@@ -1,0 +1,13 @@
+{
+  "name": "highlovetrip-local-ai-orchestrator",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "benchmark:models": "node scripts/benchmark-models.ts",
+    "test": "node --test src/**/*.test.ts",
+    "check": "node --test src/**/*.test.ts"
+  },
+  "engines": {
+    "node": ">=22.18"
+  }
+}

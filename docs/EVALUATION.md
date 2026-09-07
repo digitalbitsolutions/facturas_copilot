@@ -1,0 +1,49 @@
+# Protocolo de evaluación
+
+## Objetivo
+
+Demostrar si la orquestación local produce ahorro neto frente al flujo íntegramente ejecutado por Codex.
+
+## Diseño del experimento
+
+Crear una batería de tareas reales y anonimizadas:
+
+- 10 clasificaciones/extracciones;
+- 10 resúmenes de errores o requisitos;
+- 10 generaciones de tests;
+- 10 parches pequeños de frontend/backend;
+- 5 revisiones visuales.
+
+Cada tarea se ejecutará como control con Codex y como variante local + escalado. Se conservarán exactamente el objetivo y los criterios de aceptación.
+
+## Métricas
+
+| Métrica | Definición |
+|---|---|
+| Cloud input tokens | Tokens enviados a Codex |
+| Cloud output tokens | Tokens generados por Codex |
+| Local tokens | Entrada y salida de Ollama |
+| Latencia total | Inicio hasta resultado validado |
+| First-pass acceptance | Resultado aceptado sin corrección |
+| Escalation rate | Porcentaje que termina en Codex |
+| Rework | Tiempo/tokens para corregir resultado local |
+| Defect escape | Error detectado después de aceptar |
+
+## Registro JSONL propuesto
+
+```json
+{"task_id":"...","category":"code_patch","route":"local","model":"qwen2.5-coder:3b-instruct","prompt_tokens_local":0,"completion_tokens_local":0,"cloud_input_tokens":0,"cloud_output_tokens":0,"latency_ms":0,"accepted_first_pass":false,"escalated":false,"tests_passed":false,"prompt_version":"v1"}
+```
+
+## Validación
+
+- JSON: validación contra esquema.
+- Código: parseo, formato, lint, typecheck y tests.
+- Resumen: verificación de referencias y muestreo humano.
+- Visión: comparación con una ficha de observaciones conocida.
+- Enrutamiento: matriz de riesgo y revisión de falsos locales.
+
+## Decisión
+
+Promover, ajustar o retirar cada pareja `categoría + modelo`. No se evaluará un promedio global que oculte categorías deficientes.
+
