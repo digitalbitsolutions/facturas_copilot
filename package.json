@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "benchmark:models": "node scripts/benchmark-models.ts",
+    "check:m365": "node --env-file-if-exists=.env scripts/check-m365-config.ts",
     "test": "node --test src/**/*.test.ts",
     "check": "node --test src/**/*.test.ts"
   },

@@ -73,6 +73,7 @@ También se medirán latencia total, tasa de aceptación directa, fallos de form
 - [Protocolo de evaluación](./docs/EVALUATION.md)
 - [Política de datos](./docs/DATA_POLICY.md)
 - [Resultados del benchmark local](./docs/BENCHMARK_RESULTS.md)
+- [Preparación de Microsoft 365](./docs/M365_SETUP.md)
 - [Roadmap](./ROADMAP.md)
 - [Trabajo inmediato](./TODO.md)
 
