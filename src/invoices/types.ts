@@ -1,0 +1,33 @@
+export type ExtractionConfidence = Partial<Record<keyof ExtractedInvoice, number>>;
+
+export type ExtractedInvoice = {
+  supplierName?: string;
+  invoiceNumber?: string;
+  invoiceDate?: string;
+  dueDate?: string;
+  taxableBase?: string;
+  vatAmount?: string;
+  totalAmount?: string;
+  currency?: string;
+};
+
+export type InvoiceValidationConfig = {
+  dueDateRequired: boolean;
+  currencyRequired: boolean;
+  minimumConfidence: number;
+  amountToleranceMinorUnits: number;
+};
+
+export type ValidationIssue = {
+  code: "required" | "invalid_date" | "invalid_amount" | "invalid_currency" | "low_confidence" | "amount_mismatch";
+  field: keyof ExtractedInvoice;
+  message: string;
+};
+
+export type ValidatedInvoice = Required<Pick<ExtractedInvoice,
+  "supplierName" | "invoiceNumber" | "invoiceDate" | "taxableBase" | "vatAmount" | "totalAmount"
+>> & Pick<ExtractedInvoice, "dueDate" | "currency">;
+
+export type InvoiceValidationResult =
+  | { valid: true; invoice: ValidatedInvoice; issues: [] }
+  | { valid: false; issues: ValidationIssue[] };
