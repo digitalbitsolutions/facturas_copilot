@@ -1,5 +1,7 @@
 # Preparación de Microsoft 365
 
+> Estado al 8 de septiembre de 2026: preparación local terminada; provisionamiento detenido hasta recibir accesos y parámetros del cliente. Véase `CONTEXT.md`.
+
 ## Arquitectura de integración elegida
 
 - Power Automate recibe el correo, enumera adjuntos y llama a AI Builder con identidad administrada por sus conexiones.

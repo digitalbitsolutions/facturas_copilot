@@ -1,10 +1,14 @@
-# Orquestación local para desarrollo y automatizaciones
+# Automatización de facturas con Microsoft 365 y Copilot
 
-Este repositorio desarrollará una capa de orquestación que use modelos locales de Ollama para trabajo mecánico y reserve Codex para tareas de mayor riesgo o complejidad. El objetivo no es usar IA local por principio, sino reducir **tokens cloud totales y coste** sin aumentar errores, latencia o retrabajo.
+Este repositorio contiene el núcleo TypeScript y la documentación de una solución para clasificar, extraer, validar, archivar y consultar facturas recibidas en Microsoft 365. La orquestación local con Ollama es una línea experimental separada y no forma parte inicialmente del circuito productivo.
 
 ## Estado
 
-- Fase actual: diseño y línea base.
+- Fase actual: núcleo implementado; integración detenida hasta recibir accesos y parámetros del cliente.
+- Núcleo de facturas: validación, nomenclatura, duplicados, estados, excepciones e idempotencia.
+- Integración preparada: cliente Microsoft Graph y adaptador SharePoint con pruebas simuladas.
+- Destino previsto: Azure Functions + Power Automate + AI Builder + SharePoint + Excel + Copilot.
+- Pruebas: 22 superadas.
 - Ollama: `0.33.3`, API disponible en `http://127.0.0.1:11434`.
 - Equipo: Intel i5-10210U, 4 núcleos/8 hilos, 7,78 GB RAM, sin GPU dedicada.
 - Restricción operativa: un único modelo local cargado y contexto corto.
@@ -74,9 +78,10 @@ También se medirán latencia total, tasa de aceptación directa, fallos de form
 - [Política de datos](./docs/DATA_POLICY.md)
 - [Resultados del benchmark local](./docs/BENCHMARK_RESULTS.md)
 - [Preparación de Microsoft 365](./docs/M365_SETUP.md)
+- [Contexto de reanudación](./CONTEXT.md)
 - [Roadmap](./ROADMAP.md)
 - [Trabajo inmediato](./TODO.md)
 
 ## Próximo hito
 
-Construir un adaptador mínimo para Ollama, un router basado primero en reglas y un registro JSONL de métricas. Antes de integrarlo con Codex se ejecutará una batería controlada de tareas reales del proyecto.
+Recibir el tenant, la suscripción Azure y los parámetros funcionales del cliente; después provisionar Microsoft 365, empaquetar el núcleo como Azure Function y conectar el primer flujo Power Automate.
