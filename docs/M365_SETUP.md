@@ -24,6 +24,10 @@ Ejecutar una sola vez, autenticándose como propietario del sitio:
 
 Los ajustes de aplicación que se deben configurar son `M365_SHAREPOINT_SITE_ID` y `M365_SHAREPOINT_DRIVE_ID`. Los demás ya tienen valores seguros predeterminados en la infraestructura: nombres de carpetas, listas y la programación `0 */10 * * * *`.
 
+## Acceso al buzón de pruebas
+
+El buzón de pruebas es `facturas-pruebas@integramente.onmicrosoft.com`. Su acceso se concede únicamente con Exchange Application RBAC, usando `scripts/grant-function-mailbox-rbac.ps1` y los identificadores de identidad administrada de la Function. No se debe conservar `Mail.Read` como permiso de aplicación asignado directamente en Entra, porque sería global y anularía el alcance por buzón.
+
 ## Recursos que se crearán
 
 ```text
