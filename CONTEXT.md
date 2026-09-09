@@ -31,7 +31,7 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - Infraestructura Azure desplegada el 9 de septiembre de 2026 en `rg-facturas-copilot-dev` (Spain Central): Function App `func-facturas-copilot-dev-jbhyjbgfzr3iy`, almacenamiento, Log Analytics, Application Insights, Key Vault e identidades/RBAC gestionados.
 - URL de la API de desarrollo: `https://func-facturas-copilot-dev-jbhyjbgfzr3iy.azurewebsites.net`. Los cuatro endpoints están registrados y devuelven `401` sin token, como corresponde a la protección Entra.
 - La identidad administrada de la Function App (`23530c7b-95c2-44bf-b949-36750c962917`) tiene permiso de aplicación `Sites.Selected` y rol `write` únicamente sobre `https://integramente.sharepoint.com/sites/facturas`.
-- OIDC de GitHub preparado: aplicación `facturas-copilot-github-deploy-dev` (Client ID `7db41108-d13f-4c3e-920a-832e875e1caa`), restringida a `digitalbitsolutions/facturas_copilot` en la rama `main` y Contributor solo en `rg-facturas-copilot-dev`. Falta registrar sus valores en GitHub Actions.
+- OIDC de GitHub preparado: aplicación `facturas-copilot-github-deploy-dev` (Client ID `7db41108-d13f-4c3e-920a-832e875e1caa`), restringida a `digitalbitsolutions/facturas_copilot` en la rama `main` y entorno `dev`. Tiene `Contributor` y `Role Based Access Control Administrator` solo en `rg-facturas-copilot-dev`, necesarios para aplicar la infraestructura y sus permisos RBAC. Falta ejecutar correctamente el workflow de GitHub Actions.
 - No existe aún ningún recurso productivo ni credencial almacenada.
 
 ## Arquitectura acordada
