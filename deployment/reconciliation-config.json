@@ -1,0 +1,14 @@
+{
+  "version": "1.0-draft",
+  "amountToleranceMinor": 1,
+  "maximumDateDistanceDays": 45,
+  "highThreshold": 85,
+  "probableThreshold": 65,
+  "reviewThreshold": 40,
+  "ambiguityMargin": 10,
+  "automaticAcceptanceEnabled": false,
+  "notes": [
+    "Draft values for simulation only.",
+    "Automatic acceptance remains disabled until the client approves thresholds after the pilot."
+  ]
+}

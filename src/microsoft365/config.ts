@@ -4,18 +4,25 @@ export type Microsoft365Config = {
   sharePointSiteUrl: string;
   sharePointDriveId: string;
   invoiceFolder: string;
+  bankFolder: string;
   mailboxAddress: string;
   mailFolder: string;
   excelFilePath: string;
   excelTable: string;
+  bankBatchTable: string;
+  bankMovementTable: string;
+  reconciliationTable: string;
   aiBuilderModelId: string;
 };
 
 const VARIABLES = {
   tenantId: "M365_TENANT_ID", clientId: "M365_CLIENT_ID", sharePointSiteUrl: "M365_SHAREPOINT_SITE_URL",
   sharePointDriveId: "M365_SHAREPOINT_DRIVE_ID", invoiceFolder: "M365_INVOICE_FOLDER",
+  bankFolder: "M365_BANK_FOLDER",
   mailboxAddress: "M365_MAILBOX_ADDRESS", mailFolder: "M365_MAIL_FOLDER",
-  excelFilePath: "M365_EXCEL_FILE_PATH", excelTable: "M365_EXCEL_TABLE", aiBuilderModelId: "M365_AI_BUILDER_MODEL_ID",
+  excelFilePath: "M365_EXCEL_FILE_PATH", excelTable: "M365_EXCEL_TABLE",
+  bankBatchTable: "M365_BANK_BATCH_TABLE", bankMovementTable: "M365_BANK_MOVEMENT_TABLE",
+  reconciliationTable: "M365_RECONCILIATION_TABLE", aiBuilderModelId: "M365_AI_BUILDER_MODEL_ID",
 } as const;
 
 export class ConfigurationError extends Error {

@@ -2,13 +2,23 @@
   "name": "highlovetrip-local-ai-orchestrator",
   "private": true,
   "type": "module",
+  "main": "dist/src/functions/app.js",
   "scripts": {
     "benchmark:models": "node scripts/benchmark-models.ts",
     "check:m365": "node --env-file-if-exists=.env scripts/check-m365-config.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "func start",
     "test": "node --test src/**/*.test.ts",
-    "check": "node --test src/**/*.test.ts"
+    "check": "npm run build && npm test"
   },
   "engines": {
     "node": ">=22.18"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.16.2"
+  },
+  "devDependencies": {
+    "@types/node": "^26.5.0",
+    "typescript": "^7.0.2"
   }
 }

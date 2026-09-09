@@ -66,9 +66,9 @@ export function validateInvoice(
     }
   }
 
-  const base = invoice.taxableBase && toMinorUnits(invoice.taxableBase);
-  const vat = invoice.vatAmount && toMinorUnits(invoice.vatAmount);
-  const total = invoice.totalAmount && toMinorUnits(invoice.totalAmount);
+  const base = invoice.taxableBase ? toMinorUnits(invoice.taxableBase) : undefined;
+  const vat = invoice.vatAmount ? toMinorUnits(invoice.vatAmount) : undefined;
+  const total = invoice.totalAmount ? toMinorUnits(invoice.totalAmount) : undefined;
   if (base !== undefined && vat !== undefined && total !== undefined && Math.abs(base + vat - total) > config.amountToleranceMinorUnits) {
     issues.push({ code: "amount_mismatch", field: "totalAmount", message: "taxableBase plus vatAmount does not match totalAmount" });
   }

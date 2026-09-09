@@ -3,10 +3,11 @@
   "worksheet": "Facturas",
   "table": "tblFacturas",
   "columns": [
-    "FacturaId", "EstadoProceso", "ProveedorNombre", "NumeroFactura", "FechaFactura",
+    "FacturaId", "EstadoProceso", "EstadoPago", "ProveedorNombre", "NumeroFactura", "FechaFactura",
     "FechaVencimiento", "BaseImponible", "ImporteIVA", "TotalFactura", "Moneda",
     "EnlacePDF", "MessageId", "RemitenteCorreo", "FechaRecepcion",
     "NombreArchivoOriginal", "NombreArchivoFinal", "SharePointItemId", "ClaveDuplicado",
-    "ConfianzaExtraccion", "MotivoRevision", "FechaProcesado", "FlowRunId"
+    "ConfianzaExtraccion", "MotivoRevision", "FechaProcesado", "FlowRunId",
+    "FechaPago", "MovimientoBancoId"
   ]
 }

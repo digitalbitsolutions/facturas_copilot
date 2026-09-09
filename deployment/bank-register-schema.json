@@ -1,0 +1,33 @@
+{
+  "workbook": "RegistroFacturas.xlsx",
+  "tables": [
+    {
+      "worksheet": "LotesBancarios",
+      "table": "tblLotesBancarios",
+      "columns": [
+        "LoteImportacionId", "NombreArchivo", "HashArchivo", "VersionEsquema",
+        "FechaImportacion", "UsuarioImportacion", "EstadoLote", "FilasTotales",
+        "FilasValidas", "FilasRechazadas", "MotivoError"
+      ]
+    },
+    {
+      "worksheet": "Movimientos",
+      "table": "tblMovimientos",
+      "columns": [
+        "MovimientoBancoId", "LoteImportacionId", "IdentificadorOrigen", "FechaMovimiento",
+        "FechaValor", "ConceptoOriginal", "ConceptoNormalizado", "Importe", "Moneda",
+        "Referencia", "Contraparte", "Huella", "FacturaId", "ResultadoConciliacion",
+        "PuntuacionConciliacion", "MotivosPuntuacion"
+      ]
+    },
+    {
+      "worksheet": "Conciliaciones",
+      "table": "tblConciliaciones",
+      "columns": [
+        "ConciliacionId", "FacturaId", "MovimientoBancoId", "Resultado", "Puntuacion",
+        "Motivos", "EstadoDecision", "ModoAceptacion", "DecididoPor", "FechaDecision",
+        "ImporteAplicado"
+      ]
+    }
+  ]
+}

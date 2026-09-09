@@ -4,24 +4,27 @@
 
 ### A0 — Especificación y núcleo
 
-- [x] Versionar PRD y decisiones pendientes DP-01 a DP-15.
+- [x] Versionar PRD v3 y decisiones pendientes DP-01 a DP-24.
 - [x] Implementar modelo, validación, nomenclatura y duplicados.
 - [x] Implementar estados, excepciones, idempotencia y aislamiento por adjunto.
 - [x] Preparar configuración M365, cliente Graph y adaptador SharePoint.
+- [x] Implementar importación bancaria, normalización y motor de conciliación explicable.
+- [x] Empaquetar API HTTP como Azure Functions v4 y preparar infraestructura/CI.
 
 ### A1 — Provisionamiento e integración
 
-- [ ] Recibir accesos, licencias y parámetros del cliente.
-- [ ] Crear recursos de Microsoft 365 y Azure para desarrollo.
+- [x] Recibir y validar tenant, administrador y licencias M365 de prueba; crear aplicación Entra y recursos SharePoint de simulación.
+- [ ] Activar una suscripción Azure para desarrollo (alta Free Trial iniciada; pendiente tarjeta autorizada por gerencia).
 - [ ] Empaquetar y desplegar el backend en Azure Functions.
 - [ ] Crear el flujo Power Automate con Outlook, AI Builder y Excel.
+- [ ] Crear los flujos de importación bancaria, conciliación y revisión humana.
 - [ ] Configurar permisos de mínimo privilegio y monitorización.
 
 ### A2 — Piloto y aceptación
 
 - [ ] Preparar documentos representativos anonimizados o autorizados.
-- [ ] Ejecutar CA-01 a CA-12 y conservar evidencia.
-- [ ] Medir exactitud, intervención, tiempos, excepciones y consumo.
+- [ ] Ejecutar CA-01 a CA-21 y conservar evidencia.
+- [ ] Medir exactitud, intervención, tiempos, excepciones, consumo y falsos positivos de conciliación.
 - [ ] Corregir resultados y obtener aceptación del cliente.
 
 ## Orquestación local experimental

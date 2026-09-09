@@ -6,8 +6,11 @@ const environment = {
   M365_TENANT_ID: "tenant", M365_CLIENT_ID: "client",
   M365_SHAREPOINT_SITE_URL: "https://company.sharepoint.com/sites/facturas",
   M365_SHAREPOINT_DRIVE_ID: "drive id", M365_INVOICE_FOLDER: "Facturas/2026",
+  M365_BANK_FOLDER: "ExtractosBancarios/2026",
   M365_MAILBOX_ADDRESS: "facturas@company.test", M365_MAIL_FOLDER: "Inbox",
   M365_EXCEL_FILE_PATH: "Configuracion/RegistroFacturas.xlsx", M365_EXCEL_TABLE: "tblFacturas",
+  M365_BANK_BATCH_TABLE: "tblLotesBancarios", M365_BANK_MOVEMENT_TABLE: "tblMovimientos",
+  M365_RECONCILIATION_TABLE: "tblConciliaciones",
   M365_AI_BUILDER_MODEL_ID: "model",
 };
 
@@ -19,7 +22,7 @@ test("loads and validates Microsoft 365 configuration", () => {
 test("reports every missing Microsoft 365 variable", () => {
   assert.throws(() => loadMicrosoft365Config({}), (error) => {
     assert.ok(error instanceof ConfigurationError);
-    assert.equal(error.missingVariables.length, 10);
+    assert.equal(error.missingVariables.length, 14);
     return true;
   });
 });

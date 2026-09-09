@@ -1,10 +1,10 @@
 # Contexto de reanudación
 
-Actualizado: 8 de septiembre de 2026.
+Actualizado: 9 de septiembre de 2026.
 
 ## Objetivo
 
-Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasificación, extracción con AI Builder, validación, detección de duplicados, archivo en SharePoint, registro Excel y consultas mediante Copilot. La conciliación bancaria queda fuera de la fase 1.
+Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasificación, extracción con AI Builder, validación, detección de duplicados, archivo en SharePoint, registro y consultas mediante Copilot. La fase 1 incluye la importación manual de extractos Excel y la conciliación bancaria por reglas, sin conexión directa con bancos ni ejecución de pagos.
 
 ## Estado actual
 
@@ -14,7 +14,19 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - Núcleo de factura terminado: campos, fechas, importes, moneda, confianza, coherencia, nombres seguros y clave de duplicidad.
 - Procesador terminado: estados, excepciones, idempotencia, reproceso y aislamiento por adjunto.
 - Integración preparada: configuración M365, cliente Graph y adaptador de documentos SharePoint con pruebas simuladas.
-- Pruebas actuales: 22 superadas.
+- Importación bancaria y conciliación local terminadas: lotes, validación, normalización, duplicidad, puntuación explicable y ambigüedad.
+- Azure Functions v4 preparada con endpoints HTTP; infraestructura Flex Consumption y CI/CD preparadas.
+- Pruebas actuales: 33 superadas.
+- Tenant de pruebas verificado: `INTEGRAMENTE SL`, dominio `integramente.onmicrosoft.com` (`a1a2b397-4ac5-4f94-9004-67f158ea14e0`).
+- Administrador comunicado: `demo@integramente.onmicrosoft.com`; la contraseña no se almacena.
+- Licencias verificadas el 9 de septiembre de 2026: 25 `O365_BUSINESS_PREMIUM` y 25 `MICROSOFT_365_COPILOT_FOR_BUSINESS`, ambas habilitadas y sin asignar.
+- Licencias Business Premium y Copilot asignadas a `demo@integramente.onmicrosoft.com` el 9 de septiembre de 2026.
+- Registro Entra creado: `facturas-copilot-api-dev` (Client ID `66e78b9f-fbbe-4e80-beda-83469b6fee8c`), sin secreto ni certificado.
+- Sitio privado creado: `https://integramente.sharepoint.com/sites/facturas`.
+- Biblioteca predeterminada preparada con `Facturas`, `ExtractosBancarios` y `Configuracion`.
+- Libro `Configuracion/RegistroFacturas.xlsx` inicializado con `tblFacturas`, `tblLotesBancarios`, `tblMovimientos` y `tblConciliaciones`.
+- Listas SharePoint creadas: `Excepciones` y `ConfiguracionConciliacion`.
+- No hay suscripción Azure activa en el tenant. Se inició el alta de Azure Free Trial y queda pendiente una tarjeta autorizada por gerencia; no se han creado recursos Azure ni se ha incurrido en consumo.
 - No existe aún ningún recurso productivo ni credencial almacenada.
 
 ## Arquitectura acordada
@@ -27,9 +39,13 @@ Outlook → Power Automate → AI Builder
                     ├─ idempotencia
                     └─ Microsoft Graph → SharePoint
                          ↓
-              Excel Online mediante Power Automate
+              Registro Microsoft 365 mediante Power Automate
                          ↓
                   Copilot / Copilot Studio
+
+Extracto Excel → Power Automate → Azure Function (reglas de conciliación)
+                                      ↓
+                         revisión / vínculo confirmado
 ```
 
 - Código fuente y CI/CD: GitHub.
@@ -62,7 +78,7 @@ Los nombres son provisionales hasta que el cliente los confirme. El esquema Exce
 
 ## Bloqueo actual
 
-Se espera que el cliente proporcione o apruebe el tenant Microsoft 365, la suscripción Azure, las credenciales administradas y los parámetros funcionales. La cuenta personal Microsoft 365 mostrada durante la sesión no incluye SharePoint; se ha identificado Microsoft 365 Empresa Básico como base mínima, con Power Automate Premium/capacidad de IA sujeta a validación de licencias.
+La base de pruebas de Microsoft 365 está provisionada: tenant, licencias, aplicación Entra, sitio SharePoint, carpetas, libro/tablas y listas. El despliegue queda bloqueado exclusivamente hasta activar una suscripción Azure con una tarjeta autorizada por gerencia. Siguen pendientes las capacidades Power Automate/AI Builder, el buzón funcional y los parámetros de negocio. No se usará el tenant personal/empresarial distinto que aparece en la sesión habitual del desarrollador.
 
 ## Información que debe proporcionar el cliente
 
@@ -93,17 +109,16 @@ Se espera que el cliente proporcione o apruebe el tenant Microsoft 365, la suscr
 - Responsables y canal de excepciones.
 - Volumen esperado e idiomas.
 
-Estas decisiones corresponden a DP-01 a DP-15 del PRD.
+Estas decisiones corresponden a DP-01 a DP-24 del PRD v3.
 
 ## Siguiente secuencia
 
-1. Completar `.env` local con identificadores no secretos y ejecutar `npm run check:m365`.
-2. Crear sitio, biblioteca, carpetas, libro y tabla.
-3. Crear la suscripción/recursos Azure.
-4. Convertir el proyecto en una Function App compilable y añadir endpoints HTTP.
-5. Configurar Entra, identidad administrada, `Sites.Selected` y OIDC de GitHub.
-6. Crear el flujo Power Automate y conexiones de Outlook, Excel y AI Builder.
-7. Probar con facturas anonimizadas y registrar evidencia de CA-01 a CA-12.
+1. Activar la suscripción Azure con la tarjeta autorizada por gerencia y registrar el identificador de suscripción.
+2. Validar y desplegar la Function App y la infraestructura Bicep preparadas.
+3. Configurar identidad administrada, `Sites.Selected` y OIDC de GitHub.
+4. Confirmar Power Automate, AI Builder/Copilot Credits y buzón funcional.
+5. Crear los flujos Power Automate de facturas, importación y conciliación.
+6. Probar con facturas y extractos anonimizados y registrar evidencia de CA-01 a CA-21.
 
 ## Comandos de comprobación
 

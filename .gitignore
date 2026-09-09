@@ -1,6 +1,8 @@
 node_modules/
+dist/
 .local-ai/
 *.log
 .env
 .env.*
 !.env.example
+local.settings.json

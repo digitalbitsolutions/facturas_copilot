@@ -1,18 +1,21 @@
 # Automatización de facturas con Microsoft 365 y Copilot
 
-Este repositorio contiene el núcleo TypeScript y la documentación de una solución para clasificar, extraer, validar, archivar y consultar facturas recibidas en Microsoft 365. La orquestación local con Ollama es una línea experimental separada y no forma parte inicialmente del circuito productivo.
+Este repositorio contiene el núcleo TypeScript y la documentación de una solución para clasificar, extraer, validar, archivar y consultar facturas recibidas en Microsoft 365, además de importar extractos y conciliar movimientos bancarios. La orquestación local con Ollama es una línea experimental separada y no forma parte inicialmente del circuito productivo.
 
 ## Estado
 
-- Fase actual: núcleo implementado; integración detenida hasta recibir accesos y parámetros del cliente.
+- Fase actual: núcleo y API local implementados; la simulación M365 está provisionada. El despliegue Azure espera activar la suscripción con una tarjeta autorizada por gerencia y completar parámetros funcionales.
 - Núcleo de facturas: validación, nomenclatura, duplicados, estados, excepciones e idempotencia.
 - Integración preparada: cliente Microsoft Graph y adaptador SharePoint con pruebas simuladas.
-- Destino previsto: Azure Functions + Power Automate + AI Builder + SharePoint + Excel + Copilot.
-- Pruebas: 22 superadas.
+- Conciliación: importación por lotes, normalización, duplicidad y puntuación explicable implementadas; aceptación automática deshabilitada.
+- Azure Functions: endpoints de salud, validación, importación y conciliación compilables sobre Runtime 4 / Node.js 24.
+- Infraestructura: Bicep para Flex Consumption, Storage, Application Insights, Log Analytics y Key Vault con identidades administradas.
+- Destino previsto: Azure Functions + Power Automate + AI Builder + SharePoint + Excel/Lists + Copilot.
+- Pruebas: 33 superadas.
 - Ollama: `0.33.3`, API disponible en `http://127.0.0.1:11434`.
 - Equipo: Intel i5-10210U, 4 núcleos/8 hilos, 7,78 GB RAM, sin GPU dedicada.
 - Restricción operativa: un único modelo local cargado y contexto corto.
-- PRD funcional del proyecto de facturas: [PRD_Automatizacion_Facturas_M365_Copilot_v2.md](./PRD_Automatizacion_Facturas_M365_Copilot_v2.md).
+- PRD funcional vigente: [PRD_Automatizacion_Facturas_M365_Copilot_v3.md](./PRD_Automatizacion_Facturas_M365_Copilot_v3.md).
 
 ## Modelos instalados
 
@@ -78,10 +81,13 @@ También se medirán latencia total, tasa de aceptación directa, fallos de form
 - [Política de datos](./docs/DATA_POLICY.md)
 - [Resultados del benchmark local](./docs/BENCHMARK_RESULTS.md)
 - [Preparación de Microsoft 365](./docs/M365_SETUP.md)
+- [Contratos de la API](./docs/API.md)
+- [Diseño de Power Automate](./docs/POWER_AUTOMATE_DESIGN.md)
+- [Matriz de aceptación v3](./docs/ACCEPTANCE_MATRIX.md)
 - [Contexto de reanudación](./CONTEXT.md)
 - [Roadmap](./ROADMAP.md)
 - [Trabajo inmediato](./TODO.md)
 
 ## Próximo hito
 
-Recibir el tenant, la suscripción Azure y los parámetros funcionales del cliente; después provisionar Microsoft 365, empaquetar el núcleo como Azure Function y conectar el primer flujo Power Automate.
+Activar la suscripción Azure, desplegar la infraestructura preparada y conectar los flujos cuando estén disponibles Power Automate, AI Builder y los parámetros funcionales del cliente.

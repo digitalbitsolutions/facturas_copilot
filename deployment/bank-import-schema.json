@@ -1,0 +1,23 @@
+{
+  "version": "1.0",
+  "input": "Excel rows supplied by Power Automate",
+  "debitSign": "negative",
+  "defaultCurrency": "EUR",
+  "columns": {
+    "id": "IdMovimiento",
+    "bookingDate": "FechaMovimiento",
+    "valueDate": "FechaValor",
+    "description": "Concepto",
+    "amount": "Importe",
+    "currency": "Moneda",
+    "reference": "Referencia",
+    "counterparty": "Contraparte"
+  },
+  "required": ["FechaMovimiento", "Concepto", "Importe"],
+  "acceptedDateFormats": ["yyyy-MM-dd", "dd/MM/yyyy", "dd-MM-yyyy"],
+  "notes": [
+    "The original workbook is retained and hashed before rows are processed.",
+    "Bank-specific mappings may be added as new schema versions.",
+    "The sign convention must be confirmed with the client before production."
+  ]
+}

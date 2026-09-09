@@ -1,0 +1,32 @@
+[
+  {
+    "invoiceId": "INV-DEMO-001",
+    "supplierName": "ACME SL",
+    "supplierTaxId": "B00000001",
+    "invoiceNumber": "F-2026-15",
+    "invoiceDate": "2026-08-20",
+    "dueDate": "2026-09-05",
+    "totalMinor": 121000,
+    "currency": "EUR"
+  },
+  {
+    "invoiceId": "INV-DEMO-002",
+    "supplierName": "Servicios Demo SL",
+    "supplierTaxId": "B00000002",
+    "invoiceNumber": "SD-0901",
+    "invoiceDate": "2026-09-01",
+    "dueDate": "2026-09-08",
+    "totalMinor": 60500,
+    "currency": "EUR"
+  },
+  {
+    "invoiceId": "INV-DEMO-003",
+    "supplierName": "Servicios Demo SL",
+    "supplierTaxId": "B00000002",
+    "invoiceNumber": "SD-0902",
+    "invoiceDate": "2026-09-01",
+    "dueDate": "2026-09-08",
+    "totalMinor": 60500,
+    "currency": "EUR"
+  }
+]
