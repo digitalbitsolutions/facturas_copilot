@@ -18,7 +18,7 @@
 - [x] Preparar Bicep, endpoints HTTP y GitHub Actions.
 - [x] Conceder consentimiento delegado de Entra a Azure CLI y probar `/api/health` autenticado (HTTP 200).
 - [x] Conceder `Sites.Selected` y `write` de SharePoint a la identidad administrada, restringidos a `/sites/facturas`.
-- [ ] Configurar GitHub OIDC.
+- [ ] Registrar los valores OIDC en GitHub Actions y ejecutar el workflow de despliegue.
 - [ ] Crear los flujos Power Automate y ejecutar pruebas de aceptación CA-01 a CA-21.
 
 ## Núcleo de facturas

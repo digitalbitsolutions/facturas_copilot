@@ -84,6 +84,7 @@ También se medirán latencia total, tasa de aceptación directa, fallos de form
 - [Contratos de la API](./docs/API.md)
 - [Diseño de Power Automate](./docs/POWER_AUTOMATE_DESIGN.md)
 - [Matriz de aceptación v3](./docs/ACCEPTANCE_MATRIX.md)
+- [Despliegue GitHub OIDC](./docs/GITHUB_OIDC.md)
 - [Contexto de reanudación](./CONTEXT.md)
 - [Roadmap](./ROADMAP.md)
 - [Trabajo inmediato](./TODO.md)
