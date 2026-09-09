@@ -4,7 +4,7 @@ Este repositorio contiene el núcleo TypeScript y la documentación de una soluc
 
 ## Estado
 
-- Fase actual: simulación M365 e infraestructura Azure de desarrollo desplegadas. Falta la prueba autenticada, Power Automate, AI Builder y los parámetros funcionales.
+- Fase actual: simulación M365 e infraestructura Azure de desarrollo desplegadas y validadas con Entra. Faltan Power Automate, AI Builder y los parámetros funcionales.
 - Núcleo de facturas: validación, nomenclatura, duplicados, estados, excepciones e idempotencia.
 - Integración preparada: cliente Microsoft Graph y adaptador SharePoint con pruebas simuladas.
 - Conciliación: importación por lotes, normalización, duplicidad y puntuación explicable implementadas; aceptación automática deshabilitada.

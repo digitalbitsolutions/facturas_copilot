@@ -16,7 +16,7 @@
 - [x] Empaquetar el núcleo como Azure Functions Runtime 4 / Node.js 24.
 - [x] Implementar importación bancaria y motor determinista de conciliación.
 - [x] Preparar Bicep, endpoints HTTP y GitHub Actions.
-- [ ] Conceder consentimiento delegado de Entra a Azure CLI y probar los endpoints autenticados.
+- [x] Conceder consentimiento delegado de Entra a Azure CLI y probar `/api/health` autenticado (HTTP 200).
 - [ ] Configurar `Sites.Selected` y GitHub OIDC.
 - [ ] Crear los flujos Power Automate y ejecutar pruebas de aceptación CA-01 a CA-21.
 

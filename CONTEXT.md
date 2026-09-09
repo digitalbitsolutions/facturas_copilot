@@ -22,6 +22,7 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - Licencias verificadas el 9 de septiembre de 2026: 25 `O365_BUSINESS_PREMIUM` y 25 `MICROSOFT_365_COPILOT_FOR_BUSINESS`, ambas habilitadas y sin asignar.
 - Licencias Business Premium y Copilot asignadas a `demo@integramente.onmicrosoft.com` el 9 de septiembre de 2026.
 - Registro Entra creado: `facturas-copilot-api-dev` (Client ID `66e78b9f-fbbe-4e80-beda-83469b6fee8c`), sin secreto ni certificado.
+- Instancia empresarial (service principal) de la API creada y permiso delegado `access_as_user` concedido a Azure CLI. La llamada autenticada a `/api/health` devolvió `200` y versión `3.0` el 9 de septiembre de 2026.
 - Sitio privado creado: `https://integramente.sharepoint.com/sites/facturas`.
 - Biblioteca predeterminada preparada con `Facturas`, `ExtractosBancarios` y `Configuracion`.
 - Libro `Configuracion/RegistroFacturas.xlsx` inicializado con `tblFacturas`, `tblLotesBancarios`, `tblMovimientos` y `tblConciliaciones`.
@@ -115,11 +116,10 @@ Estas decisiones corresponden a DP-01 a DP-24 del PRD v3.
 
 ## Siguiente secuencia
 
-1. Conceder el consentimiento delegado de `access_as_user` a Azure CLI y probar la API autenticada.
-2. Configurar `Sites.Selected` y OIDC de GitHub.
-3. Confirmar Power Automate, AI Builder/Copilot Credits y buzón funcional.
-4. Crear los flujos Power Automate de facturas, importación y conciliación.
-5. Probar con facturas y extractos anonimizados y registrar evidencia de CA-01 a CA-21.
+1. Configurar `Sites.Selected` y OIDC de GitHub.
+2. Confirmar Power Automate, AI Builder/Copilot Credits y buzón funcional.
+3. Crear los flujos Power Automate de facturas, importación y conciliación.
+4. Probar con facturas y extractos anonimizados y registrar evidencia de CA-01 a CA-21.
 
 ## Comandos de comprobación
 
