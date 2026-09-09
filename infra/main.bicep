@@ -164,6 +164,7 @@ resource functionAuth 'Microsoft.Web/sites/config@2024-04-01' = {
           allowedAudiences: [
             'api://${entraApiClientId}'
             entraApiClientId
+            'https://${functionApp.properties.defaultHostName}'
           ]
         }
       }
