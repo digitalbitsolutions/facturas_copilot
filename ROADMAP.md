@@ -17,6 +17,7 @@
 - [x] Activar una suscripción Azure Trial para desarrollo.
 - [x] Desplegar infraestructura y backend en Azure Functions protegida con Entra.
 - [x] Validar el acceso delegado autenticado a la API.
+- [x] Restringir el acceso de la identidad administrada a SharePoint mediante `Sites.Selected`.
 - [ ] Crear el flujo Power Automate con Outlook, AI Builder y Excel.
 - [ ] Crear los flujos de importación bancaria, conciliación y revisión humana.
 - [ ] Configurar permisos de mínimo privilegio y monitorización.

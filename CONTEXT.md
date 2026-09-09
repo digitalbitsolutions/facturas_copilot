@@ -30,6 +30,7 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - Suscripción Azure Trial activa: `e7e239ec-59fb-4128-b9e1-b7854f426f4d`, con crédito promocional. Los recursos de desarrollo se facturarán, si aplica, contra ese crédito Trial.
 - Infraestructura Azure desplegada el 9 de septiembre de 2026 en `rg-facturas-copilot-dev` (Spain Central): Function App `func-facturas-copilot-dev-jbhyjbgfzr3iy`, almacenamiento, Log Analytics, Application Insights, Key Vault e identidades/RBAC gestionados.
 - URL de la API de desarrollo: `https://func-facturas-copilot-dev-jbhyjbgfzr3iy.azurewebsites.net`. Los cuatro endpoints están registrados y devuelven `401` sin token, como corresponde a la protección Entra.
+- La identidad administrada de la Function App (`23530c7b-95c2-44bf-b949-36750c962917`) tiene permiso de aplicación `Sites.Selected` y rol `write` únicamente sobre `https://integramente.sharepoint.com/sites/facturas`.
 - No existe aún ningún recurso productivo ni credencial almacenada.
 
 ## Arquitectura acordada
@@ -116,7 +117,7 @@ Estas decisiones corresponden a DP-01 a DP-24 del PRD v3.
 
 ## Siguiente secuencia
 
-1. Configurar `Sites.Selected` y OIDC de GitHub.
+1. Configurar OIDC de GitHub.
 2. Confirmar Power Automate, AI Builder/Copilot Credits y buzón funcional.
 3. Crear los flujos Power Automate de facturas, importación y conciliación.
 4. Probar con facturas y extractos anonimizados y registrar evidencia de CA-01 a CA-21.

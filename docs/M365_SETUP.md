@@ -1,6 +1,6 @@
 # Preparación de Microsoft 365
 
-> Estado al 8 de septiembre de 2026: preparación local terminada; provisionamiento detenido hasta recibir accesos y parámetros del cliente. Véase `CONTEXT.md`.
+> Estado al 9 de septiembre de 2026: sitio, carpetas, libro, tablas, listas y permisos mínimos de SharePoint preparados en el tenant de prueba. Véase `CONTEXT.md`.
 
 ## Arquitectura de integración elegida
 
@@ -52,7 +52,7 @@ Copiar `.env.example` como `.env` y completar solo identificadores y nombres. `.
 
 No se guardan secretos en el repositorio ni en `.env`. Para Graph se elegirá certificado o secreto almacenado en un almacén seguro. Para Outlook, Excel y AI Builder se utilizarán conexiones administradas de Power Automate.
 
-Permiso previsto para Graph: `Sites.Selected` con escritura concedida únicamente al sitio de facturas. La concesión final debe validarse en el tenant antes de producción.
+Permiso configurado para Graph: `Sites.Selected` con escritura concedida únicamente al sitio de facturas a la identidad administrada de la Function App. La concesión debe revisarse de nuevo antes de producción.
 
 ## Comprobaciones al disponer de la cuenta
 

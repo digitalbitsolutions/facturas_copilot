@@ -17,7 +17,8 @@
 - [x] Implementar importación bancaria y motor determinista de conciliación.
 - [x] Preparar Bicep, endpoints HTTP y GitHub Actions.
 - [x] Conceder consentimiento delegado de Entra a Azure CLI y probar `/api/health` autenticado (HTTP 200).
-- [ ] Configurar `Sites.Selected` y GitHub OIDC.
+- [x] Conceder `Sites.Selected` y `write` de SharePoint a la identidad administrada, restringidos a `/sites/facturas`.
+- [ ] Configurar GitHub OIDC.
 - [ ] Crear los flujos Power Automate y ejecutar pruebas de aceptación CA-01 a CA-21.
 
 ## Núcleo de facturas
