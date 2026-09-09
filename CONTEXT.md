@@ -33,6 +33,7 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - La identidad administrada de la Function App (`23530c7b-95c2-44bf-b949-36750c962917`) tiene permiso de aplicación `Sites.Selected` y rol `write` únicamente sobre `https://integramente.sharepoint.com/sites/facturas`.
 - OIDC de GitHub preparado: aplicación `facturas-copilot-github-deploy-dev` (Client ID `7db41108-d13f-4c3e-920a-832e875e1caa`), restringida a `digitalbitsolutions/facturas_copilot` en la rama `main` y entorno `dev`. Tiene `Contributor` y `Role Based Access Control Administrator` solo en `rg-facturas-copilot-dev`, necesarios para aplicar la infraestructura y sus permisos RBAC. Falta ejecutar correctamente el workflow de GitHub Actions.
 - GitHub Actions OIDC validado el 9 de septiembre de 2026: el workflow `Deploy Azure Function` terminó correctamente. La advertencia `AzureWebJobsStorage` es un falso positivo del action; la Function usa configuración de almacenamiento mediante identidad administrada y la prueba autenticada posterior devolvió HTTP 200.
+- La aplicación Entra de la API preautoriza el cliente `HTTP With Microsoft Entra ID` de Power Automate solo para el scope delegado `access_as_user`; esto permite a los flujos llamar a la API sin usar secretos.
 - No existe aún ningún recurso productivo ni credencial almacenada.
 
 ## Arquitectura acordada

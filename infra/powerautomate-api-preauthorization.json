@@ -1,0 +1,25 @@
+{
+  "api": {
+    "requestedAccessTokenVersion": 2,
+    "oauth2PermissionScopes": [
+      {
+        "id": "ff9b1bd9-7c4a-4b82-889b-c9585fc77fa2",
+        "adminConsentDescription": "Access the Facturas Copilot API on behalf of the signed-in user.",
+        "adminConsentDisplayName": "Access Facturas Copilot API",
+        "isEnabled": true,
+        "type": "User",
+        "userConsentDescription": "Access Facturas Copilot API on your behalf.",
+        "userConsentDisplayName": "Access Facturas Copilot API",
+        "value": "access_as_user"
+      }
+    ],
+    "preAuthorizedApplications": [
+      {
+        "appId": "d2ebd3a9-1ada-4480-8b2d-eac162716601",
+        "delegatedPermissionIds": [
+          "ff9b1bd9-7c4a-4b82-889b-c9585fc77fa2"
+        ]
+      }
+    ]
+  }
+}

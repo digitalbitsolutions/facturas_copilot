@@ -48,3 +48,6 @@ La interfaz definitiva puede ser una lista SharePoint o una Power App. Debe most
 - AI Builder / modelo de procesamiento de facturas.
 - HTTP con Microsoft Entra ID / Azure Function.
 - Canal de notificaciones.
+# Conexiones y seguridad
+
+Las llamadas a la Azure Function usan **HTTP With Microsoft Entra ID**, con recurso `api://66e78b9f-fbbe-4e80-beda-83469b6fee8c`. El cliente oficial del conector está preautorizado únicamente para el scope `access_as_user`; no se introducen secretos de Azure en Power Automate.
