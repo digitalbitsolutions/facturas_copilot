@@ -26,7 +26,9 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - Biblioteca predeterminada preparada con `Facturas`, `ExtractosBancarios` y `Configuracion`.
 - Libro `Configuracion/RegistroFacturas.xlsx` inicializado con `tblFacturas`, `tblLotesBancarios`, `tblMovimientos` y `tblConciliaciones`.
 - Listas SharePoint creadas: `Excepciones` y `ConfiguracionConciliacion`.
-- No hay suscripción Azure activa en el tenant. Se inició el alta de Azure Free Trial y queda pendiente una tarjeta autorizada por gerencia; no se han creado recursos Azure ni se ha incurrido en consumo.
+- Suscripción Azure Trial activa: `e7e239ec-59fb-4128-b9e1-b7854f426f4d`, con crédito promocional. Los recursos de desarrollo se facturarán, si aplica, contra ese crédito Trial.
+- Infraestructura Azure desplegada el 9 de septiembre de 2026 en `rg-facturas-copilot-dev` (Spain Central): Function App `func-facturas-copilot-dev-jbhyjbgfzr3iy`, almacenamiento, Log Analytics, Application Insights, Key Vault e identidades/RBAC gestionados.
+- URL de la API de desarrollo: `https://func-facturas-copilot-dev-jbhyjbgfzr3iy.azurewebsites.net`. Los cuatro endpoints están registrados y devuelven `401` sin token, como corresponde a la protección Entra.
 - No existe aún ningún recurso productivo ni credencial almacenada.
 
 ## Arquitectura acordada
@@ -78,7 +80,7 @@ Los nombres son provisionales hasta que el cliente los confirme. El esquema Exce
 
 ## Bloqueo actual
 
-La base de pruebas de Microsoft 365 está provisionada: tenant, licencias, aplicación Entra, sitio SharePoint, carpetas, libro/tablas y listas. El despliegue queda bloqueado exclusivamente hasta activar una suscripción Azure con una tarjeta autorizada por gerencia. Siguen pendientes las capacidades Power Automate/AI Builder, el buzón funcional y los parámetros de negocio. No se usará el tenant personal/empresarial distinto que aparece en la sesión habitual del desarrollador.
+La base de pruebas de Microsoft 365 y la suscripción Azure Trial están disponibles: tenant, licencias, aplicación Entra, sitio SharePoint, carpetas, libro/tablas y listas. Se puede iniciar el despliegue de infraestructura. Siguen pendientes las capacidades Power Automate/AI Builder, el buzón funcional y los parámetros de negocio. No se usará el tenant personal/empresarial distinto que aparece en la sesión habitual del desarrollador.
 
 ## Información que debe proporcionar el cliente
 
@@ -113,12 +115,11 @@ Estas decisiones corresponden a DP-01 a DP-24 del PRD v3.
 
 ## Siguiente secuencia
 
-1. Activar la suscripción Azure con la tarjeta autorizada por gerencia y registrar el identificador de suscripción.
-2. Validar y desplegar la Function App y la infraestructura Bicep preparadas.
-3. Configurar identidad administrada, `Sites.Selected` y OIDC de GitHub.
-4. Confirmar Power Automate, AI Builder/Copilot Credits y buzón funcional.
-5. Crear los flujos Power Automate de facturas, importación y conciliación.
-6. Probar con facturas y extractos anonimizados y registrar evidencia de CA-01 a CA-21.
+1. Conceder el consentimiento delegado de `access_as_user` a Azure CLI y probar la API autenticada.
+2. Configurar `Sites.Selected` y OIDC de GitHub.
+3. Confirmar Power Automate, AI Builder/Copilot Credits y buzón funcional.
+4. Crear los flujos Power Automate de facturas, importación y conciliación.
+5. Probar con facturas y extractos anonimizados y registrar evidencia de CA-01 a CA-21.
 
 ## Comandos de comprobación
 

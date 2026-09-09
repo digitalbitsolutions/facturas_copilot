@@ -14,8 +14,8 @@
 ### A1 — Provisionamiento e integración
 
 - [x] Recibir y validar tenant, administrador y licencias M365 de prueba; crear aplicación Entra y recursos SharePoint de simulación.
-- [ ] Activar una suscripción Azure para desarrollo (alta Free Trial iniciada; pendiente tarjeta autorizada por gerencia).
-- [ ] Empaquetar y desplegar el backend en Azure Functions.
+- [x] Activar una suscripción Azure Trial para desarrollo.
+- [x] Desplegar infraestructura y backend en Azure Functions protegida con Entra.
 - [ ] Crear el flujo Power Automate con Outlook, AI Builder y Excel.
 - [ ] Crear los flujos de importación bancaria, conciliación y revisión humana.
 - [ ] Configurar permisos de mínimo privilegio y monitorización.

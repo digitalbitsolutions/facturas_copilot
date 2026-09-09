@@ -3,7 +3,8 @@
 ## Integración Microsoft 365 — en espera del cliente
 
 - [x] Recibir y verificar Tenant ID, dominio y cuenta de desarrollo/servicio.
-- [ ] Activar la suscripción Azure (alta Free Trial iniciada; falta tarjeta autorizada por gerencia), confirmar región y permisos.
+- [x] Activar la suscripción Azure Trial: `e7e239ec-59fb-4128-b9e1-b7854f426f4d`.
+- [x] Confirmar Spain Central, permisos Azure y desplegar infraestructura de desarrollo en `rg-facturas-copilot-dev`.
 - [ ] Confirmar licencias/capacidades de Power Automate y AI Builder/Copilot Credits. Copilot y Business Premium ya están asignadas a `demo`.
 - [ ] Recibir o crear buzón y carpeta de entrada.
 - [x] Crear sitio SharePoint privado, carpetas y libro/tablas de simulación.
@@ -15,7 +16,8 @@
 - [x] Empaquetar el núcleo como Azure Functions Runtime 4 / Node.js 24.
 - [x] Implementar importación bancaria y motor determinista de conciliación.
 - [x] Preparar Bicep, endpoints HTTP y GitHub Actions.
-- [ ] Configurar Entra ID, identidad administrada, `Sites.Selected` y GitHub OIDC.
+- [ ] Conceder consentimiento delegado de Entra a Azure CLI y probar los endpoints autenticados.
+- [ ] Configurar `Sites.Selected` y GitHub OIDC.
 - [ ] Crear los flujos Power Automate y ejecutar pruebas de aceptación CA-01 a CA-21.
 
 ## Núcleo de facturas

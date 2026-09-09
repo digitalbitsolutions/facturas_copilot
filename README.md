@@ -4,7 +4,7 @@ Este repositorio contiene el núcleo TypeScript y la documentación de una soluc
 
 ## Estado
 
-- Fase actual: núcleo y API local implementados; la simulación M365 está provisionada. El despliegue Azure espera activar la suscripción con una tarjeta autorizada por gerencia y completar parámetros funcionales.
+- Fase actual: simulación M365 e infraestructura Azure de desarrollo desplegadas. Falta la prueba autenticada, Power Automate, AI Builder y los parámetros funcionales.
 - Núcleo de facturas: validación, nomenclatura, duplicados, estados, excepciones e idempotencia.
 - Integración preparada: cliente Microsoft Graph y adaptador SharePoint con pruebas simuladas.
 - Conciliación: importación por lotes, normalización, duplicidad y puntuación explicable implementadas; aceptación automática deshabilitada.
@@ -90,4 +90,4 @@ También se medirán latencia total, tasa de aceptación directa, fallos de form
 
 ## Próximo hito
 
-Activar la suscripción Azure, desplegar la infraestructura preparada y conectar los flujos cuando estén disponibles Power Automate, AI Builder y los parámetros funcionales del cliente.
+Probar la API con Entra, configurar el acceso mínimo a SharePoint y conectar los flujos cuando estén disponibles Power Automate, AI Builder y los parámetros funcionales del cliente.
