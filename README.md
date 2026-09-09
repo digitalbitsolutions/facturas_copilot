@@ -4,13 +4,13 @@ Este repositorio contiene el núcleo TypeScript y la documentación de una soluc
 
 ## Estado
 
-- Fase actual: simulación M365 e infraestructura Azure de desarrollo desplegadas y validadas con Entra. Faltan Power Automate, AI Builder y los parámetros funcionales.
+- Fase actual: alternativa sin Power Automate Premium implementada: Azure Function programada importa extractos `.xlsx`, `.xls` o `.csv` desde SharePoint con identidad administrada. Faltan el alta de listas/carpetas y sus parámetros funcionales.
 - Núcleo de facturas: validación, nomenclatura, duplicados, estados, excepciones e idempotencia.
 - Integración preparada: cliente Microsoft Graph y adaptador SharePoint con pruebas simuladas.
 - Conciliación: importación por lotes, normalización, duplicidad y puntuación explicable implementadas; aceptación automática deshabilitada.
 - Azure Functions: endpoints de salud, validación, importación y conciliación compilables sobre Runtime 4 / Node.js 24.
 - Infraestructura: Bicep para Flex Consumption, Storage, Application Insights, Log Analytics y Key Vault con identidades administradas.
-- Destino previsto: Azure Functions + Power Automate + AI Builder + SharePoint + Excel/Lists + Copilot.
+- Destino actual sin licencia Premium: Azure Functions + SharePoint Lists; Power Automate y AI Builder quedan opcionales.
 - Pruebas: 33 superadas.
 - Ollama: `0.33.3`, API disponible en `http://127.0.0.1:11434`.
 - Equipo: Intel i5-10210U, 4 núcleos/8 hilos, 7,78 GB RAM, sin GPU dedicada.
@@ -89,6 +89,8 @@ También se medirán latencia total, tasa de aceptación directa, fallos de form
 - [Roadmap](./ROADMAP.md)
 - [Trabajo inmediato](./TODO.md)
 
-## Próximo hito
+## Importación bancaria sin Power Automate Premium
 
-Probar la API con Entra, configurar el acceso mínimo a SharePoint y conectar los flujos cuando estén disponibles Power Automate, AI Builder y los parámetros funcionales del cliente.
+Cada diez minutos, la Function revisa `ExtractosBancarios`. Un archivo válido se convierte en registros de las listas `ImportacionesBancarias` y `MovimientosBancarios`, y pasa a `Procesados`. Si falla, registra una excepción y lo mueve a `Errores`. Se usa la primera hoja y las columnas: `IdMovimiento`, `FechaMovimiento`, `FechaValor`, `Concepto`, `Importe`, `Moneda`, `Referencia`, `Contraparte`.
+
+El alta se hace una vez con `scripts/provision-sharepoint-folders.ps1` y `scripts/provision-sharepoint-lists.ps1`; después se configuran los identificadores del sitio y de la biblioteca como ajustes de la Function. No requiere licencia Power Automate Premium.

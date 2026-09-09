@@ -139,6 +139,13 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
         { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: insights.properties.ConnectionString }
         { name: 'APPLICATIONINSIGHTS_AUTHENTICATION_STRING', value: 'Authorization=AAD' }
         { name: 'FUNCTIONS_NODE_BLOCK_ON_ENTRY_POINT_ERROR', value: 'true' }
+        { name: 'BANK_IMPORT_SCHEDULE', value: '0 */10 * * * *' }
+        { name: 'M365_BANK_FOLDER', value: 'ExtractosBancarios' }
+        { name: 'M365_BANK_PROCESSED_FOLDER', value: 'Procesados' }
+        { name: 'M365_BANK_ERROR_FOLDER', value: 'Errores' }
+        { name: 'M365_BANK_IMPORTS_LIST', value: 'ImportacionesBancarias' }
+        { name: 'M365_BANK_MOVEMENTS_LIST', value: 'MovimientosBancarios' }
+        { name: 'M365_EXCEPTIONS_LIST', value: 'Excepciones' }
       ]
     }
   }

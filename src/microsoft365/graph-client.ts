@@ -23,6 +23,12 @@ export class GraphClient {
   }
 
   async request<T>(path: string, init: RequestInit = {}): Promise<T> {
+    const response = await this.requestResponse(path, init);
+    if (response.status === 204) return undefined as T;
+    return await response.json() as T;
+  }
+
+  async requestResponse(path: string, init: RequestInit = {}): Promise<Response> {
     const token = await this.tokenProvider.getAccessToken();
     for (let attempt = 0; attempt < 2; attempt += 1) {
       const response = await this.fetchImpl(`${this.baseUrl}/${path.replace(/^\//, "")}`, {
@@ -31,8 +37,7 @@ export class GraphClient {
       });
       if ((response.status === 429 || response.status >= 500) && attempt === 0) continue;
       if (!response.ok) throw new GraphError(response.status, await response.text());
-      if (response.status === 204) return undefined as T;
-      return await response.json() as T;
+      return response;
     }
     throw new Error("Unreachable Graph retry state");
   }

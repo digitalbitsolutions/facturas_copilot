@@ -11,6 +11,19 @@
 
 Las APIs de libro de Excel en Microsoft Graph no admiten permisos de aplicación. Por ello no se usará client credentials para escribir el registro Excel.
 
+## Alternativa sin Power Automate Premium
+
+La Function App usa su identidad administrada con `Sites.Selected` para consultar `ExtractosBancarios` cada 10 minutos. Lee la primera hoja de un archivo `.xlsx`, `.xls` o `.csv`, guarda el lote y los movimientos en SharePoint Lists y mueve el archivo a `Procesados` o `Errores`. Esto elimina el conector HTTP Premium y no requiere una licencia por usuario de Power Automate.
+
+Ejecutar una sola vez, autenticándose como propietario del sitio:
+
+```powershell
+.\scripts\provision-sharepoint-folders.ps1 -TenantId '<tenant-id>'
+.\scripts\provision-sharepoint-lists.ps1 -TenantId '<tenant-id>'
+```
+
+Los ajustes de aplicación que se deben configurar son `M365_SHAREPOINT_SITE_ID` y `M365_SHAREPOINT_DRIVE_ID`. Los demás ya tienen valores seguros predeterminados en la infraestructura: nombres de carpetas, listas y la programación `0 */10 * * * *`.
+
 ## Recursos que se crearán
 
 ```text

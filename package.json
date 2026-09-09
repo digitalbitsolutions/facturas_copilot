@@ -15,7 +15,8 @@
     "node": ">=22.18"
   },
   "dependencies": {
-    "@azure/functions": "^4.16.2"
+    "@azure/functions": "^4.16.2",
+    "xlsx-populate": "^1.21.0"
   },
   "devDependencies": {
     "@types/node": "^26.5.0",

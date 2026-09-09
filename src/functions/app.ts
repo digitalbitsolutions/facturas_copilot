@@ -1,5 +1,6 @@
 import { app, type HttpRequest, type HttpResponseInit, type InvocationContext } from "@azure/functions";
 import { importBankRequest, reconcileBankRequest, validateInvoiceRequest } from "../api/services.ts";
+import { DEFAULT_BANK_IMPORT_CONFIG, GraphClient, ManagedIdentityTokenProvider, SharePointBankPoller } from "../microsoft365/index.ts";
 
 function json(status: number, body: unknown): HttpResponseInit {
   return { status, jsonBody: body, headers: { "content-type": "application/json; charset=utf-8" } };
@@ -33,4 +34,34 @@ app.http("importBankBatch", {
 app.http("reconcileBankBatch", {
   route: "bank/reconcile", methods: ["POST"], authLevel: "anonymous",
   handler: (request, context) => execute(request, context, reconcileBankRequest),
+});
+
+function requiredSetting(name: string): string {
+  const value = process.env[name]?.trim();
+  if (!value) throw new Error(`Missing app setting ${name}`);
+  return value;
+}
+
+app.timer("pollBankExtracts", {
+  schedule: process.env.BANK_IMPORT_SCHEDULE ?? "0 */10 * * * *",
+  handler: async (_timer, context) => {
+    try {
+      const poller = new SharePointBankPoller(new GraphClient(new ManagedIdentityTokenProvider()), {
+        siteId: requiredSetting("M365_SHAREPOINT_SITE_ID"),
+        driveId: requiredSetting("M365_SHAREPOINT_DRIVE_ID"),
+        incomingFolder: process.env.M365_BANK_FOLDER ?? "ExtractosBancarios",
+        processedFolder: process.env.M365_BANK_PROCESSED_FOLDER ?? "Procesados",
+        errorFolder: process.env.M365_BANK_ERROR_FOLDER ?? "Errores",
+        importsList: process.env.M365_BANK_IMPORTS_LIST ?? "ImportacionesBancarias",
+        movementsList: process.env.M365_BANK_MOVEMENTS_LIST ?? "MovimientosBancarios",
+        exceptionsList: process.env.M365_EXCEPTIONS_LIST ?? "Excepciones",
+        importConfig: DEFAULT_BANK_IMPORT_CONFIG,
+      });
+      const result = await poller.run();
+      context.log("Bank extract polling completed", result);
+    } catch (error) {
+      context.error("Bank extract polling failed", error);
+      throw error;
+    }
+  },
 });
