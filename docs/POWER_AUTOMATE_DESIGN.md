@@ -51,3 +51,5 @@ La interfaz definitiva puede ser una lista SharePoint o una Power App. Debe most
 # Conexiones y seguridad
 
 Las llamadas a la Azure Function usan **HTTP With Microsoft Entra ID**, con recurso `https://func-facturas-copilot-dev-jbhyjbgfzr3iy.azurewebsites.net`. El cliente oficial del conector está preautorizado únicamente para el scope `access_as_user`; no se introducen secretos de Azure en Power Automate.
+
+> Este conector requiere Power Automate Premium para la cuenta propietaria del flujo. Microsoft 365 Business Premium por sí sola no cubre esta capacidad.

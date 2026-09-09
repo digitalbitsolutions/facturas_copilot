@@ -5,7 +5,7 @@
 - [x] Recibir y verificar Tenant ID, dominio y cuenta de desarrollo/servicio.
 - [x] Activar la suscripción Azure Trial: `e7e239ec-59fb-4128-b9e1-b7854f426f4d`.
 - [x] Confirmar Spain Central, permisos Azure y desplegar infraestructura de desarrollo en `rg-facturas-copilot-dev`.
-- [ ] Confirmar licencias/capacidades de Power Automate y AI Builder/Copilot Credits. Copilot y Business Premium ya están asignadas a `demo`.
+- [ ] Obtener o asignar Power Automate Premium a la cuenta propietaria del flujo y confirmar AI Builder/Copilot Credits. Copilot y Business Premium ya están asignadas a `demo`; el conector HTTP con Entra confirma que Premium falta.
 - [ ] Recibir o crear buzón y carpeta de entrada.
 - [x] Crear sitio SharePoint privado, carpetas y libro/tablas de simulación.
 - [x] Crear listas de excepciones y parámetros de conciliación.

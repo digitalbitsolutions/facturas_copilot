@@ -35,6 +35,7 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - GitHub Actions OIDC validado el 9 de septiembre de 2026: el workflow `Deploy Azure Function` terminó correctamente. La advertencia `AzureWebJobsStorage` es un falso positivo del action; la Function usa configuración de almacenamiento mediante identidad administrada y la prueba autenticada posterior devolvió HTTP 200.
 - La aplicación Entra de la API preautoriza el cliente `HTTP With Microsoft Entra ID` de Power Automate solo para el scope delegado `access_as_user`; esto permite a los flujos llamar a la API sin usar secretos.
 - Para Power Automate, la API también expone el identificador HTTPS de la Function `https://func-facturas-copilot-dev-jbhyjbgfzr3iy.azurewebsites.net`, validado con HTTP 200. El conector exige que el recurso Entra y la URL de llamada compartan esa base.
+- Power Automate está accesible en el entorno Default y las conexiones SharePoint/Excel Online (Business) funcionan. La acción `HTTP With Microsoft Entra ID` requiere Power Automate Premium; el comprobador del flujo confirma que `demo` no dispone de esa licencia. El flujo `Importar extracto bancario - Dev` queda guardado como borrador y no debe activarse hasta asignar la capacidad.
 - No existe aún ningún recurso productivo ni credencial almacenada.
 
 ## Arquitectura acordada
@@ -121,8 +122,8 @@ Estas decisiones corresponden a DP-01 a DP-24 del PRD v3.
 
 ## Siguiente secuencia
 
-1. Confirmar Power Automate, AI Builder/Copilot Credits y buzón funcional.
-2. Crear los flujos Power Automate de facturas, importación y conciliación.
+1. Obtener o asignar Power Automate Premium a la cuenta propietaria del flujo y confirmar AI Builder/Copilot Credits y buzón funcional.
+2. Reparar la conexión HTTP y crear los flujos Power Automate de facturas, importación y conciliación.
 3. Probar con facturas y extractos anonimizados y registrar evidencia de CA-01 a CA-21.
 
 ## Comandos de comprobación
