@@ -32,6 +32,7 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - URL de la API de desarrollo: `https://func-facturas-copilot-dev-jbhyjbgfzr3iy.azurewebsites.net`. Los cuatro endpoints están registrados y devuelven `401` sin token, como corresponde a la protección Entra.
 - La identidad administrada de la Function App (`23530c7b-95c2-44bf-b949-36750c962917`) tiene permiso de aplicación `Sites.Selected` y rol `write` únicamente sobre `https://integramente.sharepoint.com/sites/facturas`.
 - OIDC de GitHub preparado: aplicación `facturas-copilot-github-deploy-dev` (Client ID `7db41108-d13f-4c3e-920a-832e875e1caa`), restringida a `digitalbitsolutions/facturas_copilot` en la rama `main` y entorno `dev`. Tiene `Contributor` y `Role Based Access Control Administrator` solo en `rg-facturas-copilot-dev`, necesarios para aplicar la infraestructura y sus permisos RBAC. Falta ejecutar correctamente el workflow de GitHub Actions.
+- GitHub Actions OIDC validado el 9 de septiembre de 2026: el workflow `Deploy Azure Function` terminó correctamente. La advertencia `AzureWebJobsStorage` es un falso positivo del action; la Function usa configuración de almacenamiento mediante identidad administrada y la prueba autenticada posterior devolvió HTTP 200.
 - No existe aún ningún recurso productivo ni credencial almacenada.
 
 ## Arquitectura acordada
@@ -118,10 +119,9 @@ Estas decisiones corresponden a DP-01 a DP-24 del PRD v3.
 
 ## Siguiente secuencia
 
-1. Registrar la configuración OIDC en GitHub Actions y ejecutar el workflow de despliegue.
-2. Confirmar Power Automate, AI Builder/Copilot Credits y buzón funcional.
-3. Crear los flujos Power Automate de facturas, importación y conciliación.
-4. Probar con facturas y extractos anonimizados y registrar evidencia de CA-01 a CA-21.
+1. Confirmar Power Automate, AI Builder/Copilot Credits y buzón funcional.
+2. Crear los flujos Power Automate de facturas, importación y conciliación.
+3. Probar con facturas y extractos anonimizados y registrar evidencia de CA-01 a CA-21.
 
 ## Comandos de comprobación
 
