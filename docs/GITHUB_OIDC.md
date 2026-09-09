@@ -6,7 +6,7 @@ El workflow `.github/workflows/deploy-azure.yml` usa OpenID Connect: no se crea 
 
 - Aplicación Entra: `facturas-copilot-github-deploy-dev`.
 - Client ID: `7db41108-d13f-4c3e-920a-832e875e1caa`.
-- Confianza: solo `repo:digitalbitsolutions/facturas_copilot:ref:refs/heads/main`.
+- Confianza: rama `main` y entorno GitHub `dev` del repositorio identificado de forma inmutable por GitHub.
 - Rol Azure: `Contributor` limitado a `rg-facturas-copilot-dev`.
 
 ## Configuración pendiente en GitHub

@@ -1,0 +1,8 @@
+{
+  "name": "github-dev-environment",
+  "issuer": "https://token.actions.githubusercontent.com",
+  "subject": "repo:digitalbitsolutions@26103651/facturas_copilot@1360297271:environment:dev",
+  "audiences": [
+    "api://AzureADTokenExchange"
+  ]
+}
