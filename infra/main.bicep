@@ -146,6 +146,8 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
         { name: 'M365_BANK_IMPORTS_LIST', value: 'ImportacionesBancarias' }
         { name: 'M365_BANK_MOVEMENTS_LIST', value: 'MovimientosBancarios' }
         { name: 'M365_EXCEPTIONS_LIST', value: 'Excepciones' }
+        { name: 'INVOICE_MAIL_POLL_SCHEDULE', value: '30 */10 * * * *' }
+        { name: 'M365_INVOICE_FOLDER', value: 'Facturas' }
       ]
     }
   }

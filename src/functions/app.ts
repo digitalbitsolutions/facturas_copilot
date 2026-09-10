@@ -1,6 +1,6 @@
 import { app, type HttpRequest, type HttpResponseInit, type InvocationContext } from "@azure/functions";
 import { importBankRequest, reconcileBankRequest, validateInvoiceRequest } from "../api/services.ts";
-import { DEFAULT_BANK_IMPORT_CONFIG, GraphClient, ManagedIdentityTokenProvider, SharePointBankPoller } from "../microsoft365/index.ts";
+import { DEFAULT_BANK_IMPORT_CONFIG, GraphClient, ManagedIdentityTokenProvider, SharePointBankPoller, SharePointDocumentRepository, SharePointInvoiceMailboxPoller } from "../microsoft365/index.ts";
 
 function json(status: number, body: unknown): HttpResponseInit {
   return { status, jsonBody: body, headers: { "content-type": "application/json; charset=utf-8" } };
@@ -61,6 +61,24 @@ app.timer("pollBankExtracts", {
       context.log("Bank extract polling completed", result);
     } catch (error) {
       context.error("Bank extract polling failed", error);
+      throw error;
+    }
+  },
+});
+
+app.timer("pollInvoiceMailbox", {
+  schedule: process.env.INVOICE_MAIL_POLL_SCHEDULE ?? "30 */10 * * * *",
+  handler: async (_timer, context) => {
+    try {
+      const graph = new GraphClient(new ManagedIdentityTokenProvider());
+      const poller = new SharePointInvoiceMailboxPoller(
+        graph,
+        requiredSetting("M365_MAILBOX_ADDRESS"),
+        new SharePointDocumentRepository(graph, requiredSetting("M365_SHAREPOINT_DRIVE_ID"), process.env.M365_INVOICE_FOLDER ?? "Facturas"),
+      );
+      context.log("Invoice mailbox polling completed", await poller.run());
+    } catch (error) {
+      context.error("Invoice mailbox polling failed", error);
       throw error;
     }
   },
