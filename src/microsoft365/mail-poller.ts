@@ -8,7 +8,15 @@ function safeFilename(value: string): string { return value.replace(/[^a-zA-Z0-9
 
 /** Archives PDF attachments from the configured shared mailbox. Mail remains read-only. */
 export class SharePointInvoiceMailboxPoller {
-  constructor(private readonly graph: GraphClient, private readonly mailbox: string, private readonly documents: SharePointDocumentRepository) {}
+  private readonly graph: GraphClient;
+  private readonly mailbox: string;
+  private readonly documents: SharePointDocumentRepository;
+
+  constructor(graph: GraphClient, mailbox: string, documents: SharePointDocumentRepository) {
+    this.graph = graph;
+    this.mailbox = mailbox;
+    this.documents = documents;
+  }
 
   async run(): Promise<{ messages: number; archived: number }> {
     const response = await this.graph.request<{ value: Message[] }>(
