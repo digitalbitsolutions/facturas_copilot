@@ -41,6 +41,7 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - La idempotencia estricta y los nombres cortos se corrigieron y desplegaron en `79021de` (`Make SharePoint archiving truly idempotent`). La validación real posterior reconstruyó 7 adjuntos históricos con claves hash distintas y mantuvo sus fechas sin cambios durante varios ciclos.
 - La deuda de despliegue quedó cerrada el 10 de septiembre: `9d5aed8` persiste los tres ajustes M365 mediante Bicep y `8a7a225` actualiza las acciones a Node 24/Azure Login v3 y usa `AzureWebJobsStorage__accountName`. El redespliegue terminó sin warnings; las variables y los 7 documentos persistieron sin cambios.
 - El 10 de septiembre se desplegó Document Intelligence F0 en `northeurope` y se evaluaron cuatro documentos reales fuera de Git: uno completo y coherente; uno con base derivable y confianza fiscal baja; uno sin desglose fiscal; y una liquidación bancaria que el modelo confundió con factura. Los hallazgos originaron mapeo de razón social, derivación conservadora de base y rechazo de base cero.
+- La prueba extremo a extremo de `/api/invoices/extract` funcionó con autenticación Entra e identidad administrada. Una factura completa produjo importes correctos y coherentes, pero quedó en revisión porque proveedor, número, vencimiento y base no alcanzaron confianza `0,8`; no se reducirá el umbral global sin reglas adicionales.
 - No existe aún ningún recurso productivo ni credencial almacenada.
 
 ## Evidencia y diagnóstico del piloto de correo
@@ -166,9 +167,9 @@ Estas decisiones se consolidarán contra el PRD vigente v4.
 
 ## Siguiente secuencia
 
-1. Redesplegar los ajustes de mapeo validados con los cuatro documentos reales.
-2. Probar el endpoint autenticado `/api/invoices/extract` con una factura completa y conservar solo evidencia anonimizada.
-3. Diseñar la clasificación previa para separar facturas de liquidaciones bancarias antes de automatizar el buzón.
+1. Definir política de validación por campo, coherencia fiscal e identificación contra maestro de proveedores.
+2. Diseñar la clasificación previa para separar facturas de liquidaciones bancarias antes de automatizar el buzón.
+3. Conectar extracción y validación al buzón con estado persistente e idempotencia.
 4. Crear los flujos Power Automate de registro, conciliación y revisión.
 5. Ejecutar la aceptación restante CA-01 a CA-21 y conservar evidencia.
 
