@@ -109,6 +109,15 @@ Prueba real posterior:
 
 Conclusión: CA-03 y CA-07 quedan validados para la fase de archivado del piloto.
 
+## Cierre de la deuda de despliegue
+
+La validación final se realizó con `9d5aed8` y `8a7a225`. El workflow terminó sin annotations deprecadas ni advertencias de configuración de Storage. Después del redespliegue:
+
+- Los tres ajustes M365 continuaron presentes por haber sido aplicados desde Bicep.
+- Los 7 PDF continuaron en SharePoint.
+- Sus fechas de modificación permanecieron estables.
+- No fue necesaria ninguna reparación manual posterior.
+
 ## Criterio de éxito
 
 La prueba se considera correcta cuando:

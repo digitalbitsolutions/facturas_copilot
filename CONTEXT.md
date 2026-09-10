@@ -39,6 +39,7 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - El 10 de septiembre de 2026 se completó una prueba real: correo recibido en `facturas-pruebas@integramente.onmicrosoft.com`, PDF leído por `pollInvoiceMailbox` y archivo creado en `Documentos/Facturas` con `Modified By: SharePoint App`.
 - El código validado y desplegado corresponde al commit `09e14bf` (`Fix invoice attachment retrieval`).
 - La idempotencia estricta y los nombres cortos se corrigieron y desplegaron en `79021de` (`Make SharePoint archiving truly idempotent`). La validación real posterior reconstruyó 7 adjuntos históricos con claves hash distintas y mantuvo sus fechas sin cambios durante varios ciclos.
+- La deuda de despliegue quedó cerrada el 10 de septiembre: `9d5aed8` persiste los tres ajustes M365 mediante Bicep y `8a7a225` actualiza las acciones a Node 24/Azure Login v3 y usa `AzureWebJobsStorage__accountName`. El redespliegue terminó sin warnings; las variables y los 7 documentos persistieron sin cambios.
 - No existe aún ningún recurso productivo ni credencial almacenada.
 
 ## Evidencia y diagnóstico del piloto de correo
@@ -164,11 +165,11 @@ Estas decisiones se consolidarán contra el PRD vigente v4.
 
 ## Siguiente secuencia
 
-1. Redesplegar IaC y comprobar que los tres ajustes M365 se conservan automáticamente.
-2. Confirmar en Log Analytics una ejecución exitosa con el contador de archivos archivados.
-3. Obtener o asignar Power Automate Premium y confirmar AI Builder/Copilot Credits.
-4. Crear los flujos Power Automate de facturas, importación, conciliación y revisión.
-5. Probar con facturas y extractos anonimizados y registrar evidencia de CA-01 a CA-21.
+1. Preparar el conjunto autorizado de facturas reales y sus valores esperados sin incorporarlas a Git.
+2. Obtener o asignar Power Automate Premium y confirmar AI Builder/Copilot Credits.
+3. Implementar la extracción y conectar su resultado con `/api/invoices/validate`.
+4. Crear los flujos Power Automate de registro, conciliación y revisión.
+5. Ejecutar la aceptación restante CA-01 a CA-21 y conservar evidencia.
 
 ## Comandos de comprobación
 

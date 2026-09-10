@@ -25,6 +25,8 @@
 - [x] Eliminar colisiones de nombres usando una clave hash corta del mensaje y adjunto.
 - [x] Evitar sobrescrituras en ciclos posteriores y validar fechas de modificación estables (CA-07).
 - [x] Declarar `M365_MAILBOX_ADDRESS`, `M365_SHAREPOINT_SITE_ID` y `M365_SHAREPOINT_DRIVE_ID` como parámetros Bicep para que cada despliegue los restaure.
+- [x] Redesplegar y confirmar que variables y documentos persisten sin intervención manual.
+- [x] Actualizar GitHub Actions a runtimes Node 24 y eliminar warnings de Azure Login y Storage.
 - [ ] Confirmar en Application Insights una ejecución exitosa y conservar la evidencia del contador `archived`.
 - [ ] Crear los flujos Power Automate y ejecutar pruebas de aceptación CA-01 a CA-21.
 
