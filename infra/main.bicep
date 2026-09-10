@@ -220,7 +220,8 @@ var storageQueueDataContributor = subscriptionResourceId('Microsoft.Authorizatio
 var storageTableDataContributor = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3')
 var monitoringMetricsPublisher = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '3913510d-42f4-4e42-8a64-420c390055eb')
 var keyVaultSecretsUser = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')
-var cognitiveServicesUser = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'a97b65f3-24c7-4388-baec-2e87135dc908')
+// Cognitive Services User currently lacks the Document Intelligence v4 analyze data action in this tenant.
+var cognitiveServicesDataContributor = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '19c28022-e58e-450d-a464-0b2a53034789')
 
 resource blobRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(storage.id, functionApp.id, storageBlobDataOwner)
@@ -253,9 +254,9 @@ resource vaultRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
 }
 
 resource documentIntelligenceRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(documentIntelligence.id, functionApp.id, cognitiveServicesUser)
+  name: guid(documentIntelligence.id, functionApp.id, cognitiveServicesDataContributor)
   scope: documentIntelligence
-  properties: { roleDefinitionId: cognitiveServicesUser, principalId: functionApp.identity.principalId, principalType: 'ServicePrincipal' }
+  properties: { roleDefinitionId: cognitiveServicesDataContributor, principalId: functionApp.identity.principalId, principalType: 'ServicePrincipal' }
 }
 
 output functionAppName string = functionApp.name
