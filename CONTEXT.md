@@ -165,7 +165,7 @@ Estas decisiones se consolidarán contra el PRD vigente v4.
 
 ## Siguiente secuencia
 
-1. Desplegar en `westeurope` el recurso F0 de Azure AI Document Intelligence —no disponible en `spaincentral`— y el endpoint autenticado `/api/invoices/extract`.
+1. Desplegar en una región europea disponible el recurso F0 de Azure AI Document Intelligence —`spaincentral` no ofrece el tipo y `westeurope` rechazó nuevos clientes; siguiente intento `northeurope`— y el endpoint autenticado `/api/invoices/extract`.
 2. Evaluar las cuatro facturas reales autorizadas, sin incorporarlas ni guardar sus resultados en Git.
 3. Comparar campos y confianza con valores esperados y ajustar el mapeo antes de automatizar el buzón.
 4. Crear los flujos Power Automate de registro, conciliación y revisión.

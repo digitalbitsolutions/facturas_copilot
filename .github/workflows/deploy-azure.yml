@@ -11,6 +11,10 @@ on:
         description: Azure region
         required: true
         default: spaincentral
+      document_intelligence_location:
+        description: Azure Document Intelligence region
+        required: true
+        default: northeurope
 
 permissions:
   id-token: write
@@ -42,7 +46,7 @@ jobs:
           output=$(az deployment group create \
             --resource-group "rg-facturas-copilot-${{ inputs.environment }}" \
             --template-file infra/main.bicep \
-            --parameters environmentName="${{ inputs.environment }}" location="${{ inputs.location }}" entraApiClientId="${{ vars.ENTRA_API_CLIENT_ID }}" \
+            --parameters environmentName="${{ inputs.environment }}" location="${{ inputs.location }}" documentIntelligenceLocation="${{ inputs.document_intelligence_location }}" entraApiClientId="${{ vars.ENTRA_API_CLIENT_ID }}" \
             --query properties.outputs.functionAppName.value -o tsv)
           echo "function_name=$output" >> "$GITHUB_OUTPUT"
       - name: Prepare deployment package

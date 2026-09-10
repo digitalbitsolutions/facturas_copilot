@@ -6,8 +6,8 @@ param environmentName string = 'dev'
 @description('Azure region. Confirm Flex Consumption availability before deployment.')
 param location string = resourceGroup().location
 
-@description('Azure region for Document Intelligence. The service is not available in Spain Central.')
-param documentIntelligenceLocation string = 'westeurope'
+@description('Azure region for Document Intelligence. The service is not available in Spain Central; availability for new customers can vary.')
+param documentIntelligenceLocation string = 'northeurope'
 
 @description('Maximum scale-out instance count.')
 @minValue(1)

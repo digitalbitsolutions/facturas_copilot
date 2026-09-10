@@ -29,7 +29,7 @@
 - [x] Actualizar GitHub Actions a runtimes Node 24 y eliminar warnings de Azure Login y Storage.
 - [x] Implementar extracción controlada con Document Intelligence `prebuilt-invoice`, páginas 1-2 y nivel F0.
 - [x] Registrar una vez `Microsoft.CognitiveServices` en la suscripción con un administrador; OIDC está limitado al grupo de recursos.
-- [x] Separar la región de Document Intelligence (`westeurope`) porque `FormRecognizer` no está disponible en `spaincentral`.
+- [x] Hacer configurable la región de Document Intelligence porque `spaincentral` no ofrece `FormRecognizer` y `westeurope` no acepta nuevos clientes de esta suscripción.
 - [ ] Desplegar F0 y probar `/api/invoices/extract` con las cuatro facturas reales fuera de Git.
 - [ ] Registrar valores esperados, confianza y diferencias sin conservar datos personales o fiscales en el repositorio.
 - [ ] Confirmar en Application Insights una ejecución exitosa y conservar la evidencia del contador `archived`.
