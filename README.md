@@ -4,14 +4,14 @@ Este repositorio contiene el núcleo TypeScript y la documentación de una soluc
 
 ## Estado
 
-- Fase actual: alternativa sin Power Automate Premium implementada: Azure Function programada importa extractos `.xlsx`, `.xls` o `.csv` desde SharePoint con identidad administrada. Faltan el alta de listas/carpetas y sus parámetros funcionales.
+- Fase actual: alternativa sin Power Automate Premium desplegada. El circuito real Outlook → Azure Function → Microsoft Graph → SharePoint fue validado el 10 de septiembre de 2026; la importación programada de extractos también está implementada.
 - Núcleo de facturas: validación, nomenclatura, duplicados, estados, excepciones e idempotencia.
-- Integración preparada: cliente Microsoft Graph y adaptador SharePoint con pruebas simuladas.
+- Integración validada: lectura restringida del buzón de pruebas y archivado real de PDF en SharePoint con identidad administrada.
 - Conciliación: importación por lotes, normalización, duplicidad y puntuación explicable implementadas; aceptación automática deshabilitada.
 - Azure Functions: endpoints de salud, validación, importación y conciliación compilables sobre Runtime 4 / Node.js 24.
 - Infraestructura: Bicep para Flex Consumption, Storage, Application Insights, Log Analytics y Key Vault con identidades administradas.
 - Destino actual sin licencia Premium: Azure Functions + SharePoint Lists; Power Automate y AI Builder quedan opcionales.
-- Pruebas: 33 superadas.
+- Pruebas: 36 superadas.
 - Ollama: `0.33.3`, API disponible en `http://127.0.0.1:11434`.
 - Equipo: Intel i5-10210U, 4 núcleos/8 hilos, 7,78 GB RAM, sin GPU dedicada.
 - Restricción operativa: un único modelo local cargado y contexto corto.
@@ -81,6 +81,7 @@ También se medirán latencia total, tasa de aceptación directa, fallos de form
 - [Política de datos](./docs/DATA_POLICY.md)
 - [Resultados del benchmark local](./docs/BENCHMARK_RESULTS.md)
 - [Preparación de Microsoft 365](./docs/M365_SETUP.md)
+- [Ejecución y diagnóstico del piloto de correo](./docs/MAILBOX_PILOT_RUNBOOK.md)
 - [Contratos de la API](./docs/API.md)
 - [Diseño de Power Automate](./docs/POWER_AUTOMATE_DESIGN.md)
 - [Matriz de aceptación v3](./docs/ACCEPTANCE_MATRIX.md)

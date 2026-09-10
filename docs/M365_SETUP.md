@@ -1,6 +1,6 @@
 # Preparación de Microsoft 365
 
-> Estado al 9 de septiembre de 2026: sitio, carpetas, libro, tablas, listas y permisos mínimos de SharePoint preparados en el tenant de prueba. Véase `CONTEXT.md`.
+> Estado al 10 de septiembre de 2026: sitio, carpetas, libro, tablas, listas, buzón y archivado real de PDF validados en el tenant de prueba. Véase `CONTEXT.md`.
 
 ## Arquitectura de integración elegida
 
@@ -22,7 +22,7 @@ Ejecutar una sola vez, autenticándose como propietario del sitio:
 .\scripts\provision-sharepoint-lists.ps1 -TenantId '<tenant-id>'
 ```
 
-Los ajustes de aplicación que se deben configurar son `M365_SHAREPOINT_SITE_ID` y `M365_SHAREPOINT_DRIVE_ID`. Los demás ya tienen valores seguros predeterminados en la infraestructura: nombres de carpetas, listas y la programación `0 */10 * * * *`.
+Los ajustes operativos que deben existir son `M365_MAILBOX_ADDRESS`, `M365_SHAREPOINT_SITE_ID` y `M365_SHAREPOINT_DRIVE_ID`. Actualmente se añadieron manualmente en Azure. La plantilla Bicep reemplaza la colección de ajustes durante el despliegue, por lo que deben verificarse y restaurarse después de cada ejecución hasta versionarlos en IaC. Los nombres de carpetas, listas y horarios sí tienen valores predeterminados.
 
 ## Acceso al buzón de pruebas
 
@@ -53,6 +53,7 @@ Copiar `.env.example` como `.env` y completar solo identificadores y nombres. `.
 | `M365_TENANT_ID` | Centro de administración de Microsoft Entra, información general |
 | `M365_CLIENT_ID` | Registro de aplicación creado para el proyecto |
 | `M365_SHAREPOINT_SITE_URL` | URL de la portada del sitio privado |
+| `M365_SHAREPOINT_SITE_ID` | Graph Explorer: `GET /sites/integramente.sharepoint.com:/sites/facturas?$select=id` |
 | `M365_SHAREPOINT_DRIVE_ID` | Se resolverá por Graph al conectar el sitio |
 | `M365_INVOICE_FOLDER` | Carpeta de PDF, inicialmente `Facturas` |
 | `M365_BANK_FOLDER` | Carpeta restringida de extractos, inicialmente `ExtractosBancarios` |
@@ -81,3 +82,7 @@ Permiso configurado para Graph: `Sites.Selected` con escritura concedida únicam
 6. Crear conexiones Power Automate con una cuenta de servicio o propietario definido.
 7. Crear la carpeta bancaria restringida y las tablas de lotes, movimientos y conciliaciones.
 8. Ejecutar una prueba con facturas y extractos anonimizados.
+
+## Piloto validado y resolución de problemas
+
+El procedimiento completo, consultas de Graph Explorer, consulta KQL, errores observados y recuperación tras despliegue están en [MAILBOX_PILOT_RUNBOOK.md](./MAILBOX_PILOT_RUNBOOK.md).

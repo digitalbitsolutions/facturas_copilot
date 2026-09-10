@@ -4,7 +4,7 @@
 
 ### A0 — Especificación y núcleo
 
-- [x] Versionar PRD v3 y decisiones pendientes DP-01 a DP-24.
+- [x] Consolidar el alcance ejecutado en el PRD vigente v4 y retirar versiones anteriores.
 - [x] Implementar modelo, validación, nomenclatura y duplicados.
 - [x] Implementar estados, excepciones, idempotencia y aislamiento por adjunto.
 - [x] Preparar configuración M365, cliente Graph y adaptador SharePoint.
@@ -18,6 +18,8 @@
 - [x] Desplegar infraestructura y backend en Azure Functions protegida con Entra.
 - [x] Validar el acceso delegado autenticado a la API.
 - [x] Restringir el acceso de la identidad administrada a SharePoint mediante `Sites.Selected`.
+- [x] Validar el archivado real de adjuntos PDF desde Exchange Online hasta SharePoint.
+- [ ] Hacer persistentes en IaC los identificadores del buzón, sitio y biblioteca usados por los temporizadores.
 - [ ] Crear el flujo Power Automate con Outlook, AI Builder y Excel.
 - [ ] Crear los flujos de importación bancaria, conciliación y revisión humana.
 - [ ] Configurar permisos de mínimo privilegio y monitorización.

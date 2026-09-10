@@ -6,7 +6,7 @@
 - [x] Activar la suscripción Azure Trial: `e7e239ec-59fb-4128-b9e1-b7854f426f4d`.
 - [x] Confirmar Spain Central, permisos Azure y desplegar infraestructura de desarrollo en `rg-facturas-copilot-dev`.
 - [ ] Obtener o asignar Power Automate Premium a la cuenta propietaria del flujo y confirmar AI Builder/Copilot Credits. Copilot y Business Premium ya están asignadas a `demo`; el conector HTTP con Entra confirma que Premium falta.
-- [ ] Recibir o crear buzón y carpeta de entrada.
+- [x] Crear y validar el buzón `facturas-pruebas@integramente.onmicrosoft.com` y su carpeta `Inbox`.
 - [x] Crear sitio SharePoint privado, carpetas y libro/tablas de simulación.
 - [x] Crear listas de excepciones y parámetros de conciliación.
 - [ ] Confirmar libro, tabla, propietarios y política de edición.
@@ -19,6 +19,10 @@
 - [x] Conceder consentimiento delegado de Entra a Azure CLI y probar `/api/health` autenticado (HTTP 200).
 - [x] Conceder `Sites.Selected` y `write` de SharePoint a la identidad administrada, restringidos a `/sites/facturas`.
 - [x] Registrar los valores OIDC en GitHub Actions y validar el workflow de despliegue.
+- [x] Corregir la descarga de adjuntos Graph sin `$select=contentBytes` sobre el tipo base `attachment`.
+- [x] Validar el circuito real Outlook → Azure Function → Graph → SharePoint con un PDF.
+- [ ] Declarar `M365_MAILBOX_ADDRESS`, `M365_SHAREPOINT_SITE_ID` y `M365_SHAREPOINT_DRIVE_ID` en el proceso de infraestructura/despliegue para que Bicep no elimine los valores manuales.
+- [ ] Confirmar en Application Insights una ejecución exitosa y conservar la evidencia del contador `archived`.
 - [ ] Crear los flujos Power Automate y ejecutar pruebas de aceptación CA-01 a CA-21.
 
 ## Núcleo de facturas

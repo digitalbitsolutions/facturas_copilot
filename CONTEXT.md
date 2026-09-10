@@ -1,6 +1,6 @@
 # Contexto de reanudación
 
-Actualizado: 9 de septiembre de 2026.
+Actualizado: 10 de septiembre de 2026, después de validar el archivado real de correo a SharePoint.
 
 ## Objetivo
 
@@ -13,10 +13,10 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - Runtime local: Node.js 24, TypeScript ejecutado en modo nativo para desarrollo.
 - Núcleo de factura terminado: campos, fechas, importes, moneda, confianza, coherencia, nombres seguros y clave de duplicidad.
 - Procesador terminado: estados, excepciones, idempotencia, reproceso y aislamiento por adjunto.
-- Integración preparada: configuración M365, cliente Graph y adaptador de documentos SharePoint con pruebas simuladas.
+- Integración M365 validada en el tenant: la Function lee el buzón restringido mediante Graph y archiva adjuntos PDF en SharePoint.
 - Importación bancaria y conciliación local terminadas: lotes, validación, normalización, duplicidad, puntuación explicable y ambigüedad.
 - Azure Functions v4 preparada con endpoints HTTP; infraestructura Flex Consumption y CI/CD preparadas.
-- Pruebas actuales: 33 superadas.
+- Pruebas actuales: 36 superadas.
 - Tenant de pruebas verificado: `INTEGRAMENTE SL`, dominio `integramente.onmicrosoft.com` (`a1a2b397-4ac5-4f94-9004-67f158ea14e0`).
 - Administrador comunicado: `demo@integramente.onmicrosoft.com`; la contraseña no se almacena.
 - Licencias verificadas el 9 de septiembre de 2026: 25 `O365_BUSINESS_PREMIUM` y 25 `MICROSOFT_365_COPILOT_FOR_BUSINESS`, ambas habilitadas y sin asignar.
@@ -30,13 +30,50 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - Suscripción Azure Trial activa: `e7e239ec-59fb-4128-b9e1-b7854f426f4d`, con crédito promocional. Los recursos de desarrollo se facturarán, si aplica, contra ese crédito Trial.
 - Infraestructura Azure desplegada el 9 de septiembre de 2026 en `rg-facturas-copilot-dev` (Spain Central): Function App `func-facturas-copilot-dev-jbhyjbgfzr3iy`, almacenamiento, Log Analytics, Application Insights, Key Vault e identidades/RBAC gestionados.
 - URL de la API de desarrollo: `https://func-facturas-copilot-dev-jbhyjbgfzr3iy.azurewebsites.net`. Los cuatro endpoints están registrados y devuelven `401` sin token, como corresponde a la protección Entra.
-- La identidad administrada de la Function App (`23530c7b-95c2-44bf-b949-36750c962917`) tiene permiso de aplicación `Sites.Selected` y rol `write` únicamente sobre `https://integramente.sharepoint.com/sites/facturas`.
+- La identidad administrada vigente mostrada por la Function App es `5dd4df87-b31f-4b55-ad16-54eec2939986`. El archivado real confirma acceso efectivo al buzón restringido y escritura en el sitio de facturas. El identificador histórico `23530c7b-95c2-44bf-b949-36750c962917` ya no debe utilizarse sin volver a verificarlo en Azure.
 - OIDC de GitHub preparado: aplicación `facturas-copilot-github-deploy-dev` (Client ID `7db41108-d13f-4c3e-920a-832e875e1caa`), restringida a `digitalbitsolutions/facturas_copilot` en la rama `main` y entorno `dev`. Tiene `Contributor` y `Role Based Access Control Administrator` solo en `rg-facturas-copilot-dev`, necesarios para aplicar la infraestructura y sus permisos RBAC. Falta ejecutar correctamente el workflow de GitHub Actions.
 - GitHub Actions OIDC validado el 9 de septiembre de 2026: el workflow `Deploy Azure Function` terminó correctamente. La advertencia `AzureWebJobsStorage` es un falso positivo del action; la Function usa configuración de almacenamiento mediante identidad administrada y la prueba autenticada posterior devolvió HTTP 200.
 - La aplicación Entra de la API preautoriza el cliente `HTTP With Microsoft Entra ID` de Power Automate solo para el scope delegado `access_as_user`; esto permite a los flujos llamar a la API sin usar secretos.
 - Para Power Automate, la API también expone el identificador HTTPS de la Function `https://func-facturas-copilot-dev-jbhyjbgfzr3iy.azurewebsites.net`, validado con HTTP 200. El conector exige que el recurso Entra y la URL de llamada compartan esa base.
 - Power Automate está accesible en el entorno Default y las conexiones SharePoint/Excel Online (Business) funcionan. La acción `HTTP With Microsoft Entra ID` requiere Power Automate Premium; el comprobador del flujo confirma que `demo` no dispone de esa licencia. El flujo `Importar extracto bancario - Dev` queda guardado como borrador y no debe activarse hasta asignar la capacidad.
+- El 10 de septiembre de 2026 se completó una prueba real: correo recibido en `facturas-pruebas@integramente.onmicrosoft.com`, PDF leído por `pollInvoiceMailbox` y archivo creado en `Documentos/Facturas` con `Modified By: SharePoint App`.
+- El código validado y desplegado corresponde al commit `09e14bf` (`Fix invoice attachment retrieval`).
 - No existe aún ningún recurso productivo ni credencial almacenada.
+
+## Evidencia y diagnóstico del piloto de correo
+
+Flujo validado:
+
+```text
+Remitente externo
+  → Exchange Online / Inbox de facturas-pruebas
+  → temporizador pollInvoiceMailbox
+  → Microsoft Graph con identidad administrada
+  → biblioteca Documentos / carpeta Facturas
+```
+
+Cronología del 10 de septiembre de 2026:
+
+1. Se confirmó la llegada de varios correos con PDF al buzón compartido.
+2. SharePoint permaneció vacío y Log Analytics mostró primero `Missing app setting`.
+3. Se añadieron manualmente `M365_SHAREPOINT_SITE_ID` y `M365_SHAREPOINT_DRIVE_ID`.
+4. Graph devolvió HTTP 400 porque la consulta aplicaba `$select=contentBytes` al tipo base `microsoft.graph.attachment`. Se eliminó ese `$select` en `src/microsoft365/mail-poller.ts` y se añadió una prueba de regresión.
+5. Se publicó el commit `09e14bf` y se lanzó una ejecución nueva de `Deploy Azure Function` sobre `main`; repetir una ejecución antigua no despliega el commit nuevo.
+6. El despliegue Bicep sustituyó los ajustes manuales. Se volvieron a crear las tres variables operativas.
+7. Graph devolvió HTTP 404 `ErrorInvalidUser` porque `M365_MAILBOX_ADDRESS` contenía accidentalmente el Site ID. Se corrigió al buzón SMTP.
+8. En el siguiente ciclo el PDF apareció en SharePoint, modificado por `SharePoint App`.
+
+Configuración operativa no secreta:
+
+| Ajuste | Valor/criterio |
+|---|---|
+| `M365_MAILBOX_ADDRESS` | `facturas-pruebas@integramente.onmicrosoft.com` |
+| `M365_SHAREPOINT_SITE_ID` | `integramente.sharepoint.com,22c53ae6-a4db-491e-85b0-e976c559c890,c7b7b19b-73af-42e3-8b2b-67f7036ded5b` |
+| `M365_SHAREPOINT_DRIVE_ID` | ID de la biblioteca predeterminada obtenido con Graph; empieza por `b!` |
+| `M365_INVOICE_FOLDER` | `Facturas` |
+| `INVOICE_MAIL_POLL_SCHEDULE` | `30 */10 * * * *` |
+
+El temporizador se ejecuta cada diez minutos en el segundo 30. Application Insights presenta marcas UTC; durante esta prueba España estaba en UTC+2, por lo que `09:00:30 UTC` equivalía a `11:00:30` local.
 
 ## Arquitectura acordada
 
@@ -87,7 +124,7 @@ Los nombres son provisionales hasta que el cliente los confirme. El esquema Exce
 
 ## Bloqueo actual
 
-La base de pruebas de Microsoft 365 y la suscripción Azure Trial están disponibles: tenant, licencias, aplicación Entra, sitio SharePoint, carpetas, libro/tablas y listas. Se puede iniciar el despliegue de infraestructura. Siguen pendientes las capacidades Power Automate/AI Builder, el buzón funcional y los parámetros de negocio. No se usará el tenant personal/empresarial distinto que aparece en la sesión habitual del desarrollador.
+La recepción y el archivado de PDF sin Power Automate ya funcionan. Sigue pendiente hacer persistentes en Bicep/CI los tres ajustes operativos añadidos manualmente; un redespliegue de infraestructura puede eliminarlos. También quedan pendientes Power Automate Premium/AI Builder, los flujos, los parámetros de negocio y la aceptación CA-01 a CA-21 completa.
 
 ## Información que debe proporcionar el cliente
 
@@ -118,13 +155,15 @@ La base de pruebas de Microsoft 365 y la suscripción Azure Trial están disponi
 - Responsables y canal de excepciones.
 - Volumen esperado e idiomas.
 
-Estas decisiones corresponden a DP-01 a DP-24 del PRD v3.
+Estas decisiones se consolidarán contra el PRD vigente v4.
 
 ## Siguiente secuencia
 
-1. Obtener o asignar Power Automate Premium a la cuenta propietaria del flujo y confirmar AI Builder/Copilot Credits y buzón funcional.
-2. Reparar la conexión HTTP y crear los flujos Power Automate de facturas, importación y conciliación.
-3. Probar con facturas y extractos anonimizados y registrar evidencia de CA-01 a CA-21.
+1. Versionar los ajustes M365 requeridos en Bicep/GitHub Actions sin incluir secretos, para que sobrevivan a cada despliegue.
+2. Confirmar en Log Analytics una ejecución exitosa con el contador de archivos archivados.
+3. Obtener o asignar Power Automate Premium y confirmar AI Builder/Copilot Credits.
+4. Crear los flujos Power Automate de facturas, importación, conciliación y revisión.
+5. Probar con facturas y extractos anonimizados y registrar evidencia de CA-01 a CA-21.
 
 ## Comandos de comprobación
 
