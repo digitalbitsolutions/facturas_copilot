@@ -2,6 +2,8 @@
 
 El workflow `.github/workflows/deploy-azure.yml` usa OpenID Connect: no se crea ni almacena ningún secreto de cliente de Azure.
 
+Las acciones oficiales usan generaciones compatibles con Node 24 (`actions/checkout@v6`, `actions/setup-node@v6` y `azure/login@v3`). El host de Functions usa `AzureWebJobsStorage__accountName` con credencial `managedidentity`, evitando tanto secretos de Storage como la advertencia del validador de despliegue.
+
 ## Identidad de desarrollo creada
 
 - Aplicación Entra: `facturas-copilot-github-deploy-dev`.
