@@ -1,5 +1,18 @@
 # Protocolo de evaluación
 
+## Piloto con documentos reales — 10 de septiembre de 2026
+
+Se evaluaron cuatro documentos autorizados con `prebuilt-invoice` API `2024-11-30`, nivel F0 y páginas 1-2. Los PDF y las respuestas sin anonimizar permanecen fuera de Git.
+
+| Caso | Resultado | Decisión |
+|---|---|---|
+| Factura con base, IVA y total explícitos | Los tres importes fueron extraídos y resultaron aritméticamente coherentes | Candidata a validación automática según confianza |
+| Factura con total e IVA, sin `SubTotal` estructurado | La base podía derivarse mediante total menos IVA; la confianza fiscal era inferior al umbral | Revisión humana |
+| Factura sin desglose fiscal | El modelo extrajo total, pero no base ni IVA | Revisión humana, sin inventar importes |
+| Liquidación bancaria | El modelo la trató como factura y confundió el IVA con el total | Clasificación previa y revisión; nunca derivar base cero |
+
+Hallazgos aplicados al código: preferencia por razón social completa, derivación conservadora de base solo cuando total es estrictamente mayor que IVA, propagación de la menor confianza y rechazo de la derivación cuando total e IVA coinciden.
+
 ## Objetivo
 
 Demostrar si la orquestación local produce ahorro neto frente al flujo íntegramente ejecutado por Codex.

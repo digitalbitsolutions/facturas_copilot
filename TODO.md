@@ -31,8 +31,9 @@
 - [x] Registrar una vez `Microsoft.CognitiveServices` en la suscripción con un administrador; OIDC está limitado al grupo de recursos.
 - [x] Hacer configurable la región de Document Intelligence porque `spaincentral` no ofrece `FormRecognizer` y `westeurope` no acepta nuevos clientes de esta suscripción.
 - [x] Asignar a la Function `Cognitive Services Data Contributor (Preview)` porque el rol User del tenant no contiene `documentmodels:analyze/action`.
-- [ ] Desplegar F0 y probar `/api/invoices/extract` con las cuatro facturas reales fuera de Git.
-- [ ] Registrar valores esperados, confianza y diferencias sin conservar datos personales o fiscales en el repositorio.
+- [x] Desplegar F0 y evaluar visualmente cuatro documentos reales en Document Intelligence Studio fuera de Git.
+- [x] Registrar conclusiones anonimizadas de precisión sin conservar datos personales o fiscales en el repositorio.
+- [ ] Redesplegar el mapeo refinado y probar `/api/invoices/extract` de extremo a extremo.
 - [x] Ajustar el mapeo real: razón social completa y base derivada con confianza conservadora cuando falta `SubTotal`.
 - [ ] Confirmar en Application Insights una ejecución exitosa y conservar la evidencia del contador `archived`.
 - [ ] Crear los flujos Power Automate y ejecutar pruebas de aceptación CA-01 a CA-21.
