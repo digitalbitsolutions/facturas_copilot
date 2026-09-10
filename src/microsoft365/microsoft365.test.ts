@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { ConfigurationError, GraphClient, GraphError, loadMicrosoft365Config, SharePointDocumentRepository } from "./index.ts";
+import { ConfigurationError, GraphClient, GraphError, loadMicrosoft365Config, SharePointDocumentRepository, SharePointInvoiceMailboxPoller } from "./index.ts";
 
 const environment = {
   M365_TENANT_ID: "tenant", M365_CLIENT_ID: "client",
@@ -62,4 +62,24 @@ test("uploads a deterministic SharePoint path", async () => {
   const stored = await repository.putOnce({ processId: "process", filename: "Factura 1.pdf", contentType: "application/pdf", content: new Uint8Array([1]) });
   assert.match(requestedUrl, /drives\/drive%20id\/root:\/Facturas\/2026\/process_Factura%201\.pdf:\/content$/);
   assert.equal(stored.url, "https://company.sharepoint.com/file.pdf");
+});
+
+test("mail poller downloads file attachments without selecting derived contentBytes", async () => {
+  const requestedUrls: string[] = [];
+  const fakeFetch: typeof fetch = async (url, init) => {
+    requestedUrls.push(String(url));
+    if (init?.method === "PUT") return Response.json({ webUrl: "https://company.sharepoint.com/invoice.pdf" }, { status: 201 });
+    if (String(url).includes("/attachments")) {
+      return Response.json({ value: [{ id: "attachment", name: "invoice.pdf", contentType: "application/pdf", contentBytes: "AQ==", isInline: false }] });
+    }
+    return Response.json({ value: [{ id: "message", hasAttachments: true }] });
+  };
+  const graph = new GraphClient({ getAccessToken: async () => "token" }, fakeFetch);
+  const repository = new SharePointDocumentRepository(graph, "drive", "Facturas");
+  const result = await new SharePointInvoiceMailboxPoller(graph, "facturas@company.test", repository).run();
+
+  assert.deepEqual(result, { messages: 1, archived: 1 });
+  const attachmentRequest = requestedUrls.find((url) => url.includes("/attachments"));
+  assert.ok(attachmentRequest);
+  assert.doesNotMatch(attachmentRequest, /contentBytes|\$select/);
 });

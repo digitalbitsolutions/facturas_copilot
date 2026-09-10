@@ -25,7 +25,7 @@ export class SharePointInvoiceMailboxPoller {
     let archived = 0;
     for (const message of response.value.filter((candidate) => candidate.hasAttachments)) {
       const attachments = await this.graph.request<{ value: FileAttachment[] }>(
-        `/users/${encodeURIComponent(this.mailbox)}/messages/${encodeURIComponent(message.id)}/attachments?$select=id,name,contentType,contentBytes,isInline`,
+        `/users/${encodeURIComponent(this.mailbox)}/messages/${encodeURIComponent(message.id)}/attachments`,
       );
       for (const attachment of attachments.value) {
         const isPdf = attachment.contentType === "application/pdf" || /\.pdf$/i.test(attachment.name ?? "");
