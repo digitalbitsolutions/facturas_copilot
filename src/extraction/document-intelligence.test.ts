@@ -28,6 +28,23 @@ test("maps the prebuilt invoice fields to the validation contract", () => {
   });
 });
 
+test("prefers the legal vendor name and derives a missing taxable base conservatively", () => {
+  const extracted = mapInvoiceResult({
+    status: "succeeded",
+    analyzeResult: { documents: [{ fields: {
+      VendorName: { valueString: "energia", confidence: 0.92 },
+      VendorAddressRecipient: { valueString: "Energía Ejemplo, S.A.U.", confidence: 0.89 },
+      InvoiceId: { valueString: "E-100", confidence: 0.93 }, InvoiceDate: { valueDate: "2026-09-05", confidence: 0.93 },
+      InvoiceTotal: { valueCurrency: { amount: 387.21, currencyCode: "EUR" }, confidence: 0.889 },
+      TotalTax: { valueCurrency: { amount: 67.2, currencyCode: "EUR" }, confidence: 0.681 },
+    } }] },
+  });
+  assert.equal(extracted.invoice.supplierName, "Energía Ejemplo, S.A.U.");
+  assert.equal(extracted.invoice.taxableBase, "320.01");
+  assert.equal(extracted.confidence.supplierName, 0.89);
+  assert.equal(extracted.confidence.taxableBase, 0.681);
+});
+
 test("submits and polls a PDF using managed identity", async () => {
   const requests: Array<{ url: string; init?: RequestInit }> = [];
   const fetchMock = async (url: string | URL | Request, init?: RequestInit) => {

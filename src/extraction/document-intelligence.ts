@@ -41,6 +41,13 @@ function amount(field?: Field): string | undefined {
   return typeof value === "number" && Number.isFinite(value) ? value.toFixed(2) : undefined;
 }
 
+function derivedTaxableBase(total?: Field, tax?: Field): string | undefined {
+  const totalValue = total?.valueCurrency?.amount ?? total?.valueNumber;
+  const taxValue = tax?.valueCurrency?.amount ?? tax?.valueNumber;
+  if (typeof totalValue !== "number" || typeof taxValue !== "number" || !Number.isFinite(totalValue) || !Number.isFinite(taxValue) || totalValue < taxValue) return undefined;
+  return (Math.round((totalValue - taxValue) * 100) / 100).toFixed(2);
+}
+
 function confidence(fields: Record<string, Field>, mapping: Record<keyof ExtractedInvoice, string>): ExtractionConfidence {
   return Object.fromEntries(Object.entries(mapping).flatMap(([target, source]) => {
     const value = fields[source]?.confidence;
@@ -51,20 +58,29 @@ function confidence(fields: Record<string, Field>, mapping: Record<keyof Extract
 export function mapInvoiceResult(payload: AnalyzeResponse): { invoice: ExtractedInvoice; confidence: ExtractionConfidence } {
   const fields = payload.analyzeResult?.documents?.[0]?.fields;
   if (!fields) throw new Error("Document Intelligence did not detect an invoice");
-  const mapping: Record<keyof ExtractedInvoice, string> = {
-    supplierName: "VendorName", invoiceNumber: "InvoiceId", invoiceDate: "InvoiceDate", dueDate: "DueDate",
-    taxableBase: "SubTotal", vatAmount: "TotalTax", totalAmount: "InvoiceTotal", currency: "InvoiceTotal",
-  };
+  const supplier = text(fields.VendorAddressRecipient) ? fields.VendorAddressRecipient : fields.VendorName;
+  const taxableBase = amount(fields.SubTotal) ?? derivedTaxableBase(fields.InvoiceTotal, fields.TotalTax);
+  const taxableBaseConfidence = fields.SubTotal?.confidence
+    ?? (typeof fields.InvoiceTotal?.confidence === "number" && typeof fields.TotalTax?.confidence === "number"
+      ? Math.min(fields.InvoiceTotal.confidence, fields.TotalTax.confidence)
+      : undefined);
   const currency = fields.InvoiceTotal?.valueCurrency?.currencyCode
     ?? fields.SubTotal?.valueCurrency?.currencyCode
     ?? fields.TotalTax?.valueCurrency?.currencyCode;
   return {
     invoice: {
-      supplierName: text(fields.VendorName), invoiceNumber: text(fields.InvoiceId), invoiceDate: text(fields.InvoiceDate),
-      dueDate: text(fields.DueDate), taxableBase: amount(fields.SubTotal), vatAmount: amount(fields.TotalTax),
+      supplierName: text(supplier), invoiceNumber: text(fields.InvoiceId), invoiceDate: text(fields.InvoiceDate),
+      dueDate: text(fields.DueDate), taxableBase, vatAmount: amount(fields.TotalTax),
       totalAmount: amount(fields.InvoiceTotal), currency: currency?.toUpperCase(),
     },
-    confidence: confidence(fields, mapping),
+    confidence: {
+      ...confidence(fields, {
+        supplierName: text(fields.VendorAddressRecipient) ? "VendorAddressRecipient" : "VendorName",
+        invoiceNumber: "InvoiceId", invoiceDate: "InvoiceDate", dueDate: "DueDate", taxableBase: "SubTotal",
+        vatAmount: "TotalTax", totalAmount: "InvoiceTotal", currency: "InvoiceTotal",
+      }),
+      ...(typeof taxableBaseConfidence === "number" ? { taxableBase: taxableBaseConfidence } : {}),
+    },
   };
 }
 
