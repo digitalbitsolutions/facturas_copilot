@@ -4,6 +4,7 @@
   "parameters": {
     "environmentName": { "value": "dev" },
     "location": { "value": "spaincentral" },
+    "documentIntelligenceLocation": { "value": "westeurope" },
     "maximumInstanceCount": { "value": 20 },
     "instanceMemoryMB": { "value": 2048 },
     "entraApiClientId": { "value": "00000000-0000-0000-0000-000000000000" },

@@ -6,6 +6,9 @@ param environmentName string = 'dev'
 @description('Azure region. Confirm Flex Consumption availability before deployment.')
 param location string = resourceGroup().location
 
+@description('Azure region for Document Intelligence. The service is not available in Spain Central.')
+param documentIntelligenceLocation string = 'westeurope'
+
 @description('Maximum scale-out instance count.')
 @minValue(1)
 @maxValue(1000)
@@ -106,7 +109,7 @@ resource vault 'Microsoft.KeyVault/vaults@2023-07-01' = {
 
 resource documentIntelligence 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
   name: documentIntelligenceName
-  location: location
+  location: documentIntelligenceLocation
   tags: tags
   kind: 'FormRecognizer'
   sku: { name: 'F0' }
