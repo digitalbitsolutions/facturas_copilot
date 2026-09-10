@@ -90,6 +90,25 @@ Expandir la fila más reciente cuyo mensaje comience por `Invoice mailbox pollin
 | HTTP 403 | Falta autorización del buzón o del sitio para la identidad vigente | Verificar Exchange Application RBAC y `Sites.Selected` sobre el principal actual |
 | HTTP 404 al escribir | Site ID, Drive ID o ruta incorrectos | Volver a resolver IDs mediante Graph y comprobar `Facturas` |
 
+## Validación de nombres e idempotencia
+
+La primera implementación construía el nombre concatenando IDs Graph saneados y truncados. Los IDs de Exchange compartían prefijos largos, por lo que el truncado podía generar la misma ruta para adjuntos diferentes. Además, `PUT` sobre la ruta estable sobrescribía el archivo en cada ciclo: no aumentaba el número de filas, pero sí cambiaba `Modified`.
+
+El commit `79021de` aplica dos correcciones:
+
+1. Genera una clave de 20 caracteres hexadecimales a partir de SHA-256 sobre el par `messageId`/`attachmentId`.
+2. Consulta primero la ruta de SharePoint; solo ejecuta `PUT` cuando Graph devuelve 404 para ese archivo.
+
+Prueba real posterior:
+
+- Se retiraron 4 artefactos con nombres antiguos.
+- Sin enviar nuevos mensajes, el siguiente ciclo reconstruyó 7 PDF distintos que seguían entre los 25 mensajes más recientes de `Inbox`.
+- Los nombres quedaron en el formato `mail_<hash>_<nombre-original>.pdf`.
+- `factura_2023_13_manuel_gonzalez.pdf` y `factura_2023_14_manuel_gonzalez.pdf`, adjuntos del mismo correo CA-03, aparecieron de forma independiente.
+- Después de varios ciclos y aproximadamente una hora, seguían siendo 7 y las fechas de modificación no se actualizaron.
+
+Conclusión: CA-03 y CA-07 quedan validados para la fase de archivado del piloto.
+
 ## Criterio de éxito
 
 La prueba se considera correcta cuando:

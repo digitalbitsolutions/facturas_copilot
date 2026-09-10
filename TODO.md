@@ -21,6 +21,9 @@
 - [x] Registrar los valores OIDC en GitHub Actions y validar el workflow de despliegue.
 - [x] Corregir la descarga de adjuntos Graph sin `$select=contentBytes` sobre el tipo base `attachment`.
 - [x] Validar el circuito real Outlook → Azure Function → Graph → SharePoint con un PDF.
+- [x] Validar un correo con dos PDF diferentes; ambos quedaron archivados como elementos independientes (CA-03).
+- [x] Eliminar colisiones de nombres usando una clave hash corta del mensaje y adjunto.
+- [x] Evitar sobrescrituras en ciclos posteriores y validar fechas de modificación estables (CA-07).
 - [ ] Declarar `M365_MAILBOX_ADDRESS`, `M365_SHAREPOINT_SITE_ID` y `M365_SHAREPOINT_DRIVE_ID` en el proceso de infraestructura/despliegue para que Bicep no elimine los valores manuales.
 - [ ] Confirmar en Application Insights una ejecución exitosa y conservar la evidencia del contador `archived`.
 - [ ] Crear los flujos Power Automate y ejecutar pruebas de aceptación CA-01 a CA-21.

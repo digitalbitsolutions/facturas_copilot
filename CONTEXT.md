@@ -38,6 +38,7 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - Power Automate está accesible en el entorno Default y las conexiones SharePoint/Excel Online (Business) funcionan. La acción `HTTP With Microsoft Entra ID` requiere Power Automate Premium; el comprobador del flujo confirma que `demo` no dispone de esa licencia. El flujo `Importar extracto bancario - Dev` queda guardado como borrador y no debe activarse hasta asignar la capacidad.
 - El 10 de septiembre de 2026 se completó una prueba real: correo recibido en `facturas-pruebas@integramente.onmicrosoft.com`, PDF leído por `pollInvoiceMailbox` y archivo creado en `Documentos/Facturas` con `Modified By: SharePoint App`.
 - El código validado y desplegado corresponde al commit `09e14bf` (`Fix invoice attachment retrieval`).
+- La idempotencia estricta y los nombres cortos se corrigieron y desplegaron en `79021de` (`Make SharePoint archiving truly idempotent`). La validación real posterior reconstruyó 7 adjuntos históricos con claves hash distintas y mantuvo sus fechas sin cambios durante varios ciclos.
 - No existe aún ningún recurso productivo ni credencial almacenada.
 
 ## Evidencia y diagnóstico del piloto de correo
@@ -62,6 +63,10 @@ Cronología del 10 de septiembre de 2026:
 6. El despliegue Bicep sustituyó los ajustes manuales. Se volvieron a crear las tres variables operativas.
 7. Graph devolvió HTTP 404 `ErrorInvalidUser` porque `M365_MAILBOX_ADDRESS` contenía accidentalmente el Site ID. Se corrigió al buzón SMTP.
 8. En el siguiente ciclo el PDF apareció en SharePoint, modificado por `SharePoint App`.
+9. Se detectó que la implementación inicial no creaba filas adicionales, pero ejecutaba `PUT` en cada ciclo y actualizaba `Modified`. Además, truncar los IDs largos producía colisiones entre adjuntos con prefijos comunes.
+10. En `79021de` se sustituyó el identificador visible por un hash SHA-256 truncado y estable del par mensaje/adjunto, se añadió una consulta previa y se evitó el `PUT` cuando el elemento ya existe.
+11. Tras eliminar los cuatro artefactos antiguos, el sistema reconstruyó 7 archivos reales: cuatro facturas de septiembre y las facturas 2023/12, 2023/13 y 2023/14. El resultado demostró que el esquema antiguo había ocultado adjuntos por colisión de nombres.
+12. Después de aproximadamente una hora y varios ciclos, los 7 archivos conservaron la misma antigüedad de modificación. Quedó validada la idempotencia sin sobrescritura.
 
 Configuración operativa no secreta:
 
