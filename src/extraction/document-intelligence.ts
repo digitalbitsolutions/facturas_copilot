@@ -44,7 +44,7 @@ function amount(field?: Field): string | undefined {
 function derivedTaxableBase(total?: Field, tax?: Field): string | undefined {
   const totalValue = total?.valueCurrency?.amount ?? total?.valueNumber;
   const taxValue = tax?.valueCurrency?.amount ?? tax?.valueNumber;
-  if (typeof totalValue !== "number" || typeof taxValue !== "number" || !Number.isFinite(totalValue) || !Number.isFinite(taxValue) || totalValue < taxValue) return undefined;
+  if (typeof totalValue !== "number" || typeof taxValue !== "number" || !Number.isFinite(totalValue) || !Number.isFinite(taxValue) || totalValue <= taxValue) return undefined;
   return (Math.round((totalValue - taxValue) * 100) / 100).toFixed(2);
 }
 

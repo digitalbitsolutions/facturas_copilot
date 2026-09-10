@@ -13,7 +13,7 @@ La API usa Azure Functions Runtime 4, modelo de programación Node.js v4 y Node.
 
 `/api/invoices/extract` usa el modelo `prebuilt-invoice` de Document Intelligence y limita el análisis a las páginas 1-2 para respetar el nivel gratuito F0. El cuerpo es el PDF binario; opcionalmente admite `x-filename`, `x-message-id`, `x-attachment-id` y `x-sender`. Devuelve `invoice`, `confidence` y `validation`. La autenticación Entra de la Function protege también este endpoint.
 
-El mapeo prefiere `VendorAddressRecipient` frente al nombre comercial abreviado. Si el modelo omite `SubTotal` pero entrega `InvoiceTotal` y `TotalTax`, deriva la base mediante resta y conserva como confianza la menor de ambas fuentes; una confianza insuficiente sigue obligando a revisión humana.
+El mapeo prefiere `VendorAddressRecipient` frente al nombre comercial abreviado. Si el modelo omite `SubTotal` pero entrega un `InvoiceTotal` estrictamente mayor que `TotalTax`, deriva la base mediante resta y conserva como confianza la menor de ambas fuentes; una confianza insuficiente sigue obligando a revisión humana. Si total e impuesto son iguales, no deriva una base cero porque suele indicar una detección errónea del total.
 
 ## Validar factura
 

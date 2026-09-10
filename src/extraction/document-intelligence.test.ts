@@ -45,6 +45,18 @@ test("prefers the legal vendor name and derives a missing taxable base conservat
   assert.equal(extracted.confidence.taxableBase, 0.681);
 });
 
+test("does not derive a zero base when the model mistakes tax for the invoice total", () => {
+  const extracted = mapInvoiceResult({
+    status: "succeeded",
+    analyzeResult: { documents: [{ fields: {
+      InvoiceTotal: { valueCurrency: { amount: 0.06, currencyCode: "EUR" }, confidence: 0.9 },
+      TotalTax: { valueCurrency: { amount: 0.06, currencyCode: "EUR" }, confidence: 0.8 },
+    } }] },
+  });
+  assert.equal(extracted.invoice.taxableBase, undefined);
+  assert.equal(extracted.confidence.taxableBase, 0.8);
+});
+
 test("submits and polls a PDF using managed identity", async () => {
   const requests: Array<{ url: string; init?: RequestInit }> = [];
   const fetchMock = async (url: string | URL | Request, init?: RequestInit) => {
