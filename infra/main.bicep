@@ -17,6 +17,15 @@ param instanceMemoryMB int = 2048
 @description('Application (client) ID of the Entra app registration protecting the API.')
 param entraApiClientId string
 
+@description('SMTP address of the scoped invoice mailbox. This is an identifier, not a secret.')
+param m365MailboxAddress string = 'facturas-pruebas@integramente.onmicrosoft.com'
+
+@description('Microsoft Graph composite ID of the SharePoint site. This is an identifier, not a secret.')
+param m365SharePointSiteId string = 'integramente.sharepoint.com,22c53ae6-a4db-491e-85b0-e976c559c890,c7b7b19b-73af-42e3-8b2b-67f7036ded5b'
+
+@description('Microsoft Graph ID of the default SharePoint document library. This is an identifier, not a secret.')
+param m365SharePointDriveId string = 'b!5jrFItukHkmFsOl2xVnIkJuxt8evc-NCiytn9wNt7VsGAUobTrWkQLJNsSY1Ct6p'
+
 param tags object = {
   application: 'facturas-copilot'
   environment: environmentName
@@ -148,6 +157,9 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
         { name: 'M365_EXCEPTIONS_LIST', value: 'Excepciones' }
         { name: 'INVOICE_MAIL_POLL_SCHEDULE', value: '30 */10 * * * *' }
         { name: 'M365_INVOICE_FOLDER', value: 'Facturas' }
+        { name: 'M365_MAILBOX_ADDRESS', value: m365MailboxAddress }
+        { name: 'M365_SHAREPOINT_SITE_ID', value: m365SharePointSiteId }
+        { name: 'M365_SHAREPOINT_DRIVE_ID', value: m365SharePointDriveId }
       ]
     }
   }

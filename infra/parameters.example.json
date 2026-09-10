@@ -5,7 +5,10 @@
     "environmentName": { "value": "dev" },
     "location": { "value": "spaincentral" },
     "maximumInstanceCount": { "value": 20 },
-    "instanceMemoryMB": { "value": 2048 }
-    ,"entraApiClientId": { "value": "00000000-0000-0000-0000-000000000000" }
+    "instanceMemoryMB": { "value": 2048 },
+    "entraApiClientId": { "value": "00000000-0000-0000-0000-000000000000" },
+    "m365MailboxAddress": { "value": "facturas-pruebas@integramente.onmicrosoft.com" },
+    "m365SharePointSiteId": { "value": "integramente.sharepoint.com,site-collection-guid,site-guid" },
+    "m365SharePointDriveId": { "value": "b!graph-drive-id" }
   }
 }

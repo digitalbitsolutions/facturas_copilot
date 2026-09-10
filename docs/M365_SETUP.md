@@ -22,7 +22,7 @@ Ejecutar una sola vez, autenticándose como propietario del sitio:
 .\scripts\provision-sharepoint-lists.ps1 -TenantId '<tenant-id>'
 ```
 
-Los ajustes operativos que deben existir son `M365_MAILBOX_ADDRESS`, `M365_SHAREPOINT_SITE_ID` y `M365_SHAREPOINT_DRIVE_ID`. Actualmente se añadieron manualmente en Azure. La plantilla Bicep reemplaza la colección de ajustes durante el despliegue, por lo que deben verificarse y restaurarse después de cada ejecución hasta versionarlos en IaC. Los nombres de carpetas, listas y horarios sí tienen valores predeterminados.
+Los ajustes operativos `M365_MAILBOX_ADDRESS`, `M365_SHAREPOINT_SITE_ID` y `M365_SHAREPOINT_DRIVE_ID` están declarados como parámetros en Bicep. El despliegue los aplica junto con los nombres de carpetas, listas y horarios; para otro tenant se deben sobrescribir los parámetros sin modificar el código.
 
 ## Acceso al buzón de pruebas
 

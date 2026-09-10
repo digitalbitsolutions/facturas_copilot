@@ -129,7 +129,7 @@ Los nombres son provisionales hasta que el cliente los confirme. El esquema Exce
 
 ## Bloqueo actual
 
-La recepción y el archivado de PDF sin Power Automate ya funcionan. Sigue pendiente hacer persistentes en Bicep/CI los tres ajustes operativos añadidos manualmente; un redespliegue de infraestructura puede eliminarlos. También quedan pendientes Power Automate Premium/AI Builder, los flujos, los parámetros de negocio y la aceptación CA-01 a CA-21 completa.
+La recepción y el archivado de PDF sin Power Automate ya funcionan. Los tres ajustes operativos quedaron declarados como parámetros Bicep para sobrevivir a nuevos despliegues. Quedan pendientes Power Automate Premium/AI Builder, los flujos, los parámetros de negocio y la aceptación CA-01 a CA-21 completa.
 
 ## Información que debe proporcionar el cliente
 
@@ -164,7 +164,7 @@ Estas decisiones se consolidarán contra el PRD vigente v4.
 
 ## Siguiente secuencia
 
-1. Versionar los ajustes M365 requeridos en Bicep/GitHub Actions sin incluir secretos, para que sobrevivan a cada despliegue.
+1. Redesplegar IaC y comprobar que los tres ajustes M365 se conservan automáticamente.
 2. Confirmar en Log Analytics una ejecución exitosa con el contador de archivos archivados.
 3. Obtener o asignar Power Automate Premium y confirmar AI Builder/Copilot Credits.
 4. Crear los flujos Power Automate de facturas, importación, conciliación y revisión.

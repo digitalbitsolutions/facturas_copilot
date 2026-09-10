@@ -58,11 +58,11 @@ Si la segunda consulta devuelve 403, conceder en **Modify Permissions** el permi
 
 El workflow `Deploy Azure Function` se inicia con **Run workflow**, rama `main`, entorno `dev` y región `spaincentral`. **Re-run jobs** repite el commit de una ejecución antigua y no publica cambios nuevos. Se debe comprobar el SHA mostrado por la ejecución.
 
-Limitación actual: `infra/main.bicep` declara una lista cerrada de `appSettings`. Al redesplegar infraestructura se eliminaron los tres valores añadidos manualmente. Hasta corregir IaC, después de cada despliegue se debe:
+Incidencia histórica resuelta: inicialmente `infra/main.bicep` declaraba una lista cerrada de `appSettings` sin los tres identificadores operativos, por lo que cada redespliegue eliminaba los valores añadidos manualmente. Ahora son parámetros Bicep y el despliegue debe restaurarlos. Después de cada despliegue se debe verificar una vez:
 
 1. Abrir Function App → Settings → Environment variables.
 2. Confirmar los tres ajustes obligatorios y sus valores, usando **Show value**.
-3. Añadir los ausentes y pulsar **Apply**.
+3. Si falta alguno, tratar el despliegue como fallido y revisar sus parámetros; no mantener una corrección manual permanente.
 4. No es imprescindible pulsar **Restart** en Flex Consumption: aplicar ajustes recicla la aplicación y el portal puede deshabilitar el botón.
 
 ## Diagnóstico en Log Analytics
