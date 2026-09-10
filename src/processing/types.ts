@@ -43,7 +43,7 @@ export interface ProcessStore {
   save(record: ProcessRecord): Promise<void>;
 }
 export interface DocumentRepository {
-  putOnce(input: { processId: string; filename: string; contentType: string; content: Uint8Array }): Promise<{ url: string }>;
+  putOnce(input: { processId: string; filename: string; contentType: string; content: Uint8Array }): Promise<{ url: string; created: boolean }>;
 }
 export interface InvoiceRegistry {
   findByDuplicateKey(key: string): Promise<{ processId: string } | undefined>;

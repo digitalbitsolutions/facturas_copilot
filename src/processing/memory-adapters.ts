@@ -8,12 +8,12 @@ export class MemoryProcessStore implements ProcessStore {
 
 export class MemoryDocumentRepository implements DocumentRepository {
   readonly documents = new Map<string, { filename: string; contentType: string; content: Uint8Array; url: string }>();
-  async putOnce(input: { processId: string; filename: string; contentType: string; content: Uint8Array }): Promise<{ url: string }> {
+  async putOnce(input: { processId: string; filename: string; contentType: string; content: Uint8Array }): Promise<{ url: string; created: boolean }> {
     const existing = this.documents.get(input.processId);
-    if (existing) return { url: existing.url };
+    if (existing) return { url: existing.url, created: false };
     const stored = { ...input, content: input.content.slice(), url: `memory://documents/${input.processId}/${encodeURIComponent(input.filename)}` };
     this.documents.set(input.processId, stored);
-    return { url: stored.url };
+    return { url: stored.url, created: true };
   }
 }
 

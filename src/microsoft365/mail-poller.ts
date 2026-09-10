@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { GraphClient } from "./graph-client.ts";
 import { SharePointDocumentRepository } from "./sharepoint-documents.ts";
 
@@ -5,6 +6,9 @@ type Message = { id: string; subject?: string; receivedDateTime?: string; hasAtt
 type FileAttachment = { id: string; name?: string; contentType?: string; contentBytes?: string; isInline?: boolean; "@odata.type"?: string };
 
 function safeFilename(value: string): string { return value.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 140); }
+function attachmentKey(messageId: string, attachmentId: string): string {
+  return createHash("sha256").update(messageId).update("\0").update(attachmentId).digest("hex").slice(0, 20);
+}
 
 /** Archives PDF attachments from the configured shared mailbox. Mail remains read-only. */
 export class SharePointInvoiceMailboxPoller {
@@ -31,11 +35,11 @@ export class SharePointInvoiceMailboxPoller {
         const isPdf = attachment.contentType === "application/pdf" || /\.pdf$/i.test(attachment.name ?? "");
         if (!isPdf || attachment.isInline || !attachment.contentBytes || !attachment.name) continue;
         const content = Buffer.from(attachment.contentBytes, "base64");
-        await this.documents.putOnce({
-          processId: `mail_${safeFilename(message.id)}_${safeFilename(attachment.id)}`,
+        const stored = await this.documents.putOnce({
+          processId: `mail_${attachmentKey(message.id, attachment.id)}`,
           filename: safeFilename(attachment.name), contentType: "application/pdf", content,
         });
-        archived += 1;
+        if (stored.created) archived += 1;
       }
     }
     return { messages: response.value.length, archived };
