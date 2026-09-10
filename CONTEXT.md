@@ -165,9 +165,9 @@ Estas decisiones se consolidarán contra el PRD vigente v4.
 
 ## Siguiente secuencia
 
-1. Preparar el conjunto autorizado de facturas reales y sus valores esperados sin incorporarlas a Git.
-2. Obtener o asignar Power Automate Premium y confirmar AI Builder/Copilot Credits.
-3. Implementar la extracción y conectar su resultado con `/api/invoices/validate`.
+1. Desplegar el recurso F0 de Azure AI Document Intelligence y el endpoint autenticado `/api/invoices/extract`.
+2. Evaluar las cuatro facturas reales autorizadas, sin incorporarlas ni guardar sus resultados en Git.
+3. Comparar campos y confianza con valores esperados y ajustar el mapeo antes de automatizar el buzón.
 4. Crear los flujos Power Automate de registro, conciliación y revisión.
 5. Ejecutar la aceptación restante CA-01 a CA-21 y conservar evidencia.
 

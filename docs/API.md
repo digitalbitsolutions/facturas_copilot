@@ -7,8 +7,11 @@ La API usa Azure Functions Runtime 4, modelo de programación Node.js v4 y Node.
 |---|---|---|
 | GET | `/api/health` | Estado y versión del servicio |
 | POST | `/api/invoices/validate` | Validar una extracción de factura |
+| POST | `/api/invoices/extract` | Extraer y validar un PDF durante el piloto (cuerpo `application/pdf`) |
 | POST | `/api/bank/import` | Validar y normalizar filas de un extracto |
 | POST | `/api/bank/reconcile` | Puntuar movimientos contra facturas pendientes |
+
+`/api/invoices/extract` usa el modelo `prebuilt-invoice` de Document Intelligence y limita el análisis a las páginas 1-2 para respetar el nivel gratuito F0. El cuerpo es el PDF binario; opcionalmente admite `x-filename`, `x-message-id`, `x-attachment-id` y `x-sender`. Devuelve `invoice`, `confidence` y `validation`. La autenticación Entra de la Function protege también este endpoint.
 
 ## Validar factura
 

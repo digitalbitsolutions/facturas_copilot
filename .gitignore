@@ -6,3 +6,4 @@ dist/
 .env.*
 !.env.example
 local.settings.json
+/pilot-results/

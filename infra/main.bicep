@@ -40,6 +40,7 @@ var insightsName = 'appi-facturas-copilot-${environmentName}'
 var workspaceName = 'log-facturas-copilot-${environmentName}'
 var vaultName = take('kv-fact-${environmentName}-${token}', 24)
 var deploymentContainerName = 'app-package-${take(token, 12)}'
+var documentIntelligenceName = take('di-fact-${environmentName}-${token}', 64)
 
 resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   name: storageName
@@ -103,6 +104,19 @@ resource vault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   }
 }
 
+resource documentIntelligence 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
+  name: documentIntelligenceName
+  location: location
+  tags: tags
+  kind: 'FormRecognizer'
+  sku: { name: 'F0' }
+  properties: {
+    customSubDomainName: documentIntelligenceName
+    disableLocalAuth: true
+    publicNetworkAccess: 'Enabled'
+  }
+}
+
 resource plan 'Microsoft.Web/serverfarms@2024-04-01' = {
   name: planName
   location: location
@@ -158,6 +172,7 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
         { name: 'M365_MAILBOX_ADDRESS', value: m365MailboxAddress }
         { name: 'M365_SHAREPOINT_SITE_ID', value: m365SharePointSiteId }
         { name: 'M365_SHAREPOINT_DRIVE_ID', value: m365SharePointDriveId }
+        { name: 'DOCUMENT_INTELLIGENCE_ENDPOINT', value: documentIntelligence.properties.endpoint }
       ]
     }
   }
@@ -202,6 +217,7 @@ var storageQueueDataContributor = subscriptionResourceId('Microsoft.Authorizatio
 var storageTableDataContributor = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3')
 var monitoringMetricsPublisher = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '3913510d-42f4-4e42-8a64-420c390055eb')
 var keyVaultSecretsUser = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')
+var cognitiveServicesUser = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'a97b65f3-24c7-4388-baec-2e87135dc908')
 
 resource blobRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(storage.id, functionApp.id, storageBlobDataOwner)
@@ -233,8 +249,16 @@ resource vaultRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   properties: { roleDefinitionId: keyVaultSecretsUser, principalId: functionApp.identity.principalId, principalType: 'ServicePrincipal' }
 }
 
+resource documentIntelligenceRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(documentIntelligence.id, functionApp.id, cognitiveServicesUser)
+  scope: documentIntelligence
+  properties: { roleDefinitionId: cognitiveServicesUser, principalId: functionApp.identity.principalId, principalType: 'ServicePrincipal' }
+}
+
 output functionAppName string = functionApp.name
 output functionAppUrl string = 'https://${functionApp.properties.defaultHostName}'
 output functionPrincipalId string = functionApp.identity.principalId
 output storageAccountName string = storage.name
 output keyVaultName string = vault.name
+output documentIntelligenceName string = documentIntelligence.name
+output documentIntelligenceEndpoint string = documentIntelligence.properties.endpoint

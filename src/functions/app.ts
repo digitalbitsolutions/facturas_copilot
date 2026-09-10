@@ -1,5 +1,7 @@
 import { app, type HttpRequest, type HttpResponseInit, type InvocationContext } from "@azure/functions";
 import { importBankRequest, reconcileBankRequest, validateInvoiceRequest } from "../api/services.ts";
+import { DocumentIntelligenceInvoiceExtractor } from "../extraction/index.ts";
+import { validateInvoice } from "../invoices/index.ts";
 import { DEFAULT_BANK_IMPORT_CONFIG, GraphClient, ManagedIdentityTokenProvider, SharePointBankPoller, SharePointDocumentRepository, SharePointInvoiceMailboxPoller } from "../microsoft365/index.ts";
 
 function json(status: number, body: unknown): HttpResponseInit {
@@ -24,6 +26,34 @@ app.http("health", {
 app.http("validateInvoice", {
   route: "invoices/validate", methods: ["POST"], authLevel: "anonymous",
   handler: (request, context) => execute(request, context, validateInvoiceRequest),
+});
+
+app.http("extractInvoice", {
+  route: "invoices/extract", methods: ["POST"], authLevel: "anonymous",
+  handler: async (request, context) => {
+    try {
+      const contentType = request.headers.get("content-type")?.split(";", 1)[0].toLowerCase();
+      if (contentType !== "application/pdf") return json(415, { error: { code: "unsupported_media_type", message: "Send the PDF as application/pdf" } });
+      const content = new Uint8Array(await request.arrayBuffer());
+      const extractor = new DocumentIntelligenceInvoiceExtractor(
+        requiredSetting("DOCUMENT_INTELLIGENCE_ENDPOINT"),
+        new ManagedIdentityTokenProvider("https://cognitiveservices.azure.com/"),
+      );
+      const extraction = await extractor.extract({
+        messageId: request.headers.get("x-message-id") ?? "manual-pilot",
+        attachmentId: request.headers.get("x-attachment-id") ?? crypto.randomUUID(),
+        sender: request.headers.get("x-sender") ?? "manual-pilot",
+        receivedAt: new Date().toISOString(),
+        originalFilename: request.headers.get("x-filename") ?? "invoice.pdf",
+        contentType, content,
+      });
+      return json(200, { ...extraction, validation: validateInvoice(extraction.invoice, extraction.confidence) });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Extraction failed";
+      context.error("Invoice extraction failed", { message });
+      return json(502, { error: { code: "extraction_failed", message } });
+    }
+  },
 });
 
 app.http("importBankBatch", {
