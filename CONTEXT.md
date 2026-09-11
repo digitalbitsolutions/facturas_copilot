@@ -1,6 +1,6 @@
 # Contexto de reanudación
 
-Actualizado: 10 de septiembre de 2026, después de validar el archivado real de correo a SharePoint.
+Actualizado: 11 de septiembre de 2026, tras validar el cierre auditado de excepciones en SharePoint.
 
 ## Objetivo
 
@@ -16,7 +16,7 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - Integración M365 validada en el tenant: la Function lee el buzón restringido mediante Graph y archiva adjuntos PDF en SharePoint.
 - Importación bancaria y conciliación local terminadas: lotes, validación, normalización, duplicidad, puntuación explicable y ambigüedad.
 - Azure Functions v4 preparada con endpoints HTTP; infraestructura Flex Consumption y CI/CD preparadas.
-- Pruebas actuales: 36 superadas.
+- Pruebas actuales: 60 superadas.
 - Tenant de pruebas verificado: `INTEGRAMENTE SL`, dominio `integramente.onmicrosoft.com` (`a1a2b397-4ac5-4f94-9004-67f158ea14e0`).
 - Administrador comunicado: `demo@integramente.onmicrosoft.com`; la contraseña no se almacena.
 - Licencias verificadas el 9 de septiembre de 2026: 25 `O365_BUSINESS_PREMIUM` y 25 `MICROSOFT_365_COPILOT_FOR_BUSINESS`, ambas habilitadas y sin asignar.
@@ -54,6 +54,8 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - La prueba de proveedor inactivo terminó correctamente el 11 de septiembre: un correo nuevo con `FASF198033.pdf` produjo `review_required` y `EX-06` (`Supplier identity requires review`), sin aumentar `RegistroFacturas` ni crear otro PDF. SATINFO se restauró inmediatamente a `Activo = Sí` a las 10:31:34 UTC.
 - La prueba de duplicado de negocio terminó correctamente en el ciclo de las 10:40:30 UTC: otro correo nuevo con `FASF198033.pdf`, ya con SATINFO activo, produjo `review_required` y `EX-07`, apuntando al proceso original. `RegistroFacturas` permaneció en una fila, `Documentos/Facturas` en 8 archivos y la clave de duplicidad original no cambió.
 - El 11 de septiembre se crearon las vistas operativas del sitio: `Pendientes de revisión` en `ProcesosFacturas` (filtro `Estado = review_required`) y `Excepciones abiertas` en `Excepciones` (filtro `Estado = Abierta`), ambas con límite de 30 elementos. Se retiró después la aplicación temporal sin secreto usada para administrarlas.
+- El 11 de septiembre se validó la operación manual de excepciones mediante los endpoints autenticados. `EX-03` se descartó como liquidación bancaria, `EX-07` se descartó tras verificar el proceso fiscal original y `EX-06` se resolvió tras confirmar activo al proveedor SATINFO. Cada cierre conserva responsable, acción, resultado y fecha UTC en `Excepciones`.
+- El commit `e4ada44` sincroniza esos cierres con `ProcesosFacturas`: `Descartada` pasa a `discarded` y `Resuelta` a `resolved`, sin modificar facturas, PDFs ni registros fiscales. Tras desplegarlo con GitHub Actions, los tres procesos de prueba mostraron los estados esperados y la vista `Pendientes de revisión` quedó vacía tras verificación manual.
 - No existe aún ningún recurso productivo ni credencial almacenada.
 
 ## Evidencia y diagnóstico del piloto de correo

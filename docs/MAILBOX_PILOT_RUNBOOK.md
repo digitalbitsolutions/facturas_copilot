@@ -156,3 +156,9 @@ La clasificación automática se validó después con dos correos nuevos. Una li
 La validación de proveedor inactivo se completó con otro correo nuevo de SATINFO. El proceso terminó `review_required`, generó `EX-06` con motivo `Supplier identity requires review` y registró la incidencia `supplier_not_found`; `RegistroFacturas` permaneció en una fila y `Documentos/Facturas` en 8 archivos. SATINFO se restauró inmediatamente a `Activo = Sí` a las 10:31:34 UTC.
 
 Con el proveedor nuevamente activo se envió la misma factura desde otro correo. En el ciclo de las 10:40:30 UTC se creó un proceso distinto en `review_required` con `EX-07` y motivo `Possible duplicate of process ...`, vinculado al proceso original por la misma `DuplicateKey`. La excepción quedó abierta como evidencia, mientras `RegistroFacturas` siguió con una sola fila y la carpeta con 8 archivos; tampoco cambió la fecha de modificación del PDF original.
+
+## Cierre auditado de excepciones — 11 de septiembre de 2026
+
+Se desplegaron `POST /api/exceptions/assign` y `POST /api/exceptions/resolve` con autenticación Entra. La revisión manual confirmó el documento de `EX-03`, el proveedor activo de `EX-06` y el proceso original completado de `EX-07` antes de cerrar las incidencias.
+
+Cada resolución conserva en `Excepciones` responsable, acción, resultado y fecha UTC. El despliegue posterior de `e4ada44` añadió la sincronización del proceso correlacionado: `Descartada` se refleja como `discarded` y `Resuelta` como `resolved`. La repetición idempotente de los tres cierres actualizó solo el estado de sus procesos; no modificó PDFs ni `RegistroFacturas`. La vista `Pendientes de revisión` quedó vacía tras la comprobación manual.

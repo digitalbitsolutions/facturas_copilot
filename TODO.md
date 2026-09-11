@@ -48,6 +48,7 @@
 - [x] Completar prueba de proveedor inactivo (`EX-06`) y restaurar SATINFO a `Activo = Sí`.
 - [x] Verificar duplicado de negocio desde otro correo (`EX-07`) sin segundo registro ni archivo.
 - [x] Crear vistas de revisión en SharePoint: `Pendientes de revisión` y `Excepciones abiertas`.
+- [x] Validar asignación y resolución auditada de `EX-03`, `EX-06` y `EX-07`, sincronizando sus procesos terminales y vaciando `Pendientes de revisión`.
 - [ ] Crear los flujos Power Automate y ejecutar pruebas de aceptación CA-01 a CA-21.
 
 ## Núcleo de facturas

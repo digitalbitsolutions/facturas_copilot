@@ -6,12 +6,12 @@ Este repositorio contiene el núcleo TypeScript y la documentación de una soluc
 
 - Fase actual: alternativa sin Power Automate Premium desplegada. El circuito real Outlook → Azure Function → Microsoft Graph → SharePoint fue validado el 10 de septiembre de 2026; la importación programada de extractos también está implementada.
 - Núcleo de facturas: validación, nomenclatura, duplicados, estados, excepciones e idempotencia.
-- Integración: lectura restringida del buzón y circuito clasificación → extracción → proveedor → validación → archivo conectado con estado persistente en SharePoint; activación automática protegida por un interruptor de despliegue.
+- Integración: lectura restringida del buzón y circuito clasificación → extracción → proveedor → validación → archivo conectado con estado persistente en SharePoint; las excepciones se resuelven de forma auditable y actualizan el estado terminal del proceso.
 - Conciliación: importación por lotes, normalización, duplicidad y puntuación explicable implementadas; aceptación automática deshabilitada.
 - Azure Functions: endpoints de salud, validación, importación y conciliación compilables sobre Runtime 4 / Node.js 24.
 - Infraestructura: Bicep para Flex Consumption, Storage, Application Insights, Log Analytics y Key Vault con identidades administradas.
 - Destino actual sin licencia Premium: Azure Functions + SharePoint Lists; Power Automate y AI Builder quedan opcionales.
-- Pruebas: 57 superadas.
+- Pruebas: 60 superadas.
 - Ollama: `0.33.3`, API disponible en `http://127.0.0.1:11434`.
 - Equipo: Intel i5-10210U, 4 núcleos/8 hilos, 7,78 GB RAM, sin GPU dedicada.
 - Restricción operativa: un único modelo local cargado y contexto corto.
