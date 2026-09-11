@@ -40,8 +40,8 @@
 - [x] Implementar clasificación previa auditable para separar facturas, liquidaciones bancarias y otros documentos antes de la extracción.
 - [x] Redesplegar y verificar con una factura, la liquidación bancaria observada y un documento no fiscal.
 - [x] Conectar el buzón al procesador completo con persistencia SharePoint e idempotencia por mensaje y adjunto.
-- [ ] Aprovisionar `ProcesosFacturas` y `RegistroFacturas`, desplegar con procesamiento desactivado y preparar una activación controlada.
-- [ ] Activar el procesamiento, enviar un correo nuevo con SATINFO y verificar proceso, registro, archivo y replay idempotente.
+- [x] Aprovisionar `ProcesosFacturas` y `RegistroFacturas`, desplegar con procesamiento desactivado y preparar una activación controlada.
+- [x] Activar el procesamiento con fecha de corte, enviar un correo nuevo y verificar proceso, registro, archivo y replay idempotente.
 - [x] Ajustar el mapeo real: razón social completa y base derivada con confianza conservadora cuando falta `SubTotal`.
 - [ ] Confirmar en Application Insights una ejecución exitosa y conservar la evidencia del contador `archived`.
 - [ ] Crear los flujos Power Automate y ejecutar pruebas de aceptación CA-01 a CA-21.

@@ -119,6 +119,12 @@ Prueba real posterior:
 
 Conclusión: CA-03 y CA-07 quedan validados para la fase de archivado del piloto.
 
+## Validación del procesamiento completo — 11 de septiembre de 2026
+
+Con las listas persistentes creadas, se desplegó primero con el interruptor desactivado y después se activó usando una fecha de corte UTC para excluir el histórico. Un correo nuevo con una factura autorizada recorrió clasificación, extracción, maestro de proveedores, validación y archivo. `ProcesosFacturas` terminó en `completed`, `RegistroFacturas` recibió una única fila fiscal y la biblioteca recibió un único PDF creado por `SharePoint App`.
+
+Tras un ciclo adicional del temporizador, las dos listas conservaron una sola fila y el PDF mantuvo su fecha de modificación. Esto demuestra que el `ProcessId` derivado de `messageId` y `attachmentId` persiste entre ejecuciones y evita repetir efectos laterales.
+
 ## Cierre de la deuda de despliegue
 
 La validación final se realizó con `9d5aed8` y `8a7a225`. El workflow terminó sin annotations deprecadas ni advertencias de configuración de Storage. Después del redespliegue:
