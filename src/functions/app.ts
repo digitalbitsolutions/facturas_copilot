@@ -1,5 +1,6 @@
 import { app, type HttpRequest, type HttpResponseInit, type InvocationContext } from "@azure/functions";
 import { importBankRequest, reconcileBankRequest, validateInvoiceRequest } from "../api/services.ts";
+import { DocumentIntelligenceDocumentClassifier } from "../classification/index.ts";
 import { DocumentIntelligenceInvoiceExtractor } from "../extraction/index.ts";
 import { resolveSupplierIdentity, validateInvoice } from "../invoices/index.ts";
 import { DEFAULT_BANK_IMPORT_CONFIG, GraphClient, ManagedIdentityTokenProvider, SharePointBankPoller, SharePointDocumentRepository, SharePointInvoiceMailboxPoller, SharePointSupplierDirectory } from "../microsoft365/index.ts";
@@ -35,18 +36,26 @@ app.http("extractInvoice", {
       const contentType = request.headers.get("content-type")?.split(";", 1)[0].toLowerCase();
       if (contentType !== "application/pdf") return json(415, { error: { code: "unsupported_media_type", message: "Send the PDF as application/pdf" } });
       const content = new Uint8Array(await request.arrayBuffer());
-      const extractor = new DocumentIntelligenceInvoiceExtractor(
-        requiredSetting("DOCUMENT_INTELLIGENCE_ENDPOINT"),
-        new ManagedIdentityTokenProvider("https://cognitiveservices.azure.com/"),
-      );
-      const extraction = await extractor.extract({
+      const attachment = {
         messageId: request.headers.get("x-message-id") ?? "manual-pilot",
         attachmentId: request.headers.get("x-attachment-id") ?? crypto.randomUUID(),
         sender: request.headers.get("x-sender") ?? "manual-pilot",
         receivedAt: new Date().toISOString(),
         originalFilename: request.headers.get("x-filename") ?? "invoice.pdf",
         contentType, content,
-      });
+      };
+      const cognitiveTokenProvider = new ManagedIdentityTokenProvider("https://cognitiveservices.azure.com/");
+      const classification = await new DocumentIntelligenceDocumentClassifier(
+        requiredSetting("DOCUMENT_INTELLIGENCE_ENDPOINT"), cognitiveTokenProvider,
+      ).classify(attachment);
+      if (classification.kind !== "invoice") {
+        return json(200, { classification, extractionSkipped: true });
+      }
+      const extractor = new DocumentIntelligenceInvoiceExtractor(
+        requiredSetting("DOCUMENT_INTELLIGENCE_ENDPOINT"),
+        cognitiveTokenProvider,
+      );
+      const extraction = await extractor.extract(attachment);
       const supplierDirectory = new SharePointSupplierDirectory(
         new GraphClient(new ManagedIdentityTokenProvider()),
         requiredSetting("M365_SHAREPOINT_SITE_ID"),
@@ -60,7 +69,7 @@ app.http("extractInvoice", {
       const validation = supplierIdentity.status === "matched"
         ? invoiceValidation
         : { valid: false as const, issues: invoiceValidation.valid ? [supplierIdentity.issue] : [...invoiceValidation.issues, supplierIdentity.issue] };
-      return json(200, { ...extraction, supplierIdentity, validation });
+      return json(200, { classification, ...extraction, supplierIdentity, validation });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Extraction failed";
       context.error("Invoice extraction failed", { message });

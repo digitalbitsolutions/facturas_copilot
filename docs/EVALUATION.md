@@ -13,6 +13,8 @@ Se evaluaron cuatro documentos autorizados con `prebuilt-invoice` API `2024-11-3
 
 Hallazgos aplicados al código: preferencia por razón social completa, derivación conservadora de base solo cuando total es estrictamente mayor que IVA, propagación de la menor confianza y rechazo de la derivación cuando total e IVA coinciden.
 
+La clasificación previa implementada el 11 de septiembre usa `prebuilt-read` sobre las páginas 1-2 y reglas deterministas. La combinación observada en la liquidación (`Liquidación de recibos`, nominal abonado, fecha valor, intereses, comisiones y gastos) produce `bank_settlement` y omite por completo `prebuilt-invoice`. Un encabezado de factura requiere además evidencia fiscal; documentos débiles quedan como `other` para revisión.
+
 ### Validación extremo a extremo
 
 Tras desplegar los ajustes, una factura completa se envió desde Cloud Shell al endpoint autenticado `/api/invoices/extract`. La cadena Entra → Function → identidad administrada → Document Intelligence → mapeo → validación finalizó correctamente. Los importes extraídos fueron coherentes (`166,00 + 34,86 = 200,86 EUR`), pero la validación exigió revisión por confianza inferior a `0,8` en proveedor (`0,76`), número (`0,71`), vencimiento (`0,654`) y base (`0,438`). Fecha, IVA, total y moneda superaron el umbral.

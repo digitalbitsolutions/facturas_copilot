@@ -37,7 +37,8 @@
 - [x] Definir umbrales piloto por campo conservando `0,8` como respaldo y combinarlos con la coherencia fiscal determinista.
 - [x] Implementar identificación segura contra `MaestroProveedores` por NIF, razón social o alias antes del archivado automático.
 - [x] Aprovisionar `MaestroProveedores`, cargar un proveedor autorizado y verificar la coincidencia por NIF de extremo a extremo.
-- [ ] Implementar clasificación previa para separar facturas de liquidaciones y otros documentos.
+- [x] Implementar clasificación previa auditable para separar facturas, liquidaciones bancarias y otros documentos antes de la extracción.
+- [ ] Redesplegar y verificar con una factura, la liquidación bancaria observada y un documento no fiscal.
 - [x] Ajustar el mapeo real: razón social completa y base derivada con confianza conservadora cuando falta `SubTotal`.
 - [ ] Confirmar en Application Insights una ejecución exitosa y conservar la evidencia del contador `archived`.
 - [ ] Crear los flujos Power Automate y ejecutar pruebas de aceptación CA-01 a CA-21.

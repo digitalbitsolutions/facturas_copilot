@@ -45,6 +45,7 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - La política piloto usa umbrales por campo (`0,75` proveedor, `0,70` número, `0,85` fecha, `0,65` vencimiento, `0,40` base, `0,80` IVA, `0,90` total y `0,80` moneda), mantiene `0,8` como respaldo y nunca sustituye la validación determinista de formatos y coherencia fiscal.
 - La identidad del proveedor se resuelve contra la lista `MaestroProveedores`: NIF exacto y único cuando está disponible, o razón social/alias normalizado si no lo está. Proveedores desconocidos, inactivos, contradictorios o ambiguos quedan en revisión antes de archivar.
 - El 11 de septiembre se aprovisionó `MaestroProveedores` y se verificó el circuito desplegado con una factura autorizada: NIF extraído con confianza `0,829`, coincidencia `tax_id` con un proveedor activo y `validation.valid = true` sin incidencias.
+- La clasificación previa lee las páginas 1-2 con `prebuilt-read` y decide mediante señales auditables entre `invoice`, `bank_settlement` y `other`. Solo las facturas continúan a `prebuilt-invoice`; evidencia insuficiente se detiene de forma conservadora.
 - No existe aún ningún recurso productivo ni credencial almacenada.
 
 ## Evidencia y diagnóstico del piloto de correo
@@ -170,7 +171,7 @@ Estas decisiones se consolidarán contra el PRD vigente v4.
 
 ## Siguiente secuencia
 
-1. Diseñar la clasificación previa para separar facturas de liquidaciones bancarias antes de automatizar el buzón.
+1. Redesplegar y verificar la clasificación con los tres tipos de documento.
 2. Conectar extracción y validación al buzón con estado persistente e idempotencia.
 3. Incorporar progresivamente los proveedores autorizados al maestro.
 4. Crear los flujos Power Automate de registro, conciliación y revisión.

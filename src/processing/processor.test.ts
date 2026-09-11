@@ -16,7 +16,7 @@ function setup(options: { kind?: DocumentKind; extracted?: typeof invoice; extra
   const supplierDirectory = new MemorySupplierDirectory(options.supplierName === "missing" ? [] : [{ supplierId: "SUP-1", legalName: options.supplierName ?? "ACME", active: true }]);
   let extractionCalls = 0;
   const processor = new AttachmentProcessor({
-    classifier: { classify: async () => options.kind ?? "invoice" },
+    classifier: { classify: async () => ({ kind: options.kind ?? "invoice", confidence: 0.99, reasons: ["test"] }) },
     extractor: { extract: async (attachment) => {
       extractionCalls += 1;
       if (attachment.attachmentId === options.extractionErrorFor) throw new Error("Unreadable PDF");
@@ -39,10 +39,12 @@ test("completes and correlates a valid invoice", async () => {
 });
 
 test("diverts non-invoices without extraction", async () => {
-  const context = setup({ kind: "quote" });
+  const context = setup({ kind: "bank_settlement" });
   const result = await context.processor.process(input());
   assert.equal(result.state, "diverted");
   assert.equal(result.exception?.code, "EX-03");
+  assert.equal(result.documentKind, "bank_settlement");
+  assert.equal(result.classificationConfidence, 0.99);
   assert.equal(context.extractionCalls(), 0);
 });
 

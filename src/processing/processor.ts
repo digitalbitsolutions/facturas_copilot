@@ -43,10 +43,14 @@ export class AttachmentProcessor {
     }
 
     try {
-      const documentKind = await this.dependencies.classifier.classify(input);
-      record = await this.transition(record, "classified", { documentKind });
-      if (documentKind !== "invoice") {
-        return this.finish(record, "diverted", { code: "EX-03", reason: `Document classified as ${documentKind}`, retryable: false });
+      const classification = await this.dependencies.classifier.classify(input);
+      record = await this.transition(record, "classified", {
+        documentKind: classification.kind,
+        classificationConfidence: classification.confidence,
+        classificationReasons: classification.reasons,
+      });
+      if (classification.kind !== "invoice") {
+        return this.finish(record, "diverted", { code: "EX-03", reason: `Document classified as ${classification.kind}`, retryable: false });
       }
 
       const extraction = await this.dependencies.extractor.extract(input);

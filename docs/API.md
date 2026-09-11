@@ -11,7 +11,9 @@ La API usa Azure Functions Runtime 4, modelo de programación Node.js v4 y Node.
 | POST | `/api/bank/import` | Validar y normalizar filas de un extracto |
 | POST | `/api/bank/reconcile` | Puntuar movimientos contra facturas pendientes |
 
-`/api/invoices/extract` usa el modelo `prebuilt-invoice` de Document Intelligence y limita el análisis a las páginas 1-2 para respetar el nivel gratuito F0. El cuerpo es el PDF binario; opcionalmente admite `x-filename`, `x-message-id`, `x-attachment-id` y `x-sender`. Devuelve `invoice`, `confidence` y `validation`. La autenticación Entra de la Function protege también este endpoint.
+`/api/invoices/extract` realiza primero una lectura de las páginas 1-2 con `prebuilt-read` y clasifica el texto mediante reglas deterministas y auditables. Las categorías son `invoice`, `bank_settlement` y `other`. Solo `invoice` continúa hacia `prebuilt-invoice`; las otras categorías devuelven `classification` y `extractionSkipped: true`, sin intentar extraer ni archivar una factura. El cuerpo es el PDF binario; opcionalmente admite `x-filename`, `x-message-id`, `x-attachment-id` y `x-sender`. La autenticación Entra de la Function protege también este endpoint.
+
+La evidencia de factura combina encabezado `Factura`/`Invoice` con señales fiscales como base imponible, IVA, fecha o total de factura. Una señal fuerte de liquidación —por ejemplo `Liquidación de recibos`— junto con nominal abonado, fecha valor, intereses, comisiones o gastos se clasifica como `bank_settlement`. Evidencia débil o contradictoria produce `other`; el sistema prefiere revisión a un falso positivo. Para una factura válida, la respuesta incorpora `classification`, `invoice`, `confidence`, `supplierIdentity` y `validation`.
 
 El mapeo prefiere `VendorAddressRecipient` frente al nombre comercial abreviado. Si el modelo omite `SubTotal` pero entrega un `InvoiceTotal` estrictamente mayor que `TotalTax`, deriva la base mediante resta y conserva como confianza la menor de ambas fuentes; una confianza insuficiente sigue obligando a revisión humana. Si total e impuesto son iguales, no deriva una base cero porque suele indicar una detección errónea del total.
 

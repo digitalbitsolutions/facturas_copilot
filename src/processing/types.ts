@@ -1,6 +1,7 @@
 import type { ExtractedInvoice, ExtractionConfidence, SupplierDirectory, ValidatedInvoice, ValidationIssue } from "../invoices/index.ts";
 
-export type DocumentKind = "invoice" | "quote" | "other";
+export type DocumentKind = "invoice" | "bank_settlement" | "other";
+export type DocumentClassification = { kind: DocumentKind; confidence: number; reasons: string[] };
 export type ProcessState =
   | "received" | "classified" | "extracted" | "validated" | "archived"
   | "completed" | "diverted" | "review_required" | "failed";
@@ -23,6 +24,8 @@ export type ProcessRecord = {
   state: ProcessState;
   input: Omit<AttachmentInput, "content">;
   documentKind?: DocumentKind;
+  classificationConfidence?: number;
+  classificationReasons?: string[];
   duplicateKey?: string;
   finalFilename?: string;
   documentUrl?: string;
@@ -33,7 +36,7 @@ export type ProcessRecord = {
 export type ProcessResult = ProcessRecord & { idempotentReplay: boolean };
 
 export interface DocumentClassifier {
-  classify(input: AttachmentInput): Promise<DocumentKind>;
+  classify(input: AttachmentInput): Promise<DocumentClassification>;
 }
 export interface InvoiceExtractor {
   extract(input: AttachmentInput): Promise<{ invoice: ExtractedInvoice; confidence?: ExtractionConfidence }>;
