@@ -44,6 +44,7 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - La prueba extremo a extremo de `/api/invoices/extract` funcionó con autenticación Entra e identidad administrada. Una factura completa produjo importes correctos y coherentes, pero quedó en revisión porque proveedor, número, vencimiento y base no alcanzaron confianza `0,8`; no se reducirá el umbral global sin reglas adicionales.
 - La política piloto usa umbrales por campo (`0,75` proveedor, `0,70` número, `0,85` fecha, `0,65` vencimiento, `0,40` base, `0,80` IVA, `0,90` total y `0,80` moneda), mantiene `0,8` como respaldo y nunca sustituye la validación determinista de formatos y coherencia fiscal.
 - La identidad del proveedor se resuelve contra la lista `MaestroProveedores`: NIF exacto y único cuando está disponible, o razón social/alias normalizado si no lo está. Proveedores desconocidos, inactivos, contradictorios o ambiguos quedan en revisión antes de archivar.
+- El 11 de septiembre se aprovisionó `MaestroProveedores` y se verificó el circuito desplegado con una factura autorizada: NIF extraído con confianza `0,829`, coincidencia `tax_id` con un proveedor activo y `validation.valid = true` sin incidencias.
 - No existe aún ningún recurso productivo ni credencial almacenada.
 
 ## Evidencia y diagnóstico del piloto de correo
@@ -169,9 +170,9 @@ Estas decisiones se consolidarán contra el PRD vigente v4.
 
 ## Siguiente secuencia
 
-1. Aprovisionar y cargar `MaestroProveedores`; verificar SATINFO de extremo a extremo.
-2. Diseñar la clasificación previa para separar facturas de liquidaciones bancarias antes de automatizar el buzón.
-3. Conectar extracción y validación al buzón con estado persistente e idempotencia.
+1. Diseñar la clasificación previa para separar facturas de liquidaciones bancarias antes de automatizar el buzón.
+2. Conectar extracción y validación al buzón con estado persistente e idempotencia.
+3. Incorporar progresivamente los proveedores autorizados al maestro.
 4. Crear los flujos Power Automate de registro, conciliación y revisión.
 5. Ejecutar la aceptación restante CA-01 a CA-21 y conservar evidencia.
 

@@ -36,7 +36,7 @@
 - [x] Redesplegar el mapeo refinado y probar `/api/invoices/extract` de extremo a extremo.
 - [x] Definir umbrales piloto por campo conservando `0,8` como respaldo y combinarlos con la coherencia fiscal determinista.
 - [x] Implementar identificación segura contra `MaestroProveedores` por NIF, razón social o alias antes del archivado automático.
-- [ ] Aprovisionar `MaestroProveedores`, cargar los proveedores autorizados y verificar SATINFO de extremo a extremo.
+- [x] Aprovisionar `MaestroProveedores`, cargar un proveedor autorizado y verificar la coincidencia por NIF de extremo a extremo.
 - [ ] Implementar clasificación previa para separar facturas de liquidaciones y otros documentos.
 - [x] Ajustar el mapeo real: razón social completa y base derivada con confianza conservadora cuando falta `SubTotal`.
 - [ ] Confirmar en Application Insights una ejecución exitosa y conservar la evidencia del contador `archived`.

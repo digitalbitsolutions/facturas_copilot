@@ -17,7 +17,11 @@ Hallazgos aplicados al código: preferencia por razón social completa, derivaci
 
 Tras desplegar los ajustes, una factura completa se envió desde Cloud Shell al endpoint autenticado `/api/invoices/extract`. La cadena Entra → Function → identidad administrada → Document Intelligence → mapeo → validación finalizó correctamente. Los importes extraídos fueron coherentes (`166,00 + 34,86 = 200,86 EUR`), pero la validación exigió revisión por confianza inferior a `0,8` en proveedor (`0,76`), número (`0,71`), vencimiento (`0,654`) y base (`0,438`). Fecha, IVA, total y moneda superaron el umbral.
 
-Decisión: no reducir indiscriminadamente el umbral global. Se mantiene `0,8` como respaldo y se introducen umbrales explícitos por campo, combinados con las reglas deterministas existentes. Con esta política, el perfil observado puede validarse porque base, IVA y total son completos y coherentes; un total por debajo de `0,9` o cualquier incoherencia fiscal continúa forzando revisión. La identificación contra el maestro de proveedores y la clasificación documental previa siguen pendientes antes de automatizar el buzón.
+Decisión: no reducir indiscriminadamente el umbral global. Se mantiene `0,8` como respaldo y se introducen umbrales explícitos por campo, combinados con las reglas deterministas existentes. Con esta política, el perfil observado puede validarse porque base, IVA y total son completos y coherentes; un total por debajo de `0,9` o cualquier incoherencia fiscal continúa forzando revisión. La clasificación documental previa sigue pendiente antes de automatizar el buzón.
+
+### Validación del maestro de proveedores — 11 de septiembre de 2026
+
+Se creó `MaestroProveedores` en el sitio de pruebas y se registró un proveedor autorizado activo. La misma factura del ensayo extremo a extremo extrajo el NIF con confianza `0,829`; la Function encontró una coincidencia exacta y única mediante `tax_id`, devolvió el identificador interno del proveedor y terminó con `validation.valid = true` e `issues = []`. La evidencia confirma Function → Microsoft Graph → SharePoint → resolución de identidad sin almacenar la factura ni el NIF real en Git.
 
 ## Objetivo
 
