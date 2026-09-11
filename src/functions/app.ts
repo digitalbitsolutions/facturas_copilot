@@ -1,9 +1,9 @@
 import { app, type HttpRequest, type HttpResponseInit, type InvocationContext } from "@azure/functions";
-import { importBankRequest, reconcileBankRequest, validateInvoiceRequest } from "../api/services.ts";
+import { assignExceptionRequest, importBankRequest, reconcileBankRequest, resolveExceptionRequest, validateInvoiceRequest } from "../api/services.ts";
 import { DocumentIntelligenceDocumentClassifier } from "../classification/index.ts";
 import { DocumentIntelligenceInvoiceExtractor } from "../extraction/index.ts";
 import { resolveSupplierIdentity, validateInvoice } from "../invoices/index.ts";
-import { DEFAULT_BANK_IMPORT_CONFIG, GraphClient, ManagedIdentityTokenProvider, SharePointBankPoller, SharePointDocumentRepository, SharePointInvoiceMailboxPoller, SharePointInvoiceRegistry, SharePointProcessStore, SharePointSupplierDirectory } from "../microsoft365/index.ts";
+import { DEFAULT_BANK_IMPORT_CONFIG, GraphClient, ManagedIdentityTokenProvider, SharePointBankPoller, SharePointDocumentRepository, SharePointExceptionResolutionStore, SharePointInvoiceMailboxPoller, SharePointInvoiceRegistry, SharePointProcessStore, SharePointSupplierDirectory } from "../microsoft365/index.ts";
 import { AttachmentProcessor } from "../processing/index.ts";
 
 function json(status: number, body: unknown): HttpResponseInit {
@@ -87,6 +87,44 @@ app.http("importBankBatch", {
 app.http("reconcileBankBatch", {
   route: "bank/reconcile", methods: ["POST"], authLevel: "anonymous",
   handler: (request, context) => execute(request, context, reconcileBankRequest),
+});
+
+function exceptionResolutionStore(): SharePointExceptionResolutionStore {
+  return new SharePointExceptionResolutionStore(
+    new GraphClient(new ManagedIdentityTokenProvider()),
+    requiredSetting("M365_SHAREPOINT_SITE_ID"),
+    process.env.M365_EXCEPTIONS_LIST ?? "Excepciones",
+  );
+}
+
+app.http("assignException", {
+  route: "exceptions/assign", methods: ["POST"], authLevel: "anonymous",
+  handler: async (request, context) => {
+    try {
+      const input = assignExceptionRequest(await request.json());
+      await exceptionResolutionStore().assign(input.exceptionId, input.responsible);
+      return json(200, { ...input, state: "EnRevision" });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Invalid request";
+      context.warn("Exception assignment rejected", { message });
+      return json(400, { error: { code: "invalid_request", message } });
+    }
+  },
+});
+
+app.http("resolveException", {
+  route: "exceptions/resolve", methods: ["POST"], authLevel: "anonymous",
+  handler: async (request, context) => {
+    try {
+      const input = resolveExceptionRequest(await request.json());
+      const result = await exceptionResolutionStore().resolve(input);
+      return json(200, { exceptionId: input.exceptionId, responsible: input.responsible, ...result });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Invalid request";
+      context.warn("Exception resolution rejected", { message });
+      return json(400, { error: { code: "invalid_request", message } });
+    }
+  },
 });
 
 function requiredSetting(name: string): string {

@@ -40,6 +40,15 @@ Este documento permite construir los flujos cuando exista acceso al tenant. Las 
 
 La interfaz definitiva puede ser una lista SharePoint o una Power App. Debe mostrar factura/PDF, movimiento original, candidatos, puntuación y motivos, y permitir confirmar, rechazar o dejar pendiente. Nunca debe exigir editar manualmente un flujo o una fila técnica.
 
+Para excepciones de factura, el flujo se inicia al crear o modificar un elemento con `Estado` igual a `Abierta` o `EnRevision`:
+
+1. Asignar `Responsable` y llamar a `POST /api/exceptions/assign`; el estado pasa a `EnRevision`.
+2. Ofrecer solo las acciones permitidas para `Codigo`, según la tabla de `docs/API.md`.
+3. Exigir un resultado textual de revisión y llamar a `POST /api/exceptions/resolve`.
+4. Actualizar la vista; el backend registra responsable, acción, resultado, fecha UTC y el estado final (`Resuelta` o `Descartada`).
+
+No se habilita una acción automática que cree una factura, un PDF o una segunda fila fiscal. `EX-06` exige actualizar el maestro y reenviar/reprocesar de forma controlada; `EX-07` se descarta como duplicado confirmado.
+
 ## Conexiones pendientes
 
 - Outlook / buzón de facturas.

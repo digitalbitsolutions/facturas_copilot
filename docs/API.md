@@ -10,6 +10,8 @@ La API usa Azure Functions Runtime 4, modelo de programación Node.js v4 y Node.
 | POST | `/api/invoices/extract` | Extraer y validar un PDF durante el piloto (cuerpo `application/pdf`) |
 | POST | `/api/bank/import` | Validar y normalizar filas de un extracto |
 | POST | `/api/bank/reconcile` | Puntuar movimientos contra facturas pendientes |
+| POST | `/api/exceptions/assign` | Asignar una excepción abierta a un responsable |
+| POST | `/api/exceptions/resolve` | Cerrar una excepción con una acción permitida y resultado auditado |
 
 `/api/invoices/extract` realiza primero una lectura de las páginas 1-2 con `prebuilt-read` y clasifica el texto mediante reglas deterministas y auditables. Las categorías son `invoice`, `bank_settlement` y `other`. Solo `invoice` continúa hacia `prebuilt-invoice`; las otras categorías devuelven `classification` y `extractionSkipped: true`, sin intentar extraer ni archivar una factura. El cuerpo es el PDF binario; opcionalmente admite `x-filename`, `x-message-id`, `x-attachment-id` y `x-sender`. La autenticación Entra de la Function protege también este endpoint.
 
@@ -81,6 +83,23 @@ Los errores de datos devuelven `accepted: false` con todas las incidencias detec
 La petición contiene movimientos normalizados y facturas pendientes. La respuesta devuelve candidatos ordenados, puntuación, factores explicativos, clasificación y necesidad de revisión humana. La API nunca persiste ni acepta una coincidencia por sí sola; Power Automate o la capa de persistencia aplica la decisión de acuerdo con la política aprobada.
 
 Los valores provisionales están en `deployment/reconciliation-config.json`. La aceptación automática está deshabilitada hasta calibrar el piloto.
+
+## Revisar excepciones
+
+`POST /api/exceptions/assign` recibe `exceptionId` y `responsible`; solo admite excepciones en estado `Abierta` o `EnRevision` y las deja en `EnRevision`.
+
+`POST /api/exceptions/resolve` recibe `exceptionId`, `code`, `responsible`, `action` y `result`. El servicio vuelve a leer el código persistido en SharePoint antes de cerrar, por lo que nunca confía en el código enviado por el cliente. Registra `Responsable`, `AccionResolucion`, `ResultadoResolucion` y `FechaResolucion` UTC. Solo permite estas acciones:
+
+| Código | Acción |
+|---|---|
+| `EX-02`, `EX-05` | `request_replacement` |
+| `EX-03` | `discard_non_invoice` → `Descartada` |
+| `EX-04` | `retry_after_correction` |
+| `EX-06` | `update_supplier_and_resubmit` |
+| `EX-07` | `confirm_duplicate` → `Descartada` |
+| `EX-08`, `EX-09` | `retry_after_technical_fix` |
+
+Las acciones de reenvío, corrección o reintento no crean registros ni PDF automáticamente: requieren un nuevo envío o reproceso controlado, preservando la idempotencia fiscal.
 
 ## Desarrollo local
 

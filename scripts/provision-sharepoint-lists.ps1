@@ -130,6 +130,8 @@ $definitions = @(
             @{ name = 'Reintentable'; boolean = @{} }
             @{ name = 'CorrelationId'; text = @{} }
             @{ name = 'Responsable'; text = @{} }
+            @{ name = 'AccionResolucion'; choice = @{ choices = @('request_replacement','discard_non_invoice','retry_after_correction','update_supplier_and_resubmit','confirm_duplicate','retry_after_technical_fix') } }
+            @{ name = 'ResultadoResolucion'; text = @{ allowMultipleLines = $true } }
             @{ name = 'FechaDeteccion'; dateTime = @{ format = 'dateTime' } }
             @{ name = 'FechaResolucion'; dateTime = @{ format = 'dateTime' } }
         )
