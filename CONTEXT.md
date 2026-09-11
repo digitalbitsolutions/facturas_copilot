@@ -53,6 +53,7 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - Las rutas negativas también se verificaron desde el buzón: una liquidación terminó `diverted` con `EX-03`/`bank_settlement`, y un CV terminó `diverted` con `EX-03`/`other`. Ninguno creó fila en `RegistroFacturas` ni PDF; la lista conservó únicamente SATINFO.
 - La prueba de proveedor inactivo terminó correctamente el 11 de septiembre: un correo nuevo con `FASF198033.pdf` produjo `review_required` y `EX-06` (`Supplier identity requires review`), sin aumentar `RegistroFacturas` ni crear otro PDF. SATINFO se restauró inmediatamente a `Activo = Sí` a las 10:31:34 UTC.
 - La prueba de duplicado de negocio terminó correctamente en el ciclo de las 10:40:30 UTC: otro correo nuevo con `FASF198033.pdf`, ya con SATINFO activo, produjo `review_required` y `EX-07`, apuntando al proceso original. `RegistroFacturas` permaneció en una fila, `Documentos/Facturas` en 8 archivos y la clave de duplicidad original no cambió.
+- El 11 de septiembre se crearon las vistas operativas del sitio: `Pendientes de revisión` en `ProcesosFacturas` (filtro `Estado = review_required`) y `Excepciones abiertas` en `Excepciones` (filtro `Estado = Abierta`), ambas con límite de 30 elementos. Se retiró después la aplicación temporal sin secreto usada para administrarlas.
 - No existe aún ningún recurso productivo ni credencial almacenada.
 
 ## Evidencia y diagnóstico del piloto de correo
@@ -178,8 +179,8 @@ Estas decisiones se consolidarán contra el PRD vigente v4.
 
 ## Siguiente secuencia
 
-1. Crear vistas y flujo de revisión para documentos desviados y excepciones.
-2. Crear los flujos Power Automate de registro, conciliación y revisión.
+1. Crear el flujo de revisión para documentos desviados y excepciones.
+2. Crear los flujos Power Automate de registro y conciliación.
 3. Ejecutar la aceptación restante CA-01 a CA-21 y conservar evidencia.
 
 ## Comandos de comprobación
