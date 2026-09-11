@@ -101,6 +101,8 @@ Los valores provisionales están en `deployment/reconciliation-config.json`. La 
 
 Las acciones de reenvío, corrección o reintento no crean registros ni PDF automáticamente: requieren un nuevo envío o reproceso controlado, preservando la idempotencia fiscal.
 
+Al cerrar una excepción de factura, el servicio localiza su `CorrelationId` en `ProcesosFacturas` y sincroniza el estado del proceso: `Descartada` pasa a `discarded` y `Resuelta` a `resolved`. Así el elemento sale de la vista `Pendientes de revisión` sin falsear un proceso como `completed`.
+
 ## Desarrollo local
 
 ```powershell

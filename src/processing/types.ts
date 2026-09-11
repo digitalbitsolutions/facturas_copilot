@@ -4,7 +4,7 @@ export type DocumentKind = "invoice" | "bank_settlement" | "other";
 export type DocumentClassification = { kind: DocumentKind; confidence: number; reasons: string[] };
 export type ProcessState =
   | "received" | "classified" | "extracted" | "validated" | "archived"
-  | "completed" | "diverted" | "review_required" | "failed";
+  | "completed" | "diverted" | "review_required" | "resolved" | "discarded" | "failed";
 export type ExceptionCode = "EX-02" | "EX-03" | "EX-04" | "EX-05" | "EX-06" | "EX-07" | "EX-08" | "EX-09";
 
 export type AttachmentInput = {

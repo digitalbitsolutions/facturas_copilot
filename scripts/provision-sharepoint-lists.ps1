@@ -69,7 +69,7 @@ $definitions = @(
         displayName = 'ProcesosFacturas'
         columns = @(
             @{ name = 'ProcessId'; indexed = $true; enforceUniqueValues = $true; text = @{} }
-            @{ name = 'Estado'; choice = @{ choices = @('received','classified','extracted','validated','archived','completed','diverted','review_required','failed') } }
+            @{ name = 'Estado'; choice = @{ choices = @('received','classified','extracted','validated','archived','completed','diverted','review_required','resolved','discarded','failed') } }
             @{ name = 'MessageId'; text = @{} }
             @{ name = 'AttachmentId'; text = @{} }
             @{ name = 'Remitente'; text = @{} }

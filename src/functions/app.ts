@@ -94,6 +94,7 @@ function exceptionResolutionStore(): SharePointExceptionResolutionStore {
     new GraphClient(new ManagedIdentityTokenProvider()),
     requiredSetting("M365_SHAREPOINT_SITE_ID"),
     process.env.M365_EXCEPTIONS_LIST ?? "Excepciones",
+    process.env.M365_INVOICE_PROCESSES_LIST ?? "ProcesosFacturas",
   );
 }
 

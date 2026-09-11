@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { ConfigurationError, GraphClient, GraphError, loadMicrosoft365Config, SharePointDocumentRepository, SharePointInvoiceMailboxPoller, SharePointProcessStore, SharePointSupplierDirectory } from "./index.ts";
+import { ConfigurationError, GraphClient, GraphError, loadMicrosoft365Config, SharePointDocumentRepository, SharePointExceptionResolutionStore, SharePointInvoiceMailboxPoller, SharePointProcessStore, SharePointSupplierDirectory } from "./index.ts";
 
 const environment = {
   M365_TENANT_ID: "tenant", M365_CLIENT_ID: "client",
@@ -150,4 +150,59 @@ test("mail poller ignores messages older than the activation cutoff", async () =
   const result = await new SharePointInvoiceMailboxPoller(graph, "facturas@company.test", processor, "2026-09-11T00:00:00Z").run();
   assert.equal(result.pdfAttachments, 0);
   assert.equal(attachmentRequests, 0);
+});
+
+test("resolving an exception synchronizes its process to a terminal state", async () => {
+  const patches: Array<{ url: string; fields: Record<string, unknown> }> = [];
+  const graph = new GraphClient({ getAccessToken: async () => "token" }, async (url, init) => {
+    const path = String(url);
+    if (path.endsWith("/lists/Excepciones/items/exception-1?$expand=fields")) {
+      return Response.json({ id: "exception-1", fields: { Estado: "EnRevision", Codigo: "EX-07", CorrelationId: "process-1" } });
+    }
+    if (path.endsWith("/lists?$select=id,displayName")) return Response.json({ value: [{ id: "processes", displayName: "ProcesosFacturas" }] });
+    if (path.includes("/lists/processes/items?$expand=fields")) return Response.json({ value: [{ id: "process-item", fields: { Estado: "review_required" } }] });
+    if (init?.method === "PATCH") {
+      patches.push({ url: path, fields: (JSON.parse(String(init.body)) as Record<string, unknown>) });
+      return new Response(null, { status: 204 });
+    }
+    throw new Error(`Unexpected request ${path}`);
+  });
+  const store = new SharePointExceptionResolutionStore(graph, "site", "Excepciones", "ProcesosFacturas", () => new Date("2026-09-11T12:00:00Z"));
+  const result = await store.resolve({ exceptionId: "exception-1", responsible: "reviewer@example.test", action: "confirm_duplicate", result: "Duplicate confirmed" });
+
+  assert.deepEqual(result, { state: "Descartada", action: "confirm_duplicate" });
+  assert.deepEqual(patches, [
+    { url: "https://graph.microsoft.com/v1.0/sites/site/lists/processes/items/process-item/fields", fields: { Estado: "discarded", UpdatedAt: "2026-09-11T12:00:00.000Z" } },
+    { url: "https://graph.microsoft.com/v1.0/sites/site/lists/Excepciones/items/exception-1/fields", fields: {
+      Responsable: "reviewer@example.test", Estado: "Descartada", AccionResolucion: "confirm_duplicate", ResultadoResolucion: "Duplicate confirmed", FechaResolucion: "2026-09-11T12:00:00.000Z",
+    } },
+  ]);
+});
+
+test("replaying a closed exception synchronizes a legacy review process without rewriting the audit", async () => {
+  const patches: Array<{ url: string; fields: Record<string, unknown> }> = [];
+  const graph = new GraphClient({ getAccessToken: async () => "token" }, async (url, init) => {
+    const path = String(url);
+    if (path.endsWith("/lists/Excepciones/items/exception-1?$expand=fields")) {
+      return Response.json({ id: "exception-1", fields: {
+        Estado: "Resuelta", Codigo: "EX-06", CorrelationId: "process-1", Responsable: "reviewer@example.test",
+        AccionResolucion: "update_supplier_and_resubmit", ResultadoResolucion: "Supplier restored", FechaResolucion: "2026-09-11T12:00:00Z",
+      } });
+    }
+    if (path.endsWith("/lists?$select=id,displayName")) return Response.json({ value: [{ id: "processes", displayName: "ProcesosFacturas" }] });
+    if (path.includes("/lists/processes/items?$expand=fields")) return Response.json({ value: [{ id: "process-item", fields: { Estado: "review_required" } }] });
+    if (init?.method === "PATCH") {
+      patches.push({ url: path, fields: (JSON.parse(String(init.body)) as Record<string, unknown>) });
+      return new Response(null, { status: 204 });
+    }
+    throw new Error(`Unexpected request ${path}`);
+  });
+  const store = new SharePointExceptionResolutionStore(graph, "site", "Excepciones", "ProcesosFacturas");
+  const result = await store.resolve({ exceptionId: "exception-1", responsible: "reviewer@example.test", action: "update_supplier_and_resubmit", result: "Ignored on replay" });
+
+  assert.deepEqual(result, { state: "Resuelta", action: "update_supplier_and_resubmit" });
+  assert.deepEqual(patches, [{
+    url: "https://graph.microsoft.com/v1.0/sites/site/lists/processes/items/process-item/fields",
+    fields: { Estado: "resolved", UpdatedAt: "2026-09-11T12:00:00Z" },
+  }]);
 });
