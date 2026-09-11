@@ -15,6 +15,8 @@ La API usa Azure Functions Runtime 4, modelo de programación Node.js v4 y Node.
 
 El mapeo prefiere `VendorAddressRecipient` frente al nombre comercial abreviado. Si el modelo omite `SubTotal` pero entrega un `InvoiceTotal` estrictamente mayor que `TotalTax`, deriva la base mediante resta y conserva como confianza la menor de ambas fuentes; una confianza insuficiente sigue obligando a revisión humana. Si total e impuesto son iguales, no deriva una base cero porque suele indicar una detección errónea del total.
 
+La validación conserva `0,8` como umbral general de respaldo y aplica esta política piloto por campo: proveedor `0,75`, número `0,70`, fecha de factura `0,85`, vencimiento `0,65`, base imponible `0,40`, IVA `0,80`, total `0,90` y moneda `0,80`. Un umbral de confianza superado no reemplaza las reglas deterministas: los campos obligatorios deben existir, fechas e importes deben tener formato válido y base más IVA debe coincidir con el total dentro de un céntimo. Por ello, una base con confianza reducida solo se acepta cuando el conjunto fiscal es completo y coherente.
+
 ## Validar factura
 
 ```json
@@ -28,6 +30,15 @@ El mapeo prefiere `VendorAddressRecipient` frente al nombre comercial abreviado.
     "vatAmount": "210.00",
     "totalAmount": "1210.00",
     "currency": "EUR"
+  },
+  "confidence": {
+    "supplierName": 0.91,
+    "invoiceNumber": 0.88,
+    "invoiceDate": 0.94,
+    "taxableBase": 0.86,
+    "vatAmount": 0.93,
+    "totalAmount": 0.96,
+    "currency": 0.96
   }
 }
 ```

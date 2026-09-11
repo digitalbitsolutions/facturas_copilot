@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildDuplicateKey, buildInvoiceFilename, sanitizeFilenamePart, validateInvoice } from "./index.ts";
+import { buildDuplicateKey, buildInvoiceFilename, defaultValidationConfig, sanitizeFilenamePart, validateInvoice } from "./index.ts";
 
 const validInvoice = {
   supplierName: "Proveedor Norte, S.L.", invoiceNumber: "F/2026:0042", invoiceDate: "2026-09-07",
@@ -19,9 +19,35 @@ test("reports missing, invalid and incoherent fields together", () => {
 });
 
 test("rejects low-confidence extraction", () => {
-  const result = validateInvoice(validInvoice, { supplierName: 0.79 });
+  const result = validateInvoice(validInvoice, { supplierName: 0.74 });
   assert.equal(result.valid, false);
-  if (!result.valid) assert.equal(result.issues.at(-1)?.code, "low_confidence");
+  if (!result.valid) {
+    assert.equal(result.issues.at(-1)?.code, "low_confidence");
+    assert.match(result.issues.at(-1)?.message ?? "", /0\.75/);
+  }
+});
+
+test("accepts the field-calibrated confidence profile when amounts are coherent", () => {
+  const result = validateInvoice(validInvoice, {
+    supplierName: 0.76,
+    invoiceNumber: 0.71,
+    invoiceDate: 0.95,
+    dueDate: 0.654,
+    taxableBase: 0.438,
+    vatAmount: 0.936,
+    totalAmount: 0.938,
+    currency: 0.938,
+  });
+  assert.equal(result.valid, true);
+});
+
+test("uses the global confidence threshold for fields without an override", () => {
+  const result = validateInvoice(validInvoice, { supplierName: 0.79 }, {
+    ...defaultValidationConfig,
+    minimumConfidenceByField: {},
+  });
+  assert.equal(result.valid, false);
+  if (!result.valid) assert.match(result.issues.at(-1)?.message ?? "", /0\.8/);
 });
 
 test("creates a safe bounded PDF filename", () => {

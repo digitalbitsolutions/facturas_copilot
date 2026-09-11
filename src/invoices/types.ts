@@ -15,6 +15,7 @@ export type InvoiceValidationConfig = {
   dueDateRequired: boolean;
   currencyRequired: boolean;
   minimumConfidence: number;
+  minimumConfidenceByField?: Partial<Record<keyof ExtractedInvoice, number>>;
   amountToleranceMinorUnits: number;
 };
 

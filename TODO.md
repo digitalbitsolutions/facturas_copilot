@@ -34,7 +34,8 @@
 - [x] Desplegar F0 y evaluar visualmente cuatro documentos reales en Document Intelligence Studio fuera de Git.
 - [x] Registrar conclusiones anonimizadas de precisión sin conservar datos personales o fiscales en el repositorio.
 - [x] Redesplegar el mapeo refinado y probar `/api/invoices/extract` de extremo a extremo.
-- [ ] Definir umbrales por campo y reglas de aceptación apoyadas en coherencia fiscal y maestro de proveedores; no reducir el umbral global.
+- [x] Definir umbrales piloto por campo conservando `0,8` como respaldo y combinarlos con la coherencia fiscal determinista.
+- [ ] Identificar y validar el proveedor contra el maestro antes de permitir aceptación automática.
 - [ ] Implementar clasificación previa para separar facturas de liquidaciones y otros documentos.
 - [x] Ajustar el mapeo real: razón social completa y base derivada con confianza conservadora cuando falta `SubTotal`.
 - [ ] Confirmar en Application Insights una ejecución exitosa y conservar la evidencia del contador `archived`.

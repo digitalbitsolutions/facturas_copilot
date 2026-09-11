@@ -10,6 +10,16 @@ export const defaultValidationConfig: InvoiceValidationConfig = {
   dueDateRequired: false,
   currencyRequired: false,
   minimumConfidence: 0.8,
+  minimumConfidenceByField: {
+    supplierName: 0.75,
+    invoiceNumber: 0.7,
+    invoiceDate: 0.85,
+    dueDate: 0.65,
+    taxableBase: 0.4,
+    vatAmount: 0.8,
+    totalAmount: 0.9,
+    currency: 0.8,
+  },
   amountToleranceMinorUnits: 1,
 };
 
@@ -61,8 +71,9 @@ export function validateInvoice(
     issues.push({ code: "invalid_currency", field: "currency", message: "currency must be an ISO 4217-style code" });
   }
   for (const [field, value] of Object.entries(confidence) as Array<[keyof ExtractedInvoice, number]>) {
-    if (!Number.isFinite(value) || value < config.minimumConfidence) {
-      issues.push({ code: "low_confidence", field, message: `${field} confidence is below ${config.minimumConfidence}` });
+    const minimumConfidence = config.minimumConfidenceByField?.[field] ?? config.minimumConfidence;
+    if (!Number.isFinite(value) || value < minimumConfidence) {
+      issues.push({ code: "low_confidence", field, message: `${field} confidence is below ${minimumConfidence}` });
     }
   }
 

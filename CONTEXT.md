@@ -42,6 +42,7 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - La deuda de despliegue quedó cerrada el 10 de septiembre: `9d5aed8` persiste los tres ajustes M365 mediante Bicep y `8a7a225` actualiza las acciones a Node 24/Azure Login v3 y usa `AzureWebJobsStorage__accountName`. El redespliegue terminó sin warnings; las variables y los 7 documentos persistieron sin cambios.
 - El 10 de septiembre se desplegó Document Intelligence F0 en `northeurope` y se evaluaron cuatro documentos reales fuera de Git: uno completo y coherente; uno con base derivable y confianza fiscal baja; uno sin desglose fiscal; y una liquidación bancaria que el modelo confundió con factura. Los hallazgos originaron mapeo de razón social, derivación conservadora de base y rechazo de base cero.
 - La prueba extremo a extremo de `/api/invoices/extract` funcionó con autenticación Entra e identidad administrada. Una factura completa produjo importes correctos y coherentes, pero quedó en revisión porque proveedor, número, vencimiento y base no alcanzaron confianza `0,8`; no se reducirá el umbral global sin reglas adicionales.
+- La política piloto usa umbrales por campo (`0,75` proveedor, `0,70` número, `0,85` fecha, `0,65` vencimiento, `0,40` base, `0,80` IVA, `0,90` total y `0,80` moneda), mantiene `0,8` como respaldo y nunca sustituye la validación determinista de formatos y coherencia fiscal.
 - No existe aún ningún recurso productivo ni credencial almacenada.
 
 ## Evidencia y diagnóstico del piloto de correo
@@ -167,7 +168,7 @@ Estas decisiones se consolidarán contra el PRD vigente v4.
 
 ## Siguiente secuencia
 
-1. Definir política de validación por campo, coherencia fiscal e identificación contra maestro de proveedores.
+1. Identificar y validar el proveedor contra el maestro de proveedores.
 2. Diseñar la clasificación previa para separar facturas de liquidaciones bancarias antes de automatizar el buzón.
 3. Conectar extracción y validación al buzón con estado persistente e idempotencia.
 4. Crear los flujos Power Automate de registro, conciliación y revisión.
