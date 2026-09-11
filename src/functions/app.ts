@@ -3,7 +3,8 @@ import { importBankRequest, reconcileBankRequest, validateInvoiceRequest } from 
 import { DocumentIntelligenceDocumentClassifier } from "../classification/index.ts";
 import { DocumentIntelligenceInvoiceExtractor } from "../extraction/index.ts";
 import { resolveSupplierIdentity, validateInvoice } from "../invoices/index.ts";
-import { DEFAULT_BANK_IMPORT_CONFIG, GraphClient, ManagedIdentityTokenProvider, SharePointBankPoller, SharePointDocumentRepository, SharePointInvoiceMailboxPoller, SharePointSupplierDirectory } from "../microsoft365/index.ts";
+import { DEFAULT_BANK_IMPORT_CONFIG, GraphClient, ManagedIdentityTokenProvider, SharePointBankPoller, SharePointDocumentRepository, SharePointInvoiceMailboxPoller, SharePointInvoiceRegistry, SharePointProcessStore, SharePointSupplierDirectory } from "../microsoft365/index.ts";
+import { AttachmentProcessor } from "../processing/index.ts";
 
 function json(status: number, body: unknown): HttpResponseInit {
   return { status, jsonBody: body, headers: { "content-type": "application/json; charset=utf-8" } };
@@ -122,11 +123,25 @@ app.timer("pollInvoiceMailbox", {
   schedule: process.env.INVOICE_MAIL_POLL_SCHEDULE ?? "30 */10 * * * *",
   handler: async (_timer, context) => {
     try {
+      if (process.env.INVOICE_PROCESSING_ENABLED?.toLowerCase() !== "true") {
+        context.log("Invoice mailbox processing is disabled");
+        return;
+      }
       const graph = new GraphClient(new ManagedIdentityTokenProvider());
+      const siteId = requiredSetting("M365_SHAREPOINT_SITE_ID");
+      const cognitiveTokenProvider = new ManagedIdentityTokenProvider("https://cognitiveservices.azure.com/");
+      const processor = new AttachmentProcessor({
+        classifier: new DocumentIntelligenceDocumentClassifier(requiredSetting("DOCUMENT_INTELLIGENCE_ENDPOINT"), cognitiveTokenProvider),
+        extractor: new DocumentIntelligenceInvoiceExtractor(requiredSetting("DOCUMENT_INTELLIGENCE_ENDPOINT"), cognitiveTokenProvider),
+        processStore: new SharePointProcessStore(graph, siteId, process.env.M365_INVOICE_PROCESSES_LIST ?? "ProcesosFacturas", process.env.M365_EXCEPTIONS_LIST ?? "Excepciones"),
+        documents: new SharePointDocumentRepository(graph, requiredSetting("M365_SHAREPOINT_DRIVE_ID"), process.env.M365_INVOICE_FOLDER ?? "Facturas"),
+        registry: new SharePointInvoiceRegistry(graph, siteId, process.env.M365_INVOICE_REGISTRY_LIST ?? "RegistroFacturas"),
+        supplierDirectory: new SharePointSupplierDirectory(graph, siteId, process.env.M365_SUPPLIERS_LIST ?? "MaestroProveedores"),
+      });
       const poller = new SharePointInvoiceMailboxPoller(
         graph,
         requiredSetting("M365_MAILBOX_ADDRESS"),
-        new SharePointDocumentRepository(graph, requiredSetting("M365_SHAREPOINT_DRIVE_ID"), process.env.M365_INVOICE_FOLDER ?? "Facturas"),
+        processor,
       );
       context.log("Invoice mailbox polling completed", await poller.run());
     } catch (error) {

@@ -29,6 +29,9 @@ param m365SharePointSiteId string = 'integramente.sharepoint.com,22c53ae6-a4db-4
 @description('Microsoft Graph ID of the default SharePoint document library. This is an identifier, not a secret.')
 param m365SharePointDriveId string = 'b!5jrFItukHkmFsOl2xVnIkJuxt8evc-NCiytn9wNt7VsGAUobTrWkQLJNsSY1Ct6p'
 
+@description('Safety switch for automatic mailbox processing. Enable only after persistent lists are provisioned and the pilot inbox is prepared.')
+param invoiceProcessingEnabled bool = false
+
 param tags object = {
   application: 'facturas-copilot'
   environment: environmentName
@@ -171,6 +174,9 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
         { name: 'M365_BANK_MOVEMENTS_LIST', value: 'MovimientosBancarios' }
         { name: 'M365_EXCEPTIONS_LIST', value: 'Excepciones' }
         { name: 'M365_SUPPLIERS_LIST', value: 'MaestroProveedores' }
+        { name: 'M365_INVOICE_PROCESSES_LIST', value: 'ProcesosFacturas' }
+        { name: 'M365_INVOICE_REGISTRY_LIST', value: 'RegistroFacturas' }
+        { name: 'INVOICE_PROCESSING_ENABLED', value: string(invoiceProcessingEnabled) }
         { name: 'INVOICE_MAIL_POLL_SCHEDULE', value: '30 */10 * * * *' }
         { name: 'M365_INVOICE_FOLDER', value: 'Facturas' }
         { name: 'M365_MAILBOX_ADDRESS', value: m365MailboxAddress }

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { ConfigurationError, GraphClient, GraphError, loadMicrosoft365Config, SharePointDocumentRepository, SharePointInvoiceMailboxPoller, SharePointSupplierDirectory } from "./index.ts";
+import { ConfigurationError, GraphClient, GraphError, loadMicrosoft365Config, SharePointDocumentRepository, SharePointInvoiceMailboxPoller, SharePointProcessStore, SharePointSupplierDirectory } from "./index.ts";
 
 const environment = {
   M365_TENANT_ID: "tenant", M365_CLIENT_ID: "client",
@@ -78,6 +78,30 @@ test("loads active supplier master records from SharePoint", async () => {
   assert.deepEqual(records, [{ supplierId: "SUP-1", legalName: "Proveedor Uno SL", taxId: "B12345678", aliases: ["P1", "Proveedor 1"], active: true }]);
 });
 
+test("persists and reloads invoice process state by stable process ID", async () => {
+  let storedFields: Record<string, unknown> | undefined;
+  const graph = new GraphClient({ getAccessToken: async () => "token" }, async (url, init) => {
+    const path = String(url);
+    if (path.endsWith("/lists?$select=id,displayName")) return Response.json({ value: [{ id: "processes", displayName: "ProcesosFacturas" }] });
+    if (init?.method === "POST") {
+      storedFields = (JSON.parse(String(init.body)) as { fields: Record<string, unknown> }).fields;
+      return Response.json({ id: "item-1", fields: storedFields }, { status: 201 });
+    }
+    return Response.json({ value: storedFields ? [{ id: "item-1", fields: storedFields }] : [] });
+  });
+  const store = new SharePointProcessStore(graph, "site");
+  await store.save({
+    processId: "stable-id", state: "classified", documentKind: "invoice", classificationConfidence: 0.91,
+    classificationReasons: ["invoice heading"],
+    input: { messageId: "message", attachmentId: "attachment", sender: "sender@example.test", receivedAt: "2026-09-11T08:00:00Z", originalFilename: "invoice.pdf", contentType: "application/pdf" },
+    updatedAt: "2026-09-11T08:01:00Z",
+  });
+  const loaded = await store.get("stable-id");
+  assert.equal(loaded?.state, "classified");
+  assert.equal(loaded?.documentKind, "invoice");
+  assert.deepEqual(loaded?.classificationReasons, ["invoice heading"]);
+});
+
 test("does not overwrite an existing SharePoint document", async () => {
   const methods: string[] = [];
   const graph = new GraphClient({ getAccessToken: async () => "token" }, async (_url, init) => {
@@ -93,24 +117,25 @@ test("does not overwrite an existing SharePoint document", async () => {
 
 test("mail poller downloads file attachments without selecting derived contentBytes", async () => {
   const requestedUrls: string[] = [];
+  const processed: Array<{ sender: string; filename: string }> = [];
   const fakeFetch: typeof fetch = async (url, init) => {
     requestedUrls.push(String(url));
-    if (init?.method === "PUT") return Response.json({ webUrl: "https://company.sharepoint.com/invoice.pdf" }, { status: 201 });
-    if (String(url).includes("/root:/Facturas/")) return new Response("missing", { status: 404 });
     if (String(url).includes("/attachments")) {
       return Response.json({ value: [{ id: "attachment", name: "invoice.pdf", contentType: "application/pdf", contentBytes: "AQ==", isInline: false }] });
     }
-    return Response.json({ value: [{ id: "message", hasAttachments: true }] });
+    return Response.json({ value: [{ id: "message", receivedDateTime: "2026-09-11T08:00:00Z", hasAttachments: true, from: { emailAddress: { address: "sender@example.test" } } }] });
   };
   const graph = new GraphClient({ getAccessToken: async () => "token" }, fakeFetch);
-  const repository = new SharePointDocumentRepository(graph, "drive", "Facturas");
-  const result = await new SharePointInvoiceMailboxPoller(graph, "facturas@company.test", repository).run();
+  const processor = { process: async (input: import("../processing/types.ts").AttachmentInput) => {
+    processed.push({ sender: input.sender, filename: input.originalFilename });
+    const { content: _content, ...metadata } = input;
+    return { processId: "process", state: "completed" as const, input: metadata, updatedAt: "2026-09-11T08:01:00Z", idempotentReplay: false };
+  } };
+  const result = await new SharePointInvoiceMailboxPoller(graph, "facturas@company.test", processor).run();
 
-  assert.deepEqual(result, { messages: 1, archived: 1 });
+  assert.deepEqual(result, { messages: 1, pdfAttachments: 1, completed: 1, diverted: 0, reviewRequired: 0, failed: 0, idempotentReplays: 0 });
+  assert.deepEqual(processed, [{ sender: "sender@example.test", filename: "invoice.pdf" }]);
   const attachmentRequest = requestedUrls.find((url) => url.includes("/attachments"));
   assert.ok(attachmentRequest);
   assert.doesNotMatch(attachmentRequest, /contentBytes|\$select/);
-  const uploadRequest = requestedUrls.find((url) => url.endsWith(":/content"));
-  assert.match(uploadRequest ?? "", /\/mail_[a-f0-9]{20}_invoice\.pdf:\/content$/);
-  assert.ok((uploadRequest ?? "").length < 180);
 });

@@ -7,6 +7,9 @@ El 10 de septiembre de 2026 se validó este recorrido real en desarrollo:
 ```text
 facturas-pruebas@integramente.onmicrosoft.com / Inbox
   → pollInvoiceMailbox (Azure Functions Flex Consumption)
+  → clasificación y extracción con Document Intelligence
+  → validación contra MaestroProveedores
+  → estado en ProcesosFacturas y RegistroFacturas
   → Microsoft Graph con identidad administrada
   → https://integramente.sharepoint.com/sites/facturas
   → Documentos/Facturas
@@ -38,7 +41,13 @@ M365_SHAREPOINT_SITE_ID=integramente.sharepoint.com,22c53ae6-a4db-491e-85b0-e976
 M365_SHAREPOINT_DRIVE_ID=<id de la biblioteca que comienza por b!>
 M365_INVOICE_FOLDER=Facturas
 INVOICE_MAIL_POLL_SCHEDULE=30 */10 * * * *
+M365_INVOICE_PROCESSES_LIST=ProcesosFacturas
+M365_INVOICE_REGISTRY_LIST=RegistroFacturas
+M365_SUPPLIERS_LIST=MaestroProveedores
+INVOICE_PROCESSING_ENABLED=false
 ```
+
+El interruptor permanece en `false` durante el primer despliegue de la migración. El workflow ofrece `invoice_processing_enabled`; solo se selecciona `true` después de aprovisionar las listas y preparar un correo de prueba controlado. Con `false`, el temporizador no lee ni transforma adjuntos y deja el mensaje `Invoice mailbox processing is disabled`.
 
 El Drive ID no es el Site ID. Para obtenerlos en Graph Explorer, iniciar sesión en el tenant y ejecutar:
 
@@ -124,8 +133,9 @@ La prueba se considera correcta cuando:
 
 1. El correo permanece visible en `Inbox` con un PDF no inline.
 2. `pollInvoiceMailbox` termina sin excepción.
-3. El log `Invoice mailbox polling completed` informa al menos un adjunto archivado.
+3. El log `Invoice mailbox polling completed` informa un elemento `completed`, `diverted` o `reviewRequired` según el documento.
 4. El PDF aparece en `Documentos/Facturas` con autor `SharePoint App`.
-5. Un ciclo posterior no crea una copia adicional del mismo mensaje/adjunto.
+5. `ProcesosFacturas` contiene un único `ProcessId` y, para una factura válida, `RegistroFacturas` contiene una única clave de duplicidad.
+6. Un ciclo posterior incrementa `idempotentReplays` y no crea otra fila ni copia del mismo mensaje/adjunto.
 
 El poller es de solo lectura y no mueve ni marca el correo. Examina hasta los 25 mensajes más recientes con adjuntos; `putOnce` evita duplicar el mismo par mensaje/adjunto.

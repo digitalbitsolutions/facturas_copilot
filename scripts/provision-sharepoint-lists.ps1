@@ -66,6 +66,50 @@ $existing = (Invoke-RestMethod -Headers $headers -Uri "https://graph.microsoft.c
 
 $definitions = @(
     @{
+        displayName = 'ProcesosFacturas'
+        columns = @(
+            @{ name = 'ProcessId'; indexed = $true; enforceUniqueValues = $true; text = @{} }
+            @{ name = 'Estado'; choice = @{ choices = @('received','classified','extracted','validated','archived','completed','diverted','review_required','failed') } }
+            @{ name = 'MessageId'; text = @{} }
+            @{ name = 'AttachmentId'; text = @{} }
+            @{ name = 'Remitente'; text = @{} }
+            @{ name = 'Recibido'; dateTime = @{ format = 'dateTime' } }
+            @{ name = 'ArchivoOriginal'; text = @{} }
+            @{ name = 'ContentType'; text = @{} }
+            @{ name = 'FlowRunId'; text = @{} }
+            @{ name = 'DocumentKind'; choice = @{ choices = @('invoice','bank_settlement','other') } }
+            @{ name = 'ClassificationConfidence'; number = @{ decimalPlaces = 'automatic' } }
+            @{ name = 'ClassificationReasons'; text = @{ allowMultipleLines = $true } }
+            @{ name = 'DuplicateKey'; text = @{} }
+            @{ name = 'FinalFilename'; text = @{} }
+            @{ name = 'DocumentUrl'; text = @{ allowMultipleLines = $true } }
+            @{ name = 'ExceptionCode'; text = @{} }
+            @{ name = 'ExceptionReason'; text = @{ allowMultipleLines = $true } }
+            @{ name = 'ExceptionRetryable'; boolean = @{} }
+            @{ name = 'ValidationIssues'; text = @{ allowMultipleLines = $true } }
+            @{ name = 'UpdatedAt'; dateTime = @{ format = 'dateTime' } }
+        )
+    },
+    @{
+        displayName = 'RegistroFacturas'
+        columns = @(
+            @{ name = 'ProcessId'; indexed = $true; enforceUniqueValues = $true; text = @{} }
+            @{ name = 'DuplicateKey'; indexed = $true; enforceUniqueValues = $true; text = @{} }
+            @{ name = 'Proveedor'; text = @{} }
+            @{ name = 'NIFProveedor'; text = @{} }
+            @{ name = 'NumeroFactura'; text = @{} }
+            @{ name = 'FechaFactura'; dateTime = @{ format = 'dateOnly' } }
+            @{ name = 'FechaVencimiento'; dateTime = @{ format = 'dateOnly' } }
+            @{ name = 'BaseImponible'; number = @{ decimalPlaces = 'automatic' } }
+            @{ name = 'IVA'; number = @{ decimalPlaces = 'automatic' } }
+            @{ name = 'Total'; number = @{ decimalPlaces = 'automatic' } }
+            @{ name = 'Moneda'; text = @{} }
+            @{ name = 'DocumentoUrl'; text = @{ allowMultipleLines = $true } }
+            @{ name = 'Remitente'; text = @{} }
+            @{ name = 'Recibido'; dateTime = @{ format = 'dateTime' } }
+        )
+    },
+    @{
         displayName = 'MaestroProveedores'
         columns = @(
             @{ name = 'CodigoProveedor'; text = @{} }
