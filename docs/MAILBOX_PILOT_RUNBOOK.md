@@ -146,3 +146,7 @@ La prueba se considera correcta cuando:
 6. Un ciclo posterior incrementa `idempotentReplays` y no crea otra fila ni copia del mismo mensaje/adjunto.
 
 El poller es de solo lectura y no mueve ni marca el correo. Examina hasta los 25 mensajes más recientes con adjuntos; `putOnce` evita duplicar el mismo par mensaje/adjunto.
+
+## Validación del procesador completo — 11 de septiembre de 2026
+
+Con una fecha de corte UTC se activó el circuito para un único correo nuevo. La factura terminó en `completed`, creó una fila en `RegistroFacturas` y un PDF en `Documentos/Facturas`. Los dos ciclos siguientes conservaron una sola fila y un solo archivo. Application Insights mostró primero `completed=1` e `idempotentReplays=0`, y después `completed=1` e `idempotentReplays=1`, con cero desviados, revisiones y fallos.

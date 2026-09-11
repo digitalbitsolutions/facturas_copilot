@@ -43,7 +43,7 @@
 - [x] Aprovisionar `ProcesosFacturas` y `RegistroFacturas`, desplegar con procesamiento desactivado y preparar una activación controlada.
 - [x] Activar el procesamiento con fecha de corte, enviar un correo nuevo y verificar proceso, registro, archivo y replay idempotente.
 - [x] Ajustar el mapeo real: razón social completa y base derivada con confianza conservadora cuando falta `SubTotal`.
-- [ ] Confirmar en Application Insights una ejecución exitosa y conservar la evidencia del contador `archived`.
+- [x] Confirmar en Application Insights la ejecución automática y dos replays idempotentes sin fallos ni efectos duplicados.
 - [ ] Crear los flujos Power Automate y ejecutar pruebas de aceptación CA-01 a CA-21.
 
 ## Núcleo de facturas
