@@ -15,7 +15,9 @@ La API usa Azure Functions Runtime 4, modelo de programación Node.js v4 y Node.
 
 El mapeo prefiere `VendorAddressRecipient` frente al nombre comercial abreviado. Si el modelo omite `SubTotal` pero entrega un `InvoiceTotal` estrictamente mayor que `TotalTax`, deriva la base mediante resta y conserva como confianza la menor de ambas fuentes; una confianza insuficiente sigue obligando a revisión humana. Si total e impuesto son iguales, no deriva una base cero porque suele indicar una detección errónea del total.
 
-La validación conserva `0,8` como umbral general de respaldo y aplica esta política piloto por campo: proveedor `0,75`, número `0,70`, fecha de factura `0,85`, vencimiento `0,65`, base imponible `0,40`, IVA `0,80`, total `0,90` y moneda `0,80`. Un umbral de confianza superado no reemplaza las reglas deterministas: los campos obligatorios deben existir, fechas e importes deben tener formato válido y base más IVA debe coincidir con el total dentro de un céntimo. Por ello, una base con confianza reducida solo se acepta cuando el conjunto fiscal es completo y coherente.
+La validación conserva `0,8` como umbral general de respaldo y aplica esta política piloto por campo: proveedor `0,75`, NIF `0,80`, número `0,70`, fecha de factura `0,85`, vencimiento `0,65`, base imponible `0,40`, IVA `0,80`, total `0,90` y moneda `0,80`. Un umbral de confianza superado no reemplaza las reglas deterministas: los campos obligatorios deben existir, fechas e importes deben tener formato válido y base más IVA debe coincidir con el total dentro de un céntimo. Por ello, una base con confianza reducida solo se acepta cuando el conjunto fiscal es completo y coherente.
+
+El endpoint consulta `MaestroProveedores` y devuelve `supplierIdentity`. Un NIF extraído solo valida mediante coincidencia exacta y única con un proveedor activo; si no hay NIF, se permite coincidencia exacta tras normalizar razón social o un alias explícito. Los estados `not_found` y `ambiguous` hacen que `validation.valid` sea `false`.
 
 ## Validar factura
 

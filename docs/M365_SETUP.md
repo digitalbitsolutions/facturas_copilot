@@ -22,6 +22,8 @@ Ejecutar una sola vez, autenticándose como propietario del sitio:
 .\scripts\provision-sharepoint-lists.ps1 -TenantId '<tenant-id>'
 ```
 
+El script crea también `MaestroProveedores`. Antes de probar la aceptación automática, añade una fila por proveedor con `CodigoProveedor`, `RazonSocial`, `NIF`, `Aliases` (uno por línea o separados por `;`) y `Activo = Sí`. El NIF debe ser único entre proveedores activos. Si Document Intelligence entrega NIF, la Function exige una coincidencia exacta; solo cuando el NIF no está disponible compara la razón social y los alias normalizados. Una ausencia, contradicción o coincidencia múltiple obliga a revisión.
+
 Los ajustes operativos `M365_MAILBOX_ADDRESS`, `M365_SHAREPOINT_SITE_ID` y `M365_SHAREPOINT_DRIVE_ID` están declarados como parámetros en Bicep. El despliegue los aplica junto con los nombres de carpetas, listas y horarios; para otro tenant se deben sobrescribir los parámetros sin modificar el código.
 
 ## Acceso al buzón de pruebas

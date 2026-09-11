@@ -6,6 +6,7 @@ const result = {
   status: "succeeded" as const,
   analyzeResult: { documents: [{ fields: {
     VendorName: { valueString: "Proveedor Norte, S.L.", confidence: 0.98 },
+    VendorTaxId: { valueString: "B12345678", confidence: 0.93 },
     InvoiceId: { valueString: "F-2026-42", confidence: 0.97 },
     InvoiceDate: { valueDate: "2026-09-01", confidence: 0.96 },
     DueDate: { valueDate: "2026-10-01", confidence: 0.91 },
@@ -18,11 +19,11 @@ const result = {
 test("maps the prebuilt invoice fields to the validation contract", () => {
   assert.deepEqual(mapInvoiceResult(result), {
     invoice: {
-      supplierName: "Proveedor Norte, S.L.", invoiceNumber: "F-2026-42", invoiceDate: "2026-09-01",
+      supplierName: "Proveedor Norte, S.L.", supplierTaxId: "B12345678", invoiceNumber: "F-2026-42", invoiceDate: "2026-09-01",
       dueDate: "2026-10-01", taxableBase: "100.00", vatAmount: "21.00", totalAmount: "121.00", currency: "EUR",
     },
     confidence: {
-      supplierName: 0.98, invoiceNumber: 0.97, invoiceDate: 0.96, dueDate: 0.91,
+      supplierName: 0.98, supplierTaxId: 0.93, invoiceNumber: 0.97, invoiceDate: 0.96, dueDate: 0.91,
       taxableBase: 0.95, vatAmount: 0.94, totalAmount: 0.99, currency: 0.99,
     },
   });

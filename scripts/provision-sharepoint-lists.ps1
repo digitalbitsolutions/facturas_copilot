@@ -66,6 +66,16 @@ $existing = (Invoke-RestMethod -Headers $headers -Uri "https://graph.microsoft.c
 
 $definitions = @(
     @{
+        displayName = 'MaestroProveedores'
+        columns = @(
+            @{ name = 'CodigoProveedor'; text = @{} }
+            @{ name = 'RazonSocial'; text = @{} }
+            @{ name = 'NIF'; text = @{} }
+            @{ name = 'Aliases'; text = @{ allowMultipleLines = $true } }
+            @{ name = 'Activo'; boolean = @{} }
+        )
+    },
+    @{
         displayName = 'Excepciones'
         columns = @(
             @{ name = 'Codigo'; text = @{} }

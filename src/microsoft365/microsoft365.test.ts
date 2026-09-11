@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { ConfigurationError, GraphClient, GraphError, loadMicrosoft365Config, SharePointDocumentRepository, SharePointInvoiceMailboxPoller } from "./index.ts";
+import { ConfigurationError, GraphClient, GraphError, loadMicrosoft365Config, SharePointDocumentRepository, SharePointInvoiceMailboxPoller, SharePointSupplierDirectory } from "./index.ts";
 
 const environment = {
   M365_TENANT_ID: "tenant", M365_CLIENT_ID: "client",
@@ -64,6 +64,18 @@ test("uploads a deterministic SharePoint path", async () => {
   assert.match(requests[1].url, /drives\/drive%20id\/root:\/Facturas\/2026\/process_Factura%201\.pdf:\/content$/);
   assert.equal(stored.url, "https://company.sharepoint.com/file.pdf");
   assert.equal(stored.created, true);
+});
+
+test("loads active supplier master records from SharePoint", async () => {
+  const graph = new GraphClient({ getAccessToken: async () => "token" }, async (url) => {
+    assert.match(String(url), /lists\/MaestroProveedores\/items\?expand=fields&\$top=999$/);
+    return Response.json({ value: [
+      { id: "1", fields: { CodigoProveedor: "SUP-1", RazonSocial: "Proveedor Uno SL", NIF: "B12345678", Aliases: "P1;Proveedor 1", Activo: true } },
+      { id: "2", fields: { RazonSocial: "Proveedor Inactivo", Activo: false } },
+    ] });
+  });
+  const records = await new SharePointSupplierDirectory(graph, "site").listActive();
+  assert.deepEqual(records, [{ supplierId: "SUP-1", legalName: "Proveedor Uno SL", taxId: "B12345678", aliases: ["P1", "Proveedor 1"], active: true }]);
 });
 
 test("does not overwrite an existing SharePoint document", async () => {

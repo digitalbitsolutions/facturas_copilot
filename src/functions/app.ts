@@ -1,8 +1,8 @@
 import { app, type HttpRequest, type HttpResponseInit, type InvocationContext } from "@azure/functions";
 import { importBankRequest, reconcileBankRequest, validateInvoiceRequest } from "../api/services.ts";
 import { DocumentIntelligenceInvoiceExtractor } from "../extraction/index.ts";
-import { validateInvoice } from "../invoices/index.ts";
-import { DEFAULT_BANK_IMPORT_CONFIG, GraphClient, ManagedIdentityTokenProvider, SharePointBankPoller, SharePointDocumentRepository, SharePointInvoiceMailboxPoller } from "../microsoft365/index.ts";
+import { resolveSupplierIdentity, validateInvoice } from "../invoices/index.ts";
+import { DEFAULT_BANK_IMPORT_CONFIG, GraphClient, ManagedIdentityTokenProvider, SharePointBankPoller, SharePointDocumentRepository, SharePointInvoiceMailboxPoller, SharePointSupplierDirectory } from "../microsoft365/index.ts";
 
 function json(status: number, body: unknown): HttpResponseInit {
   return { status, jsonBody: body, headers: { "content-type": "application/json; charset=utf-8" } };
@@ -47,7 +47,20 @@ app.http("extractInvoice", {
         originalFilename: request.headers.get("x-filename") ?? "invoice.pdf",
         contentType, content,
       });
-      return json(200, { ...extraction, validation: validateInvoice(extraction.invoice, extraction.confidence) });
+      const supplierDirectory = new SharePointSupplierDirectory(
+        new GraphClient(new ManagedIdentityTokenProvider()),
+        requiredSetting("M365_SHAREPOINT_SITE_ID"),
+        process.env.M365_SUPPLIERS_LIST ?? "MaestroProveedores",
+      );
+      const supplierIdentity = resolveSupplierIdentity(extraction.invoice, await supplierDirectory.listActive());
+      const resolvedInvoice = supplierIdentity.status === "matched"
+        ? { ...extraction.invoice, supplierName: supplierIdentity.supplier.legalName, supplierTaxId: supplierIdentity.supplier.taxId ?? extraction.invoice.supplierTaxId }
+        : extraction.invoice;
+      const invoiceValidation = validateInvoice(resolvedInvoice, extraction.confidence);
+      const validation = supplierIdentity.status === "matched"
+        ? invoiceValidation
+        : { valid: false as const, issues: invoiceValidation.valid ? [supplierIdentity.issue] : [...invoiceValidation.issues, supplierIdentity.issue] };
+      return json(200, { ...extraction, supplierIdentity, validation });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Extraction failed";
       context.error("Invoice extraction failed", { message });

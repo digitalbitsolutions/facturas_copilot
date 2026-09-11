@@ -12,6 +12,7 @@ export const defaultValidationConfig: InvoiceValidationConfig = {
   minimumConfidence: 0.8,
   minimumConfidenceByField: {
     supplierName: 0.75,
+    supplierTaxId: 0.8,
     invoiceNumber: 0.7,
     invoiceDate: 0.85,
     dueDate: 0.65,
@@ -85,5 +86,5 @@ export function validateInvoice(
   }
 
   if (issues.length) return { valid: false, issues };
-  return { valid: true, invoice: invoice as Required<Pick<ExtractedInvoice, "supplierName" | "invoiceNumber" | "invoiceDate" | "taxableBase" | "vatAmount" | "totalAmount">> & Pick<ExtractedInvoice, "dueDate" | "currency">, issues: [] };
+  return { valid: true, invoice: invoice as Required<Pick<ExtractedInvoice, "supplierName" | "invoiceNumber" | "invoiceDate" | "taxableBase" | "vatAmount" | "totalAmount">> & Pick<ExtractedInvoice, "dueDate" | "currency" | "supplierTaxId">, issues: [] };
 }

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { AttachmentProcessor, MemoryDocumentRepository, MemoryInvoiceRegistry, MemoryProcessStore } from "./index.ts";
+import { AttachmentProcessor, MemoryDocumentRepository, MemoryInvoiceRegistry, MemoryProcessStore, MemorySupplierDirectory } from "./index.ts";
 import type { AttachmentInput, DocumentKind } from "./types.ts";
 
 const input = (attachmentId = "a-1"): AttachmentInput => ({
@@ -9,10 +9,11 @@ const input = (attachmentId = "a-1"): AttachmentInput => ({
 });
 const invoice = { supplierName: "ACME", invoiceNumber: "F-42", invoiceDate: "2026-09-01", dueDate: "2026-10-01", taxableBase: "100", vatAmount: "21", totalAmount: "121", currency: "EUR" };
 
-function setup(options: { kind?: DocumentKind; extracted?: typeof invoice; extractionErrorFor?: string } = {}) {
+function setup(options: { kind?: DocumentKind; extracted?: typeof invoice; extractionErrorFor?: string; supplierName?: string } = {}) {
   const processStore = new MemoryProcessStore();
   const documents = new MemoryDocumentRepository();
   const registry = new MemoryInvoiceRegistry();
+  const supplierDirectory = new MemorySupplierDirectory(options.supplierName === "missing" ? [] : [{ supplierId: "SUP-1", legalName: options.supplierName ?? "ACME", active: true }]);
   let extractionCalls = 0;
   const processor = new AttachmentProcessor({
     classifier: { classify: async () => options.kind ?? "invoice" },
@@ -21,7 +22,7 @@ function setup(options: { kind?: DocumentKind; extracted?: typeof invoice; extra
       if (attachment.attachmentId === options.extractionErrorFor) throw new Error("Unreadable PDF");
       return { invoice: options.extracted ?? invoice, confidence: { totalAmount: 0.99 } };
     } },
-    processStore, documents, registry,
+    processStore, documents, registry, supplierDirectory,
     now: () => new Date("2026-09-07T12:00:00Z"),
   });
   return { processor, processStore, documents, registry, extractionCalls: () => extractionCalls };
@@ -50,6 +51,14 @@ test("creates a review exception for incomplete extraction", async () => {
   const result = await context.processor.process(input());
   assert.equal(result.state, "review_required");
   assert.equal(result.exception?.code, "EX-05");
+  assert.equal(context.documents.documents.size, 0);
+});
+
+test("requires a unique active supplier master match before archiving", async () => {
+  const context = setup({ supplierName: "missing" });
+  const result = await context.processor.process(input());
+  assert.equal(result.state, "review_required");
+  assert.equal(result.exception?.issues?.[0]?.code, "supplier_not_found");
   assert.equal(context.documents.documents.size, 0);
 });
 
