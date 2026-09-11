@@ -45,9 +45,10 @@ M365_INVOICE_PROCESSES_LIST=ProcesosFacturas
 M365_INVOICE_REGISTRY_LIST=RegistroFacturas
 M365_SUPPLIERS_LIST=MaestroProveedores
 INVOICE_PROCESSING_ENABLED=false
+INVOICE_PROCESSING_NOT_BEFORE=9999-12-31T23:59:59Z
 ```
 
-El interruptor permanece en `false` durante el primer despliegue de la migración. El workflow ofrece `invoice_processing_enabled`; solo se selecciona `true` después de aprovisionar las listas y preparar un correo de prueba controlado. Con `false`, el temporizador no lee ni transforma adjuntos y deja el mensaje `Invoice mailbox processing is disabled`.
+El interruptor permanece en `false` durante el primer despliegue de la migración. El workflow ofrece `invoice_processing_enabled`; solo se selecciona `true` después de aprovisionar las listas. En esa ejecución se debe sustituir `invoice_processing_not_before` por el instante UTC inmediatamente anterior al envío del correo de prueba. Los mensajes anteriores se ignoran. Con `false`, el temporizador no lee ni transforma adjuntos y deja el mensaje `Invoice mailbox processing is disabled`.
 
 El Drive ID no es el Site ID. Para obtenerlos en Graph Explorer, iniciar sesión en el tenant y ejecutar:
 

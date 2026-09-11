@@ -24,7 +24,7 @@ Ejecutar una sola vez, autenticándose como propietario del sitio:
 
 El script crea también `MaestroProveedores`, `ProcesosFacturas` y `RegistroFacturas`. Antes de probar la aceptación automática, añade una fila por proveedor con `CodigoProveedor`, `RazonSocial`, `NIF`, `Aliases` (uno por línea o separados por `;`) y `Activo = Sí`. El NIF debe ser único entre proveedores activos. Si Document Intelligence entrega NIF, la Function exige una coincidencia exacta; solo cuando el NIF no está disponible compara la razón social y los alias normalizados. Una ausencia, contradicción o coincidencia múltiple obliga a revisión.
 
-`ProcesosFacturas.ProcessId`, `RegistroFacturas.ProcessId` y `RegistroFacturas.DuplicateKey` son únicos. El estado sobrevive a reinicios y permite que un ciclo posterior reconozca un adjunto terminal sin repetir clasificación, extracción ni archivo. El despliegue mantiene `INVOICE_PROCESSING_ENABLED=false` por defecto; las listas deben existir antes de activarlo.
+`ProcesosFacturas.ProcessId`, `RegistroFacturas.ProcessId` y `RegistroFacturas.DuplicateKey` son únicos. El estado sobrevive a reinicios y permite que un ciclo posterior reconozca un adjunto terminal sin repetir clasificación, extracción ni archivo. El despliegue mantiene `INVOICE_PROCESSING_ENABLED=false` e `INVOICE_PROCESSING_NOT_BEFORE=9999-12-31T23:59:59Z` por defecto; las listas deben existir y la fecha de corte debe fijarse antes de activarlo.
 
 Los ajustes operativos `M365_MAILBOX_ADDRESS`, `M365_SHAREPOINT_SITE_ID` y `M365_SHAREPOINT_DRIVE_ID` están declarados como parámetros en Bicep. El despliegue los aplica junto con los nombres de carpetas, listas y horarios; para otro tenant se deben sobrescribir los parámetros sin modificar el código.
 

@@ -142,6 +142,7 @@ app.timer("pollInvoiceMailbox", {
         graph,
         requiredSetting("M365_MAILBOX_ADDRESS"),
         processor,
+        requiredSetting("INVOICE_PROCESSING_NOT_BEFORE"),
       );
       context.log("Invoice mailbox polling completed", await poller.run());
     } catch (error) {

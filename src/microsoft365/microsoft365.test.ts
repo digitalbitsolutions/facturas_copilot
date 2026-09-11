@@ -131,11 +131,23 @@ test("mail poller downloads file attachments without selecting derived contentBy
     const { content: _content, ...metadata } = input;
     return { processId: "process", state: "completed" as const, input: metadata, updatedAt: "2026-09-11T08:01:00Z", idempotentReplay: false };
   } };
-  const result = await new SharePointInvoiceMailboxPoller(graph, "facturas@company.test", processor).run();
+  const result = await new SharePointInvoiceMailboxPoller(graph, "facturas@company.test", processor, "2026-09-11T07:59:59Z").run();
 
   assert.deepEqual(result, { messages: 1, pdfAttachments: 1, completed: 1, diverted: 0, reviewRequired: 0, failed: 0, idempotentReplays: 0 });
   assert.deepEqual(processed, [{ sender: "sender@example.test", filename: "invoice.pdf" }]);
   const attachmentRequest = requestedUrls.find((url) => url.includes("/attachments"));
   assert.ok(attachmentRequest);
   assert.doesNotMatch(attachmentRequest, /contentBytes|\$select/);
+});
+
+test("mail poller ignores messages older than the activation cutoff", async () => {
+  let attachmentRequests = 0;
+  const graph = new GraphClient({ getAccessToken: async () => "token" }, async (url) => {
+    if (String(url).includes("/attachments")) attachmentRequests += 1;
+    return Response.json({ value: [{ id: "old", receivedDateTime: "2026-09-10T23:59:59Z", hasAttachments: true }] });
+  });
+  const processor = { process: async () => { throw new Error("Old messages must not be processed"); } };
+  const result = await new SharePointInvoiceMailboxPoller(graph, "facturas@company.test", processor, "2026-09-11T00:00:00Z").run();
+  assert.equal(result.pdfAttachments, 0);
+  assert.equal(attachmentRequests, 0);
 });

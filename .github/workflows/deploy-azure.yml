@@ -20,6 +20,10 @@ on:
         required: true
         type: boolean
         default: false
+      invoice_processing_not_before:
+        description: Process only messages received at or after this UTC ISO instant
+        required: true
+        default: '9999-12-31T23:59:59Z'
 
 permissions:
   id-token: write
@@ -51,7 +55,7 @@ jobs:
           output=$(az deployment group create \
             --resource-group "rg-facturas-copilot-${{ inputs.environment }}" \
             --template-file infra/main.bicep \
-            --parameters environmentName="${{ inputs.environment }}" location="${{ inputs.location }}" documentIntelligenceLocation="${{ inputs.document_intelligence_location }}" entraApiClientId="${{ vars.ENTRA_API_CLIENT_ID }}" invoiceProcessingEnabled="${{ inputs.invoice_processing_enabled }}" \
+            --parameters environmentName="${{ inputs.environment }}" location="${{ inputs.location }}" documentIntelligenceLocation="${{ inputs.document_intelligence_location }}" entraApiClientId="${{ vars.ENTRA_API_CLIENT_ID }}" invoiceProcessingEnabled="${{ inputs.invoice_processing_enabled }}" invoiceProcessingNotBefore="${{ inputs.invoice_processing_not_before }}" \
             --query properties.outputs.functionAppName.value -o tsv)
           echo "function_name=$output" >> "$GITHUB_OUTPUT"
       - name: Prepare deployment package

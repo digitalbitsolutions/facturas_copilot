@@ -15,9 +15,12 @@ export class SharePointInvoiceMailboxPoller {
   private readonly graph: GraphClient;
   private readonly mailbox: string;
   private readonly processor: Pick<AttachmentProcessor, "process">;
+  private readonly notBefore: number;
 
-  constructor(graph: GraphClient, mailbox: string, processor: Pick<AttachmentProcessor, "process">) {
+  constructor(graph: GraphClient, mailbox: string, processor: Pick<AttachmentProcessor, "process">, notBefore: string) {
     this.graph = graph; this.mailbox = mailbox; this.processor = processor;
+    this.notBefore = Date.parse(notBefore);
+    if (!Number.isFinite(this.notBefore)) throw new Error("INVOICE_PROCESSING_NOT_BEFORE must be an ISO date-time");
   }
 
   async run(): Promise<MailboxPollingResult> {
@@ -26,7 +29,7 @@ export class SharePointInvoiceMailboxPoller {
     );
     const results: ProcessResult[] = [];
     let pdfAttachments = 0;
-    for (const message of response.value.filter((candidate) => candidate.hasAttachments)) {
+    for (const message of response.value.filter((candidate) => candidate.hasAttachments && Date.parse(candidate.receivedDateTime ?? "") >= this.notBefore)) {
       const attachments = await this.graph.request<{ value: FileAttachment[] }>(
         `/users/${encodeURIComponent(this.mailbox)}/messages/${encodeURIComponent(message.id)}/attachments`,
       );

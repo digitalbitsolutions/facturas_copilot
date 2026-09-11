@@ -32,6 +32,9 @@ param m365SharePointDriveId string = 'b!5jrFItukHkmFsOl2xVnIkJuxt8evc-NCiytn9wNt
 @description('Safety switch for automatic mailbox processing. Enable only after persistent lists are provisioned and the pilot inbox is prepared.')
 param invoiceProcessingEnabled bool = false
 
+@description('Only messages received at or after this ISO instant may enter automatic invoice processing.')
+param invoiceProcessingNotBefore string = '9999-12-31T23:59:59Z'
+
 param tags object = {
   application: 'facturas-copilot'
   environment: environmentName
@@ -177,6 +180,7 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
         { name: 'M365_INVOICE_PROCESSES_LIST', value: 'ProcesosFacturas' }
         { name: 'M365_INVOICE_REGISTRY_LIST', value: 'RegistroFacturas' }
         { name: 'INVOICE_PROCESSING_ENABLED', value: string(invoiceProcessingEnabled) }
+        { name: 'INVOICE_PROCESSING_NOT_BEFORE', value: invoiceProcessingNotBefore }
         { name: 'INVOICE_MAIL_POLL_SCHEDULE', value: '30 */10 * * * *' }
         { name: 'M365_INVOICE_FOLDER', value: 'Facturas' }
         { name: 'M365_MAILBOX_ADDRESS', value: m365MailboxAddress }
