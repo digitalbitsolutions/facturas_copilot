@@ -45,8 +45,8 @@
 - [x] Ajustar el mapeo real: razón social completa y base derivada con confianza conservadora cuando falta `SubTotal`.
 - [x] Confirmar en Application Insights la ejecución automática y dos replays idempotentes sin fallos ni efectos duplicados.
 - [x] Verificar por buzón que una liquidación y un documento no fiscal quedan `diverted` con `EX-03`, sin registro ni archivo.
-- [ ] Completar prueba de proveedor inactivo (`EX-06`) y restaurar SATINFO a `Activo = Sí`.
-- [ ] Verificar duplicado de negocio desde otro correo (`EX-07`) sin segundo registro ni archivo.
+- [x] Completar prueba de proveedor inactivo (`EX-06`) y restaurar SATINFO a `Activo = Sí`.
+- [x] Verificar duplicado de negocio desde otro correo (`EX-07`) sin segundo registro ni archivo.
 - [ ] Crear los flujos Power Automate y ejecutar pruebas de aceptación CA-01 a CA-21.
 
 ## Núcleo de facturas

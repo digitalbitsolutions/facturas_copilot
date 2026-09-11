@@ -27,6 +27,8 @@ Decisión: no reducir indiscriminadamente el umbral global. Se mantiene `0,8` co
 
 Se creó `MaestroProveedores` en el sitio de pruebas y se registró un proveedor autorizado activo. La misma factura del ensayo extremo a extremo extrajo el NIF con confianza `0,829`; la Function encontró una coincidencia exacta y única mediante `tax_id`, devolvió el identificador interno del proveedor y terminó con `validation.valid = true` e `issues = []`. La evidencia confirma Function → Microsoft Graph → SharePoint → resolución de identidad sin almacenar la factura ni el NIF real en Git.
 
+La ruta negativa se comprobó desactivando temporalmente ese proveedor y enviando la factura en un correo nuevo. El proceso terminó `review_required` con `EX-06`; no se creó registro fiscal ni PDF. El proveedor se reactivó inmediatamente y una nueva entrega de la misma factura produjo `EX-07` por duplicado de negocio, conservando una sola fila fiscal y un solo archivo de la factura. Al cierre había 5 procesos, 4 excepciones, 1 registro fiscal y 8 archivos en la carpeta del piloto.
+
 ## Objetivo
 
 Demostrar si la orquestación local produce ahorro neto frente al flujo íntegramente ejecutado por Codex.

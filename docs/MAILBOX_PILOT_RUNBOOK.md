@@ -153,4 +153,6 @@ Con una fecha de corte UTC se activó el circuito para un único correo nuevo. L
 
 La clasificación automática se validó después con dos correos nuevos. Una liquidación bancaria terminó `diverted` y generó `EX-03` con motivo `Document classified as bank_settlement`; un documento profesional no fiscal hizo lo mismo con categoría `other`. En ambos casos `RegistroFacturas` conservó una sola fila y no apareció ningún PDF adicional.
 
-Prueba pendiente al cierre de sesión: SATINFO está temporalmente inactivo en `MaestroProveedores`. Enviar una factura SATINFO nueva, confirmar `review_required` y `EX-06` sin archivo ni registro, y restaurar `Activo = Sí` antes de cualquier otra prueba.
+La validación de proveedor inactivo se completó con otro correo nuevo de SATINFO. El proceso terminó `review_required`, generó `EX-06` con motivo `Supplier identity requires review` y registró la incidencia `supplier_not_found`; `RegistroFacturas` permaneció en una fila y `Documentos/Facturas` en 8 archivos. SATINFO se restauró inmediatamente a `Activo = Sí` a las 10:31:34 UTC.
+
+Con el proveedor nuevamente activo se envió la misma factura desde otro correo. En el ciclo de las 10:40:30 UTC se creó un proceso distinto en `review_required` con `EX-07` y motivo `Possible duplicate of process ...`, vinculado al proceso original por la misma `DuplicateKey`. La excepción quedó abierta como evidencia, mientras `RegistroFacturas` siguió con una sola fila y la carpeta con 8 archivos; tampoco cambió la fecha de modificación del PDF original.
