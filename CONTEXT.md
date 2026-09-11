@@ -46,6 +46,7 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - La identidad del proveedor se resuelve contra la lista `MaestroProveedores`: NIF exacto y único cuando está disponible, o razón social/alias normalizado si no lo está. Proveedores desconocidos, inactivos, contradictorios o ambiguos quedan en revisión antes de archivar.
 - El 11 de septiembre se aprovisionó `MaestroProveedores` y se verificó el circuito desplegado con una factura autorizada: NIF extraído con confianza `0,829`, coincidencia `tax_id` con un proveedor activo y `validation.valid = true` sin incidencias.
 - La clasificación previa lee las páginas 1-2 con `prebuilt-read` y decide mediante señales auditables entre `invoice`, `bank_settlement` y `other`. Solo las facturas continúan a `prebuilt-invoice`; evidencia insuficiente se detiene de forma conservadora.
+- La clasificación desplegada se verificó con tres PDF: factura (`invoice`, confianza `0,89`, extracción y validación completas), liquidación (`bank_settlement`, `0,99`, extracción omitida) y documento no fiscal (`other`, `0,5`, extracción omitida).
 - No existe aún ningún recurso productivo ni credencial almacenada.
 
 ## Evidencia y diagnóstico del piloto de correo
@@ -171,9 +172,9 @@ Estas decisiones se consolidarán contra el PRD vigente v4.
 
 ## Siguiente secuencia
 
-1. Redesplegar y verificar la clasificación con los tres tipos de documento.
-2. Conectar extracción y validación al buzón con estado persistente e idempotencia.
-3. Incorporar progresivamente los proveedores autorizados al maestro.
+1. Conectar clasificación, extracción y validación al buzón con estado persistente e idempotencia.
+2. Incorporar progresivamente los proveedores autorizados al maestro.
+3. Crear el flujo de revisión para documentos `other`, liquidaciones y excepciones de factura.
 4. Crear los flujos Power Automate de registro, conciliación y revisión.
 5. Ejecutar la aceptación restante CA-01 a CA-21 y conservar evidencia.
 
