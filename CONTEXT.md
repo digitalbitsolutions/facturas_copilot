@@ -50,6 +50,8 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - El sondeo del buzón está conectado al procesador completo. `ProcesosFacturas` conserva cada transición y excepción por `ProcessId`; `RegistroFacturas` impone unicidad de proceso y clave de duplicidad. `INVOICE_PROCESSING_ENABLED=false` y la fecha `INVOICE_PROCESSING_NOT_BEFORE` evitan procesar el histórico hasta completar una activación controlada.
 - La activación controlada del 11 de septiembre procesó un correo nuevo con factura: estado `completed`, una fila en `RegistroFacturas` y un PDF creado por `SharePoint App`. Tras el ciclo siguiente se mantuvieron una sola fila de proceso, una sola factura y un solo archivo sin cambio de modificación, confirmando el replay idempotente persistente.
 - Application Insights confirmó la misma secuencia: primera ejecución `completed=1`, `idempotentReplays=0`; dos ciclos posteriores `completed=1`, `idempotentReplays=1`; `diverted`, `reviewRequired` y `failed` permanecieron en cero.
+- Las rutas negativas también se verificaron desde el buzón: una liquidación terminó `diverted` con `EX-03`/`bank_settlement`, y un CV terminó `diverted` con `EX-03`/`other`. Ninguno creó fila en `RegistroFacturas` ni PDF; la lista conservó únicamente SATINFO.
+- Estado temporal al reiniciar: `INVOICE_PROCESSING_ENABLED=true`; SATINFO fue marcado manualmente como inactivo en `MaestroProveedores` para la siguiente prueba. Debe enviarse una factura SATINFO nueva, esperar el ciclo, confirmar `review_required`/`EX-06` sin registro ni archivo y volver a activar SATINFO inmediatamente después.
 - No existe aún ningún recurso productivo ni credencial almacenada.
 
 ## Evidencia y diagnóstico del piloto de correo
@@ -175,9 +177,9 @@ Estas decisiones se consolidarán contra el PRD vigente v4.
 
 ## Siguiente secuencia
 
-1. Incorporar progresivamente los proveedores autorizados al maestro.
-2. Crear vistas y flujo de revisión para documentos desviados y excepciones.
-3. Ejecutar pruebas negativas automáticas: liquidación, documento no fiscal, proveedor desconocido y duplicado de negocio.
+1. Completar la prueba de proveedor inactivo y volver a activar SATINFO.
+2. Probar el duplicado de negocio enviando la misma factura con SATINFO activo; debe producir `EX-07` sin segundo archivo.
+3. Crear vistas y flujo de revisión para documentos desviados y excepciones.
 4. Crear los flujos Power Automate de registro, conciliación y revisión.
 5. Ejecutar la aceptación restante CA-01 a CA-21 y conservar evidencia.
 
