@@ -76,7 +76,6 @@ $definitions = @(
             @{ name = 'Recibido'; dateTime = @{ format = 'dateTime' } }
             @{ name = 'ArchivoOriginal'; text = @{} }
             @{ name = 'ContentType'; text = @{} }
-            @{ name = 'FlowRunId'; text = @{} }
             @{ name = 'DocumentKind'; choice = @{ choices = @('invoice','bank_settlement','other') } }
             @{ name = 'ClassificationConfidence'; number = @{ decimalPlaces = 'automatic' } }
             @{ name = 'ClassificationReasons'; text = @{ allowMultipleLines = $true } }

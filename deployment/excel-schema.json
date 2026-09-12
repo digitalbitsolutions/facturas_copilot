@@ -7,7 +7,7 @@
     "FechaVencimiento", "BaseImponible", "ImporteIVA", "TotalFactura", "Moneda",
     "EnlacePDF", "MessageId", "RemitenteCorreo", "FechaRecepcion",
     "NombreArchivoOriginal", "NombreArchivoFinal", "SharePointItemId", "ClaveDuplicado",
-    "ConfianzaExtraccion", "MotivoRevision", "FechaProcesado", "FlowRunId",
+    "ConfianzaExtraccion", "MotivoRevision", "FechaProcesado",
     "FechaPago", "MovimientoBancoId"
   ]
 }

@@ -19,9 +19,9 @@
 - [x] Validar el acceso delegado autenticado a la API.
 - [x] Restringir el acceso de la identidad administrada a SharePoint mediante `Sites.Selected`.
 - [x] Validar el archivado real de adjuntos PDF desde Exchange Online hasta SharePoint.
-- [ ] Hacer persistentes en IaC los identificadores del buzón, sitio y biblioteca usados por los temporizadores.
-- [ ] Crear el flujo Power Automate con Outlook, AI Builder y Excel.
-- [ ] Crear los flujos de importación bancaria, conciliación y revisión humana.
+- [x] Hacer persistentes en IaC los identificadores del buzón, sitio y biblioteca usados por los temporizadores.
+- [x] Implementar los temporizadores de Azure Functions para buzón e importación bancaria.
+- [ ] Definir la interfaz operativa de conciliación y revisión humana sobre SharePoint Lists.
 - [ ] Configurar permisos de mínimo privilegio y monitorización.
 
 ### A2 — Piloto y aceptación

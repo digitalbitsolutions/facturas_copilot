@@ -3,8 +3,8 @@ Estados: `Automatizado local`, `Preparado`, `Requiere tenant` y `Requiere muestr
 
 | Criterio | Estado actual | Evidencia pendiente |
 |---|---|---|
-| CA-01 Factura válida completa | Automatizado local | Repetir con Outlook, AI Builder y SharePoint |
-| CA-02 No consumir extracción para no factura | Automatizado local | Confirmar historial de ejecución de Power Automate |
+| CA-01 Factura válida completa | Automatizado local | Repetir con Outlook, Document Intelligence y SharePoint |
+| CA-02 No consumir extracción para no factura | Automatizado local | Confirmar telemetría de Azure Functions |
 | CA-03 Varios adjuntos independientes | Automatizado local | Repetir con correo real de prueba |
 | CA-04 Presupuesto no registrado como factura | Automatizado local | Repetir con clasificador seleccionado |
 | CA-05 Factura incompleta a excepción | Automatizado local | Validar vista de revisión |
@@ -16,7 +16,7 @@ Estados: `Automatizado local`, `Preparado`, `Requiere tenant` y `Requiere muestr
 | CA-11 Distinguir previsión/propuesta/pago | Preparado | Requiere agente y preguntas de evaluación |
 | CA-12 Permisos de usuario | Preparado | Requiere dos usuarios del tenant |
 | CA-13 Importación válida | Automatizado local | Repetir con Excel representativo |
-| CA-14 Esquema bancario inválido | Automatizado local | Repetir mediante Excel Online |
+| CA-14 Esquema bancario inválido | Automatizado local | Repetir con un extracto representativo en SharePoint |
 | CA-15 Reimportación idempotente | Automatizado local | Validar persistencia real |
 | CA-16 Pago exacto explicable | Automatizado local | Calibrar reglas con muestra |
 | CA-17 Ambigüedad a revisión | Automatizado local | Validar interfaz humana |

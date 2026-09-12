@@ -51,7 +51,7 @@ El endpoint consulta `MaestroProveedores` y devuelve `supplierIdentity`. Un NIF 
 
 ## Importar filas bancarias
 
-Power Automate conserva el fichero original en SharePoint, calcula o proporciona su hash, lee las filas de la tabla Excel y envía JSON. El mapeo no está fijado en código, por lo que cada banco puede disponer de una versión de esquema.
+El temporizador de Azure Functions conserva el fichero original en SharePoint, calcula su hash, lee la primera hoja y registra el lote y los movimientos en Lists. Este endpoint se mantiene para clientes autorizados que necesiten validar filas antes de importarlas. El mapeo no está fijado en código, por lo que cada banco puede disponer de una versión de esquema.
 
 ```json
 {
@@ -80,7 +80,7 @@ Los errores de datos devuelven `accepted: false` con todas las incidencias detec
 
 ## Conciliar
 
-La petición contiene movimientos normalizados y facturas pendientes. La respuesta devuelve candidatos ordenados, puntuación, factores explicativos, clasificación y necesidad de revisión humana. La API nunca persiste ni acepta una coincidencia por sí sola; Power Automate o la capa de persistencia aplica la decisión de acuerdo con la política aprobada.
+La petición contiene movimientos normalizados y facturas pendientes. La respuesta devuelve candidatos ordenados, puntuación, factores explicativos, clasificación y necesidad de revisión humana. La API nunca persiste ni acepta una coincidencia por sí sola; la capa operativa autorizada aplica la decisión de acuerdo con la política aprobada.
 
 Los valores provisionales están en `deployment/reconciliation-config.json`. La aceptación automática está deshabilitada hasta calibrar el piloto.
 

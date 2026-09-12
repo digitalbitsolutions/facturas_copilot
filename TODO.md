@@ -5,7 +5,6 @@
 - [x] Recibir y verificar Tenant ID, dominio y cuenta de desarrollo/servicio.
 - [x] Activar la suscripción Azure Trial: `e7e239ec-59fb-4128-b9e1-b7854f426f4d`.
 - [x] Confirmar Spain Central, permisos Azure y desplegar infraestructura de desarrollo en `rg-facturas-copilot-dev`.
-- [ ] Obtener o asignar Power Automate Premium a la cuenta propietaria del flujo y confirmar AI Builder/Copilot Credits. Copilot y Business Premium ya están asignadas a `demo`; el conector HTTP con Entra confirma que Premium falta.
 - [x] Crear y validar el buzón `facturas-pruebas@integramente.onmicrosoft.com` y su carpeta `Inbox`.
 - [x] Crear sitio SharePoint privado, carpetas y libro/tablas de simulación.
 - [x] Crear listas de excepciones y parámetros de conciliación.
@@ -49,7 +48,7 @@
 - [x] Verificar duplicado de negocio desde otro correo (`EX-07`) sin segundo registro ni archivo.
 - [x] Crear vistas de revisión en SharePoint: `Pendientes de revisión` y `Excepciones abiertas`.
 - [x] Validar asignación y resolución auditada de `EX-03`, `EX-06` y `EX-07`, sincronizando sus procesos terminales y vaciando `Pendientes de revisión`.
-- [ ] Crear los flujos Power Automate y ejecutar pruebas de aceptación CA-01 a CA-21.
+- [ ] Ejecutar pruebas de aceptación CA-01 a CA-21 sobre Azure Functions, Graph y SharePoint.
 
 ## Núcleo de facturas
 

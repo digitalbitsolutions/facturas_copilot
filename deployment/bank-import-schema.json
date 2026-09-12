@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "input": "Excel rows supplied by Power Automate",
+  "input": "First worksheet rows read by the Azure Function",
   "debitSign": "negative",
   "defaultCurrency": "EUR",
   "columns": {

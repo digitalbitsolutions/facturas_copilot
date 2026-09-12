@@ -4,7 +4,7 @@ Actualizado: 11 de septiembre de 2026, tras validar el cierre auditado de excepc
 
 ## Objetivo
 
-Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasificación, extracción con AI Builder, validación, detección de duplicados, archivo en SharePoint, registro y consultas mediante Copilot. La fase 1 incluye la importación manual de extractos Excel y la conciliación bancaria por reglas, sin conexión directa con bancos ni ejecución de pagos.
+Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasificación y extracción con Document Intelligence, validación, detección de duplicados, archivo en SharePoint, registro y consultas mediante Copilot. La fase 1 incluye la importación manual de extractos Excel y la conciliación bancaria por reglas, sin conexión directa con bancos ni ejecución de pagos.
 
 ## Estado actual
 
@@ -33,9 +33,6 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - La identidad administrada vigente mostrada por la Function App es `5dd4df87-b31f-4b55-ad16-54eec2939986`. El archivado real confirma acceso efectivo al buzón restringido y escritura en el sitio de facturas. El identificador histórico `23530c7b-95c2-44bf-b949-36750c962917` ya no debe utilizarse sin volver a verificarlo en Azure.
 - OIDC de GitHub preparado: aplicación `facturas-copilot-github-deploy-dev` (Client ID `7db41108-d13f-4c3e-920a-832e875e1caa`), restringida a `digitalbitsolutions/facturas_copilot` en la rama `main` y entorno `dev`. Tiene `Contributor` y `Role Based Access Control Administrator` solo en `rg-facturas-copilot-dev`, necesarios para aplicar la infraestructura y sus permisos RBAC. Falta ejecutar correctamente el workflow de GitHub Actions.
 - GitHub Actions OIDC validado. El workflow usa acciones basadas en Node 24 y configura el almacenamiento del host mediante `AzureWebJobsStorage__accountName` y `AzureWebJobsStorage__credential=managedidentity`, sin cadena de conexión.
-- La aplicación Entra de la API preautoriza el cliente `HTTP With Microsoft Entra ID` de Power Automate solo para el scope delegado `access_as_user`; esto permite a los flujos llamar a la API sin usar secretos.
-- Para Power Automate, la API también expone el identificador HTTPS de la Function `https://func-facturas-copilot-dev-jbhyjbgfzr3iy.azurewebsites.net`, validado con HTTP 200. El conector exige que el recurso Entra y la URL de llamada compartan esa base.
-- Power Automate está accesible en el entorno Default y las conexiones SharePoint/Excel Online (Business) funcionan. La acción `HTTP With Microsoft Entra ID` requiere Power Automate Premium; el comprobador del flujo confirma que `demo` no dispone de esa licencia. El flujo `Importar extracto bancario - Dev` queda guardado como borrador y no debe activarse hasta asignar la capacidad.
 - El 10 de septiembre de 2026 se completó una prueba real: correo recibido en `facturas-pruebas@integramente.onmicrosoft.com`, PDF leído por `pollInvoiceMailbox` y archivo creado en `Documentos/Facturas` con `Modified By: SharePoint App`.
 - El código validado y desplegado corresponde al commit `09e14bf` (`Fix invoice attachment retrieval`).
 - La idempotencia estricta y los nombres cortos se corrigieron y desplegaron en `79021de` (`Make SharePoint archiving truly idempotent`). La validación real posterior reconstruyó 7 adjuntos históricos con claves hash distintas y mantuvo sus fechas sin cambios durante varios ciclos.
@@ -100,20 +97,14 @@ El temporizador se ejecuta cada diez minutos en el segundo 30. Application Insig
 ## Arquitectura acordada
 
 ```text
-Outlook → Power Automate → AI Builder
-                         ↓
-                 Azure Function TypeScript
-                    ├─ reglas y validación
-                    ├─ idempotencia
-                    └─ Microsoft Graph → SharePoint
-                         ↓
-              Registro Microsoft 365 mediante Power Automate
-                         ↓
-                  Copilot / Copilot Studio
+Outlook → Azure Function TypeScript → Microsoft Graph → SharePoint
+              ├─ clasificación y extracción con Document Intelligence
+              ├─ reglas, validación e idempotencia
+              └─ ProcesosFacturas, RegistroFacturas y Excepciones
 
-Extracto Excel → Power Automate → Azure Function (reglas de conciliación)
+Extracto Excel en SharePoint → Azure Function programada
                                       ↓
-                         revisión / vínculo confirmado
+                         Lists: lotes, movimientos y conciliación
 ```
 
 - Código fuente y CI/CD: GitHub.
@@ -121,7 +112,7 @@ Extracto Excel → Power Automate → Azure Function (reglas de conciliación)
 - Despliegue: GitHub Actions con OIDC, sin perfil de publicación compartido.
 - Protección de API: Microsoft Entra ID.
 - SharePoint: Graph con `Sites.Selected`, limitado al sitio de facturas.
-- Excel: conector Excel Online (Business) de Power Automate; Graph no admite permisos de aplicación para las APIs de libro.
+- Extractos: lectura de la primera hoja por la Function; los resultados operativos se guardan en SharePoint Lists.
 - Secretos: identidad administrada y Key Vault cuando sea necesario; nunca Git ni chat.
 
 ## Recursos propuestos
@@ -146,7 +137,7 @@ Los nombres son provisionales hasta que el cliente los confirme. El esquema Exce
 
 ## Bloqueo actual
 
-La recepción y el archivado de PDF sin Power Automate ya funcionan. Los tres ajustes operativos quedaron declarados como parámetros Bicep para sobrevivir a nuevos despliegues. Quedan pendientes Power Automate Premium/AI Builder, los flujos, los parámetros de negocio y la aceptación CA-01 a CA-21 completa.
+La recepción y el archivado de PDF ya funcionan. Los tres ajustes operativos quedaron declarados como parámetros Bicep para sobrevivir a nuevos despliegues. Quedan pendientes los parámetros de negocio, la interfaz de revisión y la aceptación CA-01 a CA-21 completa.
 
 ## Información que debe proporcionar el cliente
 
@@ -156,15 +147,15 @@ La recepción y el archivado de PDF sin Power Automate ya funcionan. Los tres aj
 - Suscripción Azure y permiso para crear recursos.
 - Región Azure autorizada: preferencia inicial Spain Central o West Europe.
 - Cuenta de desarrollo/servicio y responsables de las conexiones.
-- Confirmación de licencias Power Automate, AI Builder/Copilot Credits y Copilot.
+- Confirmación de licencias y alcance de Copilot, si se habilitan consultas asistidas.
 
 ### Microsoft 365
 
 - Buzón y carpeta de entrada.
 - URL del sitio SharePoint o autorización para crearlo.
 - Biblioteca, carpetas, permisos, retención y versionado.
-- Ubicación, propietarios y política de edición del Excel.
-- Modelo publicado o autorización para configurar AI Builder.
+- Ubicación, propietarios y política de edición del libro de configuración, si se conserva como referencia.
+- Confirmación de la región y capacidad de Document Intelligence.
 
 ### Reglas de negocio
 
@@ -181,8 +172,8 @@ Estas decisiones se consolidarán contra el PRD vigente v4.
 
 ## Siguiente secuencia
 
-1. Crear el flujo de revisión para documentos desviados y excepciones.
-2. Crear los flujos Power Automate de registro y conciliación.
+1. Definir la interfaz de revisión para documentos desviados y excepciones sobre SharePoint Lists.
+2. Completar la persistencia operativa de decisiones de conciliación.
 3. Ejecutar la aceptación restante CA-01 a CA-21 y conservar evidencia.
 
 ## Comandos de comprobación

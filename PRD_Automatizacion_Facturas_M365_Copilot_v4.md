@@ -1,16 +1,16 @@
-# PRD — Facturas y conciliación bancaria sin Power Automate
+# PRD — Facturas y conciliación bancaria con Azure Functions
 
 ```yaml
 estado: piloto-en-desarrollo
 versión: 4.0
 fecha: 2026-09-10
 arquitectura: Azure Functions + Microsoft Graph + SharePoint + SharePoint Lists
-excluido: Power Automate, conectores Premium, conexión bancaria, pagos y contabilización ERP
+excluido: conectores de automatización externos, conexión bancaria, pagos y contabilización ERP
 ```
 
 ## 1. Objetivo
 
-Automatizar la recepción, custodia, validación y registro de facturas recibidas por correo, y la importación de extractos bancarios para conciliación explicable. La solución no utiliza Power Automate ni requiere licencias Power Automate Premium.
+Automatizar la recepción, custodia, validación y registro de facturas recibidas por correo, y la importación de extractos bancarios para conciliación explicable mediante Azure Functions, Microsoft Graph, Document Intelligence y SharePoint.
 
 ```text
 Exchange Online ──► Azure Function programada ──► SharePoint /Facturas
@@ -38,8 +38,7 @@ SharePoint /ExtractosBancarios ─► Azure Function ─► Lists: lotes y movim
 
 ### Excluido
 
-- Power Automate, conectores Premium y RPA.
-- AI Builder como requisito de la fase actual; podrá añadirse con capacidad aprobada.
+- Conectores de automatización externos y RPA.
 - Acceso directo a bancos, pagos, transferencias y contabilización ERP.
 - Modificar correo: marcar leído, mover, eliminar, responder o reenviar.
 
@@ -127,5 +126,5 @@ El motor compara importe, moneda, referencia, contraparte y proximidad de fecha.
 
 | Versión | Fecha | Cambio |
 |---|---|---|
-| 3.0 | 2026-09-08 | Facturas y conciliación con Power Automate previsto. |
-| 4.0 | 2026-09-10 | Sustituye Power Automate por Azure Functions, Graph, RBAC y SharePoint Lists. |
+| 3.0 | 2026-09-08 | Diseño inicial de facturas y conciliación. |
+| 4.0 | 2026-09-10 | Consolida Azure Functions, Graph, RBAC y SharePoint Lists. |

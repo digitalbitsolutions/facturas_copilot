@@ -15,7 +15,6 @@ export type AttachmentInput = {
   originalFilename: string;
   contentType: string;
   content: Uint8Array;
-  flowRunId?: string;
 };
 
 export type ProcessException = { code: ExceptionCode; reason: string; retryable: boolean; issues?: ValidationIssue[] };
