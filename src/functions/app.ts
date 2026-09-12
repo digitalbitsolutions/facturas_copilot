@@ -1,9 +1,9 @@
 import { app, type HttpRequest, type HttpResponseInit, type InvocationContext } from "@azure/functions";
-import { assignExceptionRequest, importBankRequest, reconcileBankRequest, resolveExceptionRequest, validateInvoiceRequest } from "../api/services.ts";
+import { assignExceptionRequest, decideReconciliationRequest, importBankRequest, proposeReconciliationRequest, reconcileBankRequest, resolveExceptionRequest, validateInvoiceRequest } from "../api/services.ts";
 import { DocumentIntelligenceDocumentClassifier } from "../classification/index.ts";
 import { DocumentIntelligenceInvoiceExtractor } from "../extraction/index.ts";
 import { resolveSupplierIdentity, validateInvoice } from "../invoices/index.ts";
-import { DEFAULT_BANK_IMPORT_CONFIG, GraphClient, ManagedIdentityTokenProvider, SharePointBankPoller, SharePointDocumentRepository, SharePointExceptionResolutionStore, SharePointInvoiceMailboxPoller, SharePointInvoiceRegistry, SharePointProcessStore, SharePointSupplierDirectory } from "../microsoft365/index.ts";
+import { DEFAULT_BANK_IMPORT_CONFIG, GraphClient, ManagedIdentityTokenProvider, SharePointBankPoller, SharePointDocumentRepository, SharePointExceptionResolutionStore, SharePointInvoiceMailboxPoller, SharePointInvoiceRegistry, SharePointProcessStore, SharePointReconciliationStore, SharePointSupplierDirectory } from "../microsoft365/index.ts";
 import { AttachmentProcessor } from "../processing/index.ts";
 
 function json(status: number, body: unknown): HttpResponseInit {
@@ -97,6 +97,32 @@ function exceptionResolutionStore(): SharePointExceptionResolutionStore {
     process.env.M365_INVOICE_PROCESSES_LIST ?? "ProcesosFacturas",
   );
 }
+
+function reconciliationStore(): SharePointReconciliationStore {
+  return new SharePointReconciliationStore(
+    new GraphClient(new ManagedIdentityTokenProvider()), requiredSetting("M365_SHAREPOINT_SITE_ID"),
+    process.env.M365_RECONCILIATIONS_LIST ?? "Conciliaciones", process.env.M365_BANK_MOVEMENTS_LIST ?? "MovimientosBancarios",
+  );
+}
+
+app.http("proposeReconciliations", {
+  route: "bank/reconciliations/propose", methods: ["POST"], authLevel: "anonymous",
+  handler: async (request, context) => {
+    try {
+      const proposals = proposeReconciliationRequest(await request.json());
+      const store = reconciliationStore();
+      return json(200, { proposals: await Promise.all(proposals.map((proposal) => store.propose(proposal))) });
+    } catch (error) { const message = error instanceof Error ? error.message : "Invalid request"; context.warn("Reconciliation proposal rejected", { message }); return json(400, { error: { code: "invalid_request", message } }); }
+  },
+});
+
+app.http("decideReconciliation", {
+  route: "bank/reconciliations/decide", methods: ["POST"], authLevel: "anonymous",
+  handler: async (request, context) => {
+    try { const input = decideReconciliationRequest(await request.json()); return json(200, { reconciliationId: input.reconciliationId, responsible: input.responsible, ...await reconciliationStore().decide(input) }); }
+    catch (error) { const message = error instanceof Error ? error.message : "Invalid request"; context.warn("Reconciliation decision rejected", { message }); return json(400, { error: { code: "invalid_request", message } }); }
+  },
+});
 
 app.http("assignException", {
   route: "exceptions/assign", methods: ["POST"], authLevel: "anonymous",

@@ -173,6 +173,24 @@ $definitions = @(
             @{ name = 'Huella'; text = @{} }
             @{ name = 'Estado'; choice = @{ choices = @('Importado','EnRevision','Conciliado') } }
         )
+    },
+    @{
+        displayName = 'Conciliaciones'
+        columns = @(
+            @{ name = 'MovimientoId'; indexed = $true; enforceUniqueValues = $true; text = @{} }
+            @{ name = 'FacturaIdPropuesta'; text = @{} }
+            @{ name = 'Clasificacion'; choice = @{ choices = @('high','probable','review','no_match') } }
+            @{ name = 'Puntuacion'; number = @{ decimalPlaces = 'none' } }
+            @{ name = 'Motivo'; text = @{ allowMultipleLines = $true } }
+            @{ name = 'Candidatos'; text = @{ allowMultipleLines = $true } }
+            @{ name = 'RequiereRevision'; boolean = @{} }
+            @{ name = 'Estado'; choice = @{ choices = @('PendienteRevision','Conciliada','Rechazada') } }
+            @{ name = 'Responsable'; text = @{} }
+            @{ name = 'Decision'; choice = @{ choices = @('confirm_match','reject_match') } }
+            @{ name = 'ResultadoDecision'; text = @{ allowMultipleLines = $true } }
+            @{ name = 'FechaPropuesta'; dateTime = @{ format = 'dateTime' } }
+            @{ name = 'FechaDecision'; dateTime = @{ format = 'dateTime' } }
+        )
     }
 )
 

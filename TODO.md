@@ -48,6 +48,8 @@
 - [x] Verificar duplicado de negocio desde otro correo (`EX-07`) sin segundo registro ni archivo.
 - [x] Crear vistas de revisión en SharePoint: `Pendientes de revisión` y `Excepciones abiertas`.
 - [x] Validar asignación y resolución auditada de `EX-03`, `EX-06` y `EX-07`, sincronizando sus procesos terminales y vaciando `Pendientes de revisión`.
+- [x] Implementar propuestas y decisiones auditables de conciliación en SharePoint Lists, sin aceptación automática.
+- [ ] Aprovisionar `Conciliaciones` en el sitio de pruebas y validar CA-17 a CA-19 con identidad Entra.
 - [ ] Ejecutar pruebas de aceptación CA-01 a CA-21 sobre Azure Functions, Graph y SharePoint.
 
 ## Núcleo de facturas

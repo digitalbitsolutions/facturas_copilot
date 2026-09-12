@@ -9,5 +9,7 @@ export type { MailboxPollingResult } from "./mail-poller.ts";
 export { SharePointInvoiceRegistry, SharePointProcessStore } from "./invoice-state.ts";
 export { SharePointSupplierDirectory } from "./supplier-directory.ts";
 export { SharePointExceptionResolutionStore } from "./exception-resolution.ts";
+export { SharePointReconciliationStore } from "./reconciliation-resolution.ts";
+export type { ReconciliationDecision } from "./reconciliation-resolution.ts";
 export type { Microsoft365Config } from "./config.ts";
 export type { AccessTokenProvider } from "./graph-client.ts";

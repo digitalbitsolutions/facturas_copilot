@@ -10,6 +10,8 @@ La API usa Azure Functions Runtime 4, modelo de programación Node.js v4 y Node.
 | POST | `/api/invoices/extract` | Extraer y validar un PDF durante el piloto (cuerpo `application/pdf`) |
 | POST | `/api/bank/import` | Validar y normalizar filas de un extracto |
 | POST | `/api/bank/reconcile` | Puntuar movimientos contra facturas pendientes |
+| POST | `/api/bank/reconciliations/propose` | Persistir propuestas que exigen revisión humana |
+| POST | `/api/bank/reconciliations/decide` | Confirmar o rechazar una propuesta con auditoría |
 | POST | `/api/exceptions/assign` | Asignar una excepción abierta a un responsable |
 | POST | `/api/exceptions/resolve` | Cerrar una excepción con una acción permitida y resultado auditado |
 
@@ -83,6 +85,12 @@ Los errores de datos devuelven `accepted: false` con todas las incidencias detec
 La petición contiene movimientos normalizados y facturas pendientes. La respuesta devuelve candidatos ordenados, puntuación, factores explicativos, clasificación y necesidad de revisión humana. La API nunca persiste ni acepta una coincidencia por sí sola; la capa operativa autorizada aplica la decisión de acuerdo con la política aprobada.
 
 Los valores provisionales están en `deployment/reconciliation-config.json`. La aceptación automática está deshabilitada hasta calibrar el piloto.
+
+## Revisar conciliaciones
+
+La lista `Conciliaciones` es la bandeja operativa de revisión humana. `POST /api/bank/reconciliations/propose` recibe un array `proposals` procedente de `/api/bank/reconcile`; solo admite propuestas cuyo campo `requiresHumanReview` sea `true`. Guarda el candidato principal, todos los candidatos y sus factores en JSON, el motivo y la fecha UTC, y deja el movimiento en `EnRevision`. Es idempotente por `MovimientoId` mientras la propuesta esté pendiente; una conciliación ya decidida no se puede sobrescribir.
+
+`POST /api/bank/reconciliations/decide` recibe `reconciliationId`, `responsible`, `action` (`confirm_match` o `reject_match`) y `result`. Registra decisión, responsable, resultado y fecha UTC. Solo `confirm_match` cambia el movimiento a `Conciliado`; el rechazo lo conserva en `EnRevision`. Ninguna de estas rutas acepta una propuesta automáticamente.
 
 ## Revisar excepciones
 

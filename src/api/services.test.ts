@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { assignExceptionRequest, importBankRequest, reconcileBankRequest, resolveExceptionRequest, validateInvoiceRequest } from "./services.ts";
+import { assignExceptionRequest, decideReconciliationRequest, importBankRequest, proposeReconciliationRequest, reconcileBankRequest, resolveExceptionRequest, validateInvoiceRequest } from "./services.ts";
 
 describe("HTTP service contracts", () => {
   it("validates an extracted invoice payload", () => {
@@ -23,5 +23,12 @@ describe("HTTP service contracts", () => {
     assert.deepEqual(resolveExceptionRequest({ exceptionId: "7", code: "EX-07", responsible: "reviewer@contoso.com", action: "confirm_duplicate", result: "Confirmed against original invoice" }).action, "confirm_duplicate");
     assert.throws(() => resolveExceptionRequest({ exceptionId: "7", code: "EX-07", responsible: "reviewer@contoso.com", action: "update_supplier_and_resubmit", result: "Invalid" }), /not allowed/);
     assert.deepEqual(assignExceptionRequest({ exceptionId: "7", responsible: "reviewer@contoso.com" }), { exceptionId: "7", responsible: "reviewer@contoso.com" });
+  });
+
+  it("requires a human-review proposal and an explicit reconciliation decision", () => {
+    assert.throws(() => proposeReconciliationRequest({ proposals: [{ movementId: "m-1", classification: "high", candidates: [], requiresHumanReview: false, reason: "unsafe" }] }), /requiresHumanReview/);
+    assert.deepEqual(decideReconciliationRequest({ reconciliationId: "1", responsible: "reviewer@example.test", action: "confirm_match", result: "Verified" }), {
+      reconciliationId: "1", responsible: "reviewer@example.test", action: "confirm_match", result: "Verified",
+    });
   });
 });

@@ -3,6 +3,8 @@ import type { ExtractedInvoice, ExtractionConfidence, InvoiceValidationConfig } 
 import { importBankRows, reconcileBatch } from "../reconciliation/index.ts";
 import type { BankImportConfig, BankMovement, ReconciliationConfig, ReconciliationInvoice } from "../reconciliation/types.ts";
 import { validateResolution } from "../processing/exception-resolution.ts";
+import type { ReconciliationProposal } from "../reconciliation/types.ts";
+import type { ReconciliationDecision } from "../microsoft365/reconciliation-resolution.ts";
 
 function object(value: unknown, name: string): asserts value is Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new TypeError(`${name} must be an object`);
@@ -34,6 +36,28 @@ export function reconcileBankRequest(body: unknown) {
   if (!Array.isArray(body.movements)) throw new TypeError("movements must be an array");
   if (!Array.isArray(body.invoices)) throw new TypeError("invoices must be an array");
   return reconcileBatch(body.movements as BankMovement[], body.invoices as ReconciliationInvoice[], body.config as Partial<ReconciliationConfig> | undefined);
+}
+
+export function proposeReconciliationRequest(body: unknown): ReconciliationProposal[] {
+  object(body, "request body");
+  if (!Array.isArray(body.proposals) || !body.proposals.length) throw new TypeError("proposals must be a non-empty array");
+  for (const proposal of body.proposals) {
+    object(proposal, "proposal");
+    if (typeof proposal.movementId !== "string" || !proposal.movementId.trim()) throw new TypeError("proposal.movementId is required");
+    if (proposal.requiresHumanReview !== true) throw new TypeError("proposal.requiresHumanReview must be true");
+    if (!Array.isArray(proposal.candidates)) throw new TypeError("proposal.candidates must be an array");
+    if (typeof proposal.classification !== "string" || typeof proposal.reason !== "string") throw new TypeError("proposal classification and reason are required");
+  }
+  return body.proposals as ReconciliationProposal[];
+}
+
+export function decideReconciliationRequest(body: unknown): { reconciliationId: string; responsible: string; action: ReconciliationDecision; result: string } {
+  object(body, "request body");
+  if (typeof body.reconciliationId !== "string" || !body.reconciliationId.trim()) throw new TypeError("reconciliationId is required");
+  if (typeof body.responsible !== "string" || !body.responsible.trim()) throw new TypeError("responsible is required");
+  if (body.action !== "confirm_match" && body.action !== "reject_match") throw new TypeError("action must be confirm_match or reject_match");
+  if (typeof body.result !== "string" || !body.result.trim()) throw new TypeError("result is required");
+  return { reconciliationId: body.reconciliationId.trim(), responsible: body.responsible.trim(), action: body.action, result: body.result.trim() };
 }
 
 export function assignExceptionRequest(body: unknown) {

@@ -19,9 +19,9 @@ Estados: `Automatizado local`, `Preparado`, `Requiere tenant` y `Requiere muestr
 | CA-14 Esquema bancario inválido | Automatizado local | Repetir con un extracto representativo en SharePoint |
 | CA-15 Reimportación idempotente | Automatizado local | Validar persistencia real |
 | CA-16 Pago exacto explicable | Automatizado local | Calibrar reglas con muestra |
-| CA-17 Ambigüedad a revisión | Automatizado local | Validar interfaz humana |
-| CA-18 Confirmación auditada | Preparado | Requiere repositorio e identidad real |
-| CA-19 Rechazo auditado | Preparado | Requiere repositorio e identidad real |
+| CA-17 Ambigüedad a revisión | Automatizado local | Repetir contra `Conciliaciones` en SharePoint |
+| CA-18 Confirmación auditada | Automatizado local | Repetir con repositorio e identidad real |
+| CA-19 Rechazo auditado | Automatizado local | Repetir con repositorio e identidad real |
 | CA-20 Casos complejos de pago | Requiere muestra/decisión | Definir pagos parciales/agrupados/abonos |
 | CA-21 Consultas de conciliación | Preparado | Requiere Copilot y datos del tenant |
 
