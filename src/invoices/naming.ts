@@ -11,12 +11,19 @@ export function sanitizeFilenamePart(value: string): string {
 }
 
 export function buildInvoiceFilename(invoice: ValidatedInvoice, maxLength = 180): string {
-  const parts = [invoice.invoiceDate, invoice.supplierName, invoice.invoiceNumber, invoice.totalAmount, invoice.currency ?? "XXX"]
+  const [year, month, day] = invoice.invoiceDate.split("-");
+  const amount = Number(invoice.totalAmount).toFixed(2);
+  const parts = [invoice.invoiceNumber, `${year}-${day}${month}`, amount, invoice.currency ?? "XXX"]
     .map(sanitizeFilenamePart);
   const filename = `${parts.join("_")}.pdf`;
   if (filename.length <= maxLength) return filename;
   const suffix = `_${createHash("sha256").update(filename).digest("hex").slice(0, 10)}.pdf`;
   return `${filename.slice(0, Math.max(1, maxLength - suffix.length))}${suffix}`;
+}
+
+/** Returns the supplier-organized relative SharePoint path for an archived invoice. */
+export function buildInvoicePath(invoice: ValidatedInvoice, maxFilenameLength = 180): string {
+  return `${sanitizeFilenamePart(invoice.supplierName)}/${buildInvoiceFilename(invoice, maxFilenameLength)}`;
 }
 
 export function buildDuplicateKey(invoice: ValidatedInvoice): string {

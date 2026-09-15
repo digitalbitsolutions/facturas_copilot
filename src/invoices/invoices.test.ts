@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildDuplicateKey, buildInvoiceFilename, defaultValidationConfig, sanitizeFilenamePart, validateInvoice } from "./index.ts";
+import { buildDuplicateKey, buildInvoiceFilename, buildInvoicePath, defaultValidationConfig, sanitizeFilenamePart, validateInvoice } from "./index.ts";
 
 const validInvoice = {
   supplierName: "Proveedor Norte, S.L.", invoiceNumber: "F/2026:0042", invoiceDate: "2026-09-07",
@@ -50,13 +50,14 @@ test("uses the global confidence threshold for fields without an override", () =
   if (!result.valid) assert.match(result.issues.at(-1)?.message ?? "", /0\.8/);
 });
 
-test("creates a safe bounded PDF filename", () => {
+test("creates a safe supplier-organized PDF path", () => {
   const result = validateInvoice(validInvoice);
   assert.equal(result.valid, true);
   if (result.valid) {
     const filename = buildInvoiceFilename(result.invoice, 80);
-    assert.equal(filename, "2026-09-07_Proveedor Norte, S.L_F-2026-0042_121.00_EUR.pdf");
+    assert.equal(filename, "F-2026-0042_2026-0709_121.00_EUR.pdf");
     assert.ok(filename.length <= 80);
+    assert.equal(buildInvoicePath(result.invoice), "Proveedor Norte, S.L/F-2026-0042_2026-0709_121.00_EUR.pdf");
   }
   assert.equal(sanitizeFilenamePart("CON"), "_CON");
 });

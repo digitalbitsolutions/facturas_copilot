@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { buildDuplicateKey, buildInvoiceFilename, resolveSupplierIdentity, validateInvoice } from "../invoices/index.ts";
+import { buildDuplicateKey, buildInvoicePath, resolveSupplierIdentity, validateInvoice } from "../invoices/index.ts";
 import type { InvoiceValidationConfig } from "../invoices/types.ts";
 import type {
   AttachmentInput, DocumentClassifier, DocumentRepository, InvoiceExtractor, InvoiceRegistry,
@@ -83,14 +83,14 @@ export class AttachmentProcessor {
         return this.finish(record, "review_required", { code: "EX-07", reason: `Possible duplicate of process ${duplicate.processId}`, retryable: false });
       }
 
-      const finalFilename = buildInvoiceFilename(validation.invoice);
-      let stored: { url: string };
+      const finalFilename = buildInvoicePath(validation.invoice);
+      let stored: { url: string; filename: string };
       try {
         stored = await this.dependencies.documents.putOnce({ processId, filename: finalFilename, contentType: input.contentType, content: input.content });
       } catch (error) {
         return this.finish(record, "failed", this.technicalException("EX-08", error));
       }
-      record = await this.transition(record, "archived", { finalFilename, documentUrl: stored.url });
+      record = await this.transition(record, "archived", { finalFilename: stored.filename, documentUrl: stored.url });
 
       try {
         await this.dependencies.registry.putOnce({ processId, invoice: validation.invoice, duplicateKey, documentUrl: stored.url, metadata: record.input });

@@ -61,9 +61,28 @@ test("uploads a deterministic SharePoint path", async () => {
   const graph = new GraphClient({ getAccessToken: async () => "token" }, fakeFetch);
   const repository = new SharePointDocumentRepository(graph, "drive id", "Facturas/2026");
   const stored = await repository.putOnce({ processId: "process", filename: "Factura 1.pdf", contentType: "application/pdf", content: new Uint8Array([1]) });
-  assert.match(requests[1].url, /drives\/drive%20id\/root:\/Facturas\/2026\/process_Factura%201\.pdf:\/content$/);
+  assert.match(requests[1].url, /drives\/drive%20id\/root:\/Facturas\/2026\/Factura%201\.pdf:\/content$/);
   assert.equal(stored.url, "https://company.sharepoint.com/file.pdf");
   assert.equal(stored.created, true);
+  assert.equal(stored.filename, "Factura 1.pdf");
+});
+
+test("creates a supplier folder before uploading an invoice", async () => {
+  const requests: Array<{ url: string; method: string }> = [];
+  const graph = new GraphClient({ getAccessToken: async () => "token" }, async (url, init) => {
+    const request = { url: String(url), method: init?.method ?? "GET" };
+    requests.push(request);
+    if (request.method === "GET" && request.url.endsWith("/root:/Facturas/SATINFO")) return new Response("missing", { status: 404 });
+    if (request.method === "POST") return Response.json({ id: "supplier-folder" }, { status: 201 });
+    if (request.method === "GET") return new Response("missing", { status: 404 });
+    return Response.json({ webUrl: "https://company.sharepoint.com/SATINFO/invoice.pdf" }, { status: 201 });
+  });
+  const repository = new SharePointDocumentRepository(graph, "drive", "Facturas");
+  await repository.putOnce({ processId: "process", filename: "SATINFO/SF-198033_2026-2307_200.86_EUR.pdf", contentType: "application/pdf", content: new Uint8Array([1]) });
+
+  assert.deepEqual(requests.map(({ method }) => method), ["GET", "POST", "GET", "PUT"]);
+  assert.match(requests[1].url, /root:\/Facturas:\/children$/);
+  assert.match(requests[3].url, /root:\/Facturas\/SATINFO\/SF-198033_2026-2307_200\.86_EUR\.pdf:\/content$/);
 });
 
 test("loads active supplier master records from SharePoint", async () => {
@@ -102,17 +121,19 @@ test("persists and reloads invoice process state by stable process ID", async ()
   assert.deepEqual(loaded?.classificationReasons, ["invoice heading"]);
 });
 
-test("does not overwrite an existing SharePoint document", async () => {
+test("adds a hash suffix rather than overwriting a colliding SharePoint document", async () => {
   const methods: string[] = [];
-  const graph = new GraphClient({ getAccessToken: async () => "token" }, async (_url, init) => {
+  const graph = new GraphClient({ getAccessToken: async () => "token" }, async (url, init) => {
     methods.push(init?.method ?? "GET");
-    return Response.json({ webUrl: "https://company.sharepoint.com/existing.pdf" });
+    if (!init?.method && String(url).endsWith("/root:/Facturas/invoice.pdf")) return Response.json({ webUrl: "https://company.sharepoint.com/existing.pdf" });
+    if (!init?.method) return new Response("missing", { status: 404 });
+    return Response.json({ webUrl: "https://company.sharepoint.com/invoice_stable.pdf" }, { status: 201 });
   });
   const repository = new SharePointDocumentRepository(graph, "drive", "Facturas");
   const stored = await repository.putOnce({ processId: "stable", filename: "invoice.pdf", contentType: "application/pdf", content: new Uint8Array([1]) });
 
-  assert.deepEqual(stored, { url: "https://company.sharepoint.com/existing.pdf", created: false });
-  assert.deepEqual(methods, ["GET"]);
+  assert.deepEqual(stored, { url: "https://company.sharepoint.com/invoice_stable.pdf", created: true, filename: "invoice_stable.pdf" });
+  assert.deepEqual(methods, ["GET", "GET", "PUT"]);
 });
 
 test("mail poller downloads file attachments without selecting derived contentBytes", async () => {

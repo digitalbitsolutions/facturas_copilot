@@ -1,4 +1,4 @@
-export { buildDuplicateKey, buildInvoiceFilename, sanitizeFilenamePart } from "./naming.ts";
+export { buildDuplicateKey, buildInvoiceFilename, buildInvoicePath, sanitizeFilenamePart } from "./naming.ts";
 export { defaultValidationConfig, validateInvoice } from "./validation.ts";
 export { normalizeSupplierName, normalizeTaxId, resolveSupplierIdentity } from "./supplier-identity.ts";
 export type { SupplierDirectory, SupplierIdentityResult, SupplierMasterRecord } from "./supplier-identity.ts";

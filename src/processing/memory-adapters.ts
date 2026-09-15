@@ -15,12 +15,12 @@ export class MemoryProcessStore implements ProcessStore {
 
 export class MemoryDocumentRepository implements DocumentRepository {
   readonly documents = new Map<string, { filename: string; contentType: string; content: Uint8Array; url: string }>();
-  async putOnce(input: { processId: string; filename: string; contentType: string; content: Uint8Array }): Promise<{ url: string; created: boolean }> {
+  async putOnce(input: { processId: string; filename: string; contentType: string; content: Uint8Array }): Promise<{ url: string; created: boolean; filename: string }> {
     const existing = this.documents.get(input.processId);
-    if (existing) return { url: existing.url, created: false };
+    if (existing) return { url: existing.url, created: false, filename: existing.filename };
     const stored = { ...input, content: input.content.slice(), url: `memory://documents/${input.processId}/${encodeURIComponent(input.filename)}` };
     this.documents.set(input.processId, stored);
-    return { url: stored.url, created: true };
+    return { url: stored.url, created: true, filename: stored.filename };
   }
 }
 
