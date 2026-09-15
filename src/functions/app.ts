@@ -2,7 +2,7 @@ import { app, type HttpRequest, type HttpResponseInit, type InvocationContext } 
 import { assignExceptionRequest, decideReconciliationRequest, importBankRequest, proposeReconciliationRequest, reconcileBankRequest, resolveExceptionRequest, validateInvoiceRequest } from "../api/services.ts";
 import { DocumentIntelligenceDocumentClassifier } from "../classification/index.ts";
 import { DocumentIntelligenceInvoiceExtractor } from "../extraction/index.ts";
-import { resolveSupplierIdentity, validateInvoice } from "../invoices/index.ts";
+import { resolveSupplierIdentity, validateInvoice, validationConfigForSupplier } from "../invoices/index.ts";
 import { DEFAULT_BANK_IMPORT_CONFIG, GraphClient, ManagedIdentityTokenProvider, SharePointBankPoller, SharePointDocumentRepository, SharePointExceptionResolutionStore, SharePointInvoiceMailboxPoller, SharePointInvoiceRegistry, SharePointProcessStore, SharePointReconciliationStore, SharePointSupplierDirectory } from "../microsoft365/index.ts";
 import { AttachmentProcessor } from "../processing/index.ts";
 
@@ -66,7 +66,7 @@ app.http("extractInvoice", {
       const resolvedInvoice = supplierIdentity.status === "matched"
         ? { ...extraction.invoice, supplierName: supplierIdentity.supplier.legalName, supplierTaxId: supplierIdentity.supplier.taxId ?? extraction.invoice.supplierTaxId }
         : extraction.invoice;
-      const invoiceValidation = validateInvoice(resolvedInvoice, extraction.confidence);
+      const invoiceValidation = validateInvoice(resolvedInvoice, extraction.confidence, validationConfigForSupplier(undefined, supplierIdentity));
       const validation = supplierIdentity.status === "matched"
         ? invoiceValidation
         : { valid: false as const, issues: invoiceValidation.valid ? [supplierIdentity.issue] : [...invoiceValidation.issues, supplierIdentity.issue] };

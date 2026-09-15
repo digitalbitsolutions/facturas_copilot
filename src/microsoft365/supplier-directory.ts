@@ -39,6 +39,7 @@ export class SharePointSupplierDirectory implements SupplierDirectory {
         legalName,
         ...(text(fields.NIF) ? { taxId: text(fields.NIF) } : {}),
         ...(aliases?.length ? { aliases } : {}),
+        ...(active(fields.AceptaConfianzaReducida) ? { allowReducedConfidence: true } : {}),
         active: true,
       }];
     });

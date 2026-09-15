@@ -1,10 +1,13 @@
-import type { ExtractedInvoice, ValidationIssue } from "./types.ts";
+import type { ExtractedInvoice, InvoiceValidationConfig, ValidationIssue } from "./types.ts";
+import { defaultValidationConfig } from "./validation.ts";
 
 export type SupplierMasterRecord = {
   supplierId: string;
   legalName: string;
   taxId?: string;
   aliases?: string[];
+  /** Explicit, supplier-master approval for the bounded service-invoice profile. */
+  allowReducedConfidence?: boolean;
   active: boolean;
 };
 
@@ -45,6 +48,28 @@ export function resolveSupplierIdentity(invoice: ExtractedInvoice, suppliers: Su
   if (matches.length === 1) return { status: "matched", ...matches[0] };
   if (matches.length > 1) return ambiguous(matches.map(({ supplier }) => supplier), "supplierName", "Supplier name matches multiple active master records");
   return notFound("supplierName", "Supplier name does not match an active master record");
+}
+
+/**
+ * This profile is available only after a unique, exact NIF match with an active
+ * supplier explicitly approved in MaestroProveedores. It never relaxes required
+ * fields, format checks, or the base + VAT = total reconciliation.
+ */
+export function validationConfigForSupplier(
+  config: InvoiceValidationConfig | undefined,
+  identity: SupplierIdentityResult,
+): InvoiceValidationConfig | undefined {
+  if (identity.status !== "matched" || identity.matchedBy !== "tax_id" || !identity.supplier.allowReducedConfidence) return config;
+  const base = config ?? defaultValidationConfig;
+  return {
+    ...base,
+    minimumConfidenceByField: {
+      ...base.minimumConfidenceByField,
+      supplierTaxId: 0.68,
+      vatAmount: 0.68,
+      totalAmount: 0.88,
+    },
+  };
 }
 
 function notFound(field: "supplierName" | "supplierTaxId", message: string): SupplierIdentityResult {

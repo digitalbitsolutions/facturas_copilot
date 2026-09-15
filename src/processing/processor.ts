@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { buildDuplicateKey, buildInvoicePath, resolveSupplierIdentity, validateInvoice } from "../invoices/index.ts";
+import { buildDuplicateKey, buildInvoicePath, resolveSupplierIdentity, validateInvoice, validationConfigForSupplier } from "../invoices/index.ts";
 import type { InvoiceValidationConfig } from "../invoices/types.ts";
 import type {
   AttachmentInput, DocumentClassifier, DocumentRepository, InvoiceExtractor, InvoiceRegistry,
@@ -55,7 +55,9 @@ export class AttachmentProcessor {
 
       const extraction = await this.dependencies.extractor.extract(input);
       record = await this.transition(record, "extracted");
-      let validation = validateInvoice(extraction.invoice, extraction.confidence, this.dependencies.validationConfig);
+      const supplierIdentity = resolveSupplierIdentity(extraction.invoice, await this.dependencies.supplierDirectory.listActive());
+      const supplierValidationConfig = validationConfigForSupplier(this.dependencies.validationConfig, supplierIdentity);
+      let validation = validateInvoice(extraction.invoice, extraction.confidence, supplierValidationConfig);
       if (!validation.valid) {
         const missing = validation.issues.some((issue) => issue.code === "required");
         return this.finish(record, "review_required", {
@@ -63,7 +65,6 @@ export class AttachmentProcessor {
         });
       }
 
-      const supplierIdentity = resolveSupplierIdentity(validation.invoice, await this.dependencies.supplierDirectory.listActive());
       if (supplierIdentity.status !== "matched") {
         return this.finish(record, "review_required", {
           code: "EX-06", reason: "Supplier identity requires review", retryable: false, issues: [supplierIdentity.issue],
@@ -73,7 +74,7 @@ export class AttachmentProcessor {
         ...validation.invoice,
         supplierName: supplierIdentity.supplier.legalName,
         supplierTaxId: supplierIdentity.supplier.taxId ?? validation.invoice.supplierTaxId,
-      }, extraction.confidence, this.dependencies.validationConfig);
+      }, extraction.confidence, supplierValidationConfig);
       if (!validation.valid) throw new Error("Canonical supplier data unexpectedly failed invoice validation");
 
       const duplicateKey = buildDuplicateKey(validation.invoice);

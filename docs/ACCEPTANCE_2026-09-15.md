@@ -25,8 +25,8 @@ Ejemplos esperados:
 
 ```text
 Facturas/SATINFO SL/SF 198033_2026-2307_200.86_EUR.pdf
-Facturas/Endesa Energía, S.A. Unipersonal/1788963399671_2026-0509_387.21_EUR.pdf
-Facturas/EMAS PRINTING SOLUTIONS/F26-1334_2026-0109_55.00_EUR.pdf
+Facturas/Endesa Energía, S.A. Unipersonal/P26CON037623604_2026-0509_387.21_EUR.pdf
+Facturas/Emas Printing Solutions, SL/F26-1334_2026-0109_55.00_EUR.pdf
 ```
 
 ## Preparación de la prueba
@@ -99,6 +99,7 @@ El archivo se creó con `SharePoint App` como autor y tamaño de 131.584 bytes. 
 
 ## Observaciones para las siguientes pruebas
 
-- La factura `F26/1334` es emitida por EMAS a un cliente. Es útil para probar cobros y conciliación, pero el circuito actual está orientado a facturas recibidas y la tratará como documento cuyo emisor es EMAS.
-- Las pruebas de Endesa y EMAS deben enviarse de una en una, comprobando `ProcesosFacturas`, `RegistroFacturas` y la carpeta del proveedor antes de continuar.
+- La factura `F26/1334` se revisó contra su XML Factur-X y se procesó correctamente: `completed`, sin excepción, con fecha 01/09/2026, vencimiento 20/09/2026, base 55,00 EUR, IVA 0,00 EUR y total 55,00 EUR. Es emitida por EMAS a un cliente; resulta útil para pruebas de cobros y conciliación, aunque el circuito actual está orientado a facturas recibidas.
+- La extracción de Endesa es coherente (NIF `A81948077`, base 320,01 EUR, IVA 67,20 EUR y total 387,21 EUR), pero la plantilla obtiene confianzas 0,683 para NIF, 0,681 para IVA y 0,889 para total. Se incorporó un perfil acotado y explícitamente aprobable en `MaestroProveedores` para este tipo de factura; no modifica los controles para proveedores sin esa aprobación.
+- Las pruebas de Endesa deben enviarse de una en una, comprobando `ProcesosFacturas`, `RegistroFacturas` y la carpeta del proveedor antes de continuar.
 - Los extractos bancarios simulados se conservan como insumo de la siguiente fase de conciliación; no se utilizaron en esta prueba de recepción y archivado.

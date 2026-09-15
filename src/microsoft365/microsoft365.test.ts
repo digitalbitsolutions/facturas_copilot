@@ -89,12 +89,12 @@ test("loads active supplier master records from SharePoint", async () => {
   const graph = new GraphClient({ getAccessToken: async () => "token" }, async (url) => {
     assert.match(String(url), /lists\/MaestroProveedores\/items\?expand=fields&\$top=999$/);
     return Response.json({ value: [
-      { id: "1", fields: { CodigoProveedor: "SUP-1", RazonSocial: "Proveedor Uno SL", NIF: "B12345678", Aliases: "P1;Proveedor 1", Activo: true } },
+      { id: "1", fields: { CodigoProveedor: "SUP-1", RazonSocial: "Proveedor Uno SL", NIF: "B12345678", Aliases: "P1;Proveedor 1", AceptaConfianzaReducida: true, Activo: true } },
       { id: "2", fields: { RazonSocial: "Proveedor Inactivo", Activo: false } },
     ] });
   });
   const records = await new SharePointSupplierDirectory(graph, "site").listActive();
-  assert.deepEqual(records, [{ supplierId: "SUP-1", legalName: "Proveedor Uno SL", taxId: "B12345678", aliases: ["P1", "Proveedor 1"], active: true }]);
+  assert.deepEqual(records, [{ supplierId: "SUP-1", legalName: "Proveedor Uno SL", taxId: "B12345678", aliases: ["P1", "Proveedor 1"], allowReducedConfidence: true, active: true }]);
 });
 
 test("persists and reloads invoice process state by stable process ID", async () => {

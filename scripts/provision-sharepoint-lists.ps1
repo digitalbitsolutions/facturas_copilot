@@ -116,6 +116,7 @@ $definitions = @(
             @{ name = 'NIF'; text = @{} }
             @{ name = 'Aliases'; text = @{ allowMultipleLines = $true } }
             @{ name = 'Activo'; boolean = @{} }
+            @{ name = 'AceptaConfianzaReducida'; boolean = @{} }
         )
     },
     @{
@@ -206,6 +207,22 @@ foreach ($definition in $definitions) {
     $created += $definition.displayName
 }
 
-[pscustomobject]@{ siteUrl = $site.webUrl; created = $created; alreadyPresent = $alreadyPresent } | ConvertTo-Json -Depth 4
+# Existing pilot lists are upgraded too, so newly introduced optional columns do
+# not require recreating a list or losing its audit history.
+$existing = (Invoke-RestMethod -Headers $headers -Uri "https://graph.microsoft.com/v1.0/sites/$($site.id)/lists?%24select=id,displayName").value
+$addedColumns = @()
+foreach ($definition in $definitions) {
+    $list = $existing | Where-Object { $_.displayName -eq $definition.displayName } | Select-Object -First 1
+    if (-not $list) { throw "List $($definition.displayName) was not found after provisioning." }
+    $columns = (Invoke-RestMethod -Headers $headers -Uri "https://graph.microsoft.com/v1.0/sites/$($site.id)/lists/$($list.id)/columns?%24select=name").value
+    foreach ($column in $definition.columns) {
+        if ($columns.name -contains $column.name) { continue }
+        $body = $column | ConvertTo-Json -Depth 10
+        Invoke-RestMethod -Method Post -Headers $headers -Uri "https://graph.microsoft.com/v1.0/sites/$($site.id)/lists/$($list.id)/columns" -Body $body | Out-Null
+        $addedColumns += "$($definition.displayName).$($column.name)"
+    }
+}
+
+[pscustomobject]@{ siteUrl = $site.webUrl; created = $created; alreadyPresent = $alreadyPresent; addedColumns = $addedColumns } | ConvertTo-Json -Depth 4
 
 # The access token exists only in this process and is discarded on exit.

@@ -64,6 +64,28 @@ test("requires a unique active supplier master match before archiving", async ()
   assert.equal(context.documents.documents.size, 0);
 });
 
+test("allows the bounded confidence profile only for an explicitly approved exact NIF match", async () => {
+  const endesa = {
+    supplierName: "Endesa Energía, S.A. Unipersonal.", supplierTaxId: "A81948077.", invoiceNumber: "P26CON037623604",
+    invoiceDate: "2026-09-05", taxableBase: "320.01", vatAmount: "67.20", totalAmount: "387.21", currency: "EUR",
+  };
+  const approved = new AttachmentProcessor({
+    classifier: { classify: async () => ({ kind: "invoice", confidence: 0.99, reasons: ["test"] }) },
+    extractor: { extract: async () => ({ invoice: endesa, confidence: { supplierTaxId: 0.683, vatAmount: 0.681, totalAmount: 0.889 } }) },
+    processStore: new MemoryProcessStore(), documents: new MemoryDocumentRepository(), registry: new MemoryInvoiceRegistry(),
+    supplierDirectory: new MemorySupplierDirectory([{ supplierId: "ENDESA", legalName: "Endesa Energía, S.A. Unipersonal", taxId: "A81948077", active: true, allowReducedConfidence: true }]),
+  });
+  assert.equal((await approved.process(input())).state, "completed");
+
+  const notApproved = new AttachmentProcessor({
+    classifier: { classify: async () => ({ kind: "invoice", confidence: 0.99, reasons: ["test"] }) },
+    extractor: { extract: async () => ({ invoice: endesa, confidence: { supplierTaxId: 0.683, vatAmount: 0.681, totalAmount: 0.889 } }) },
+    processStore: new MemoryProcessStore(), documents: new MemoryDocumentRepository(), registry: new MemoryInvoiceRegistry(),
+    supplierDirectory: new MemorySupplierDirectory([{ supplierId: "ENDESA", legalName: "Endesa Energía, S.A. Unipersonal", taxId: "A81948077", active: true }]),
+  });
+  assert.equal((await notApproved.process(input())).state, "review_required");
+});
+
 test("flags a second invoice with the same business key", async () => {
   const context = setup();
   assert.equal((await context.processor.process(input("first"))).state, "completed");
