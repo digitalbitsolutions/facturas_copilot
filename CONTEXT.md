@@ -1,6 +1,6 @@
 # Contexto de reanudación
 
-Actualizado: 15 de septiembre de 2026, tras validar el archivado por proveedor y nomenclatura de facturas.
+Actualizado: 15 de septiembre de 2026, tras validar facturas, simular conciliación bancaria y documentar la propuesta comercial España.
 
 ## Objetivo
 
@@ -16,7 +16,7 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - Integración M365 validada en el tenant: la Function lee el buzón restringido mediante Graph y archiva adjuntos PDF en SharePoint.
 - Importación bancaria y conciliación local terminadas: lotes, validación, normalización, duplicidad, puntuación explicable y ambigüedad.
 - Azure Functions v4 preparada con endpoints HTTP; infraestructura Flex Consumption y CI/CD preparadas.
-- Pruebas actuales: 64 superadas.
+- Pruebas actuales: 70 superadas.
 - Tenant de pruebas verificado: `INTEGRAMENTE SL`, dominio `integramente.onmicrosoft.com` (`a1a2b397-4ac5-4f94-9004-67f158ea14e0`).
 - Administrador comunicado: `demo@integramente.onmicrosoft.com`; la contraseña no se almacena.
 - Licencias verificadas el 9 de septiembre de 2026: 25 `O365_BUSINESS_PREMIUM` y 25 `MICROSOFT_365_COPILOT_FOR_BUSINESS`, ambas habilitadas y sin asignar.
@@ -54,6 +54,9 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - El 11 de septiembre se validó la operación manual de excepciones mediante los endpoints autenticados. `EX-03` se descartó como liquidación bancaria, `EX-07` se descartó tras verificar el proceso fiscal original y `EX-06` se resolvió tras confirmar activo al proveedor SATINFO. Cada cierre conserva responsable, acción, resultado y fecha UTC en `Excepciones`.
 - El commit `e4ada44` sincroniza esos cierres con `ProcesosFacturas`: `Descartada` pasa a `discarded` y `Resuelta` a `resolved`, sin modificar facturas, PDFs ni registros fiscales. Tras desplegarlo con GitHub Actions, los tres procesos de prueba mostraron los estados esperados y la vista `Pendientes de revisión` quedó vacía tras verificación manual.
 - El 15 de septiembre se aprobó el patrón de archivo `Facturas/<PROVEEDOR>/<NUMERO>_<AAAA-DDMM>_<IMPORTE>_<MONEDA>.pdf`. El commit `b431331` crea la carpeta del proveedor de forma idempotente, elimina el prefijo técnico del nombre visible y añade un sufijo hash solo ante una colisión real. Tras desplegarlo, una prueba limpia de SATINFO terminó en `completed` y archivó `SATINFO SL/SF 198033_2026-2307_200.86_EUR.pdf`; la evidencia completa está en `docs/ACCEPTANCE_2026-09-15.md`.
+- EMAS se validó contra XML Factur-X y se archivó correctamente; Endesa se validó tras aprobar su perfil acotado en `MaestroProveedores.AceptaConfianzaReducida`, siempre condicionado a NIF exacto, proveedor activo y coherencia fiscal. Evidencia en `docs/ACCEPTANCE_2026-09-15.md`.
+- El commit `6f83b03` introduce perfiles versionados de extractos. `bankinter-simulated-csv-v1` mapea el CSV de pruebas de cabeceras minúsculas y conserva signo de cargos/abonos; `standard-es-v1` queda disponible para rollback. Simulación local: 46 movimientos, 16 positivos y 30 negativos; SATINFO `high`, Endesa `probable` por comisión de 0,02 EUR y EMAS sin match por cobros parciales.
+- Propuesta comercial inicial para España documentada en `docs/COMMERCIAL_SPAIN.md`: implantación + cuota mensual + consumo cloud transparente; sin dependencia inicial de API bancaria. Pendiente definir formato del Excel de previsión de pagos e importador correspondiente.
 - No existe aún ningún recurso productivo ni credencial almacenada.
 
 ## Evidencia y diagnóstico del piloto de correo
