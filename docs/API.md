@@ -25,6 +25,12 @@ La validación conserva `0,8` como umbral general de respaldo y aplica esta pol�
 
 El endpoint consulta `MaestroProveedores` y devuelve `supplierIdentity`. Un NIF extraído solo valida mediante coincidencia exacta y única con un proveedor activo; si no hay NIF, se permite coincidencia exacta tras normalizar razón social o un alias explícito. Los estados `not_found` y `ambiguous` hacen que `validation.valid` sea `false`.
 
+### Perfil acotado de confianza por proveedor
+
+El comportamiento normal usa los umbrales anteriores. El campo booleano `MaestroProveedores.AceptaConfianzaReducida` permite aprobar de forma explícita una plantilla recurrente cuya extracción sea fiscalmente coherente pero tenga confianza marginal en determinados campos. El perfil solo se activa con las cuatro condiciones siguientes: el proveedor está activo, el campo está marcado en `Sí`, el NIF del PDF coincide de forma exacta y única con el NIF maestro, y la factura supera todos los controles deterministas. No se activa por coincidencia de razón social o alias.
+
+El perfil reduce exclusivamente los mínimos de NIF a `0,68`, IVA a `0,68` y total a `0,88`; mantiene obligatorios los datos fiscales, los formatos válidos y la igualdad `base + IVA = total` con tolerancia de un céntimo. El valor predeterminado de la columna es `No`, por lo que ningún proveedor nuevo obtiene esta excepción automáticamente.
+
 ## Validar factura
 
 ```json

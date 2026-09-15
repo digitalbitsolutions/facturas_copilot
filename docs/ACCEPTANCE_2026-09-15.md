@@ -103,3 +103,9 @@ El archivo se creó con `SharePoint App` como autor y tamaño de 131.584 bytes. 
 - La extracción de Endesa es coherente (NIF `A81948077`, base 320,01 EUR, IVA 67,20 EUR y total 387,21 EUR), pero la plantilla obtiene confianzas 0,683 para NIF, 0,681 para IVA y 0,889 para total. Se incorporó un perfil acotado y explícitamente aprobable en `MaestroProveedores` para este tipo de factura; no modifica los controles para proveedores sin esa aprobación.
 - Las pruebas de Endesa deben enviarse de una en una, comprobando `ProcesosFacturas`, `RegistroFacturas` y la carpeta del proveedor antes de continuar.
 - Los extractos bancarios simulados se conservan como insumo de la siguiente fase de conciliación; no se utilizaron en esta prueba de recepción y archivado.
+
+## Resultado de la prueba Endesa
+
+Tras desplegar el commit `ebcae19` y marcar `ENDESA.AceptaConfianzaReducida = Sí`, se reenvió la factura `FA-endesa-1788963399671.pdf`. La prueba finalizó correctamente: el proceso quedó en `completed`, sin excepción, y se creó el archivo bajo la carpeta del proveedor con el nombre `P26CON037623604_2026-0509_387.21_EUR.pdf`.
+
+La solución no reduce el umbral global. Solo se habilita para ENDESA porque su NIF extraído `A81948077` coincide de forma exacta y única con un proveedor activo autorizado; además, los importes de la factura cumplen `320,01 + 67,20 = 387,21` EUR. SATINFO y EMAS quedaron con el valor predeterminado `No` y siguen usando la validación estándar.
