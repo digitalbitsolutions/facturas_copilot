@@ -1,6 +1,7 @@
 import type { ExtractedInvoice, ExtractionConfidence } from "../invoices/types.ts";
 import type { InvoiceExtractor, AttachmentInput } from "../processing/types.ts";
 import type { AccessTokenProvider } from "../microsoft365/graph-client.ts";
+import { enrichWithFacturX } from "./factur-x.ts";
 
 const API_VERSION = "2024-11-30";
 const MODEL_ID = "prebuilt-invoice";
@@ -120,7 +121,7 @@ export class DocumentIntelligenceInvoiceExtractor implements InvoiceExtractor {
       const response = await this.fetchImpl(operationUrl, { headers: { authorization: `Bearer ${token}` } });
       if (!response.ok) throw await this.responseError("poll", response);
       const payload = await response.json() as AnalyzeResponse;
-      if (payload.status === "succeeded") return mapInvoiceResult(payload);
+      if (payload.status === "succeeded") return enrichWithFacturX(mapInvoiceResult(payload), input.content);
       if (payload.status === "failed") throw new Error(`Document Intelligence analysis failed: ${payload.error?.message ?? payload.error?.code ?? "unknown error"}`);
     }
     throw new Error("Document Intelligence analysis timed out");

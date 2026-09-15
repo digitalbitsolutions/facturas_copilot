@@ -26,7 +26,7 @@ Ejemplos esperados:
 ```text
 Facturas/SATINFO SL/SF 198033_2026-2307_200.86_EUR.pdf
 Facturas/Endesa Energía, S.A. Unipersonal/1788963399671_2026-0509_387.21_EUR.pdf
-Facturas/EMAS PRINTING SOLUTIONS/F26-1334_2026-2402_55.00_EUR.pdf
+Facturas/EMAS PRINTING SOLUTIONS/F26-1334_2026-0109_55.00_EUR.pdf
 ```
 
 ## Preparación de la prueba
