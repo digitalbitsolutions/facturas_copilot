@@ -35,6 +35,9 @@ param invoiceProcessingEnabled bool = false
 @description('Only messages received at or after this ISO instant may enter automatic invoice processing.')
 param invoiceProcessingNotBefore string = '9999-12-31T23:59:59Z'
 
+@description('Versioned bank-import profile. Keep standard-es-v1 to retain the previous mapping; use bankinter-simulated-csv-v1 only for the supplied signed CSV pilot.')
+param bankImportProfile string = 'standard-es-v1'
+
 param tags object = {
   application: 'facturas-copilot'
   environment: environmentName
@@ -170,6 +173,7 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
         { name: 'APPLICATIONINSIGHTS_AUTHENTICATION_STRING', value: 'Authorization=AAD' }
         { name: 'FUNCTIONS_NODE_BLOCK_ON_ENTRY_POINT_ERROR', value: 'true' }
         { name: 'BANK_IMPORT_SCHEDULE', value: '0 */10 * * * *' }
+        { name: 'BANK_IMPORT_PROFILE', value: bankImportProfile }
         { name: 'M365_BANK_FOLDER', value: 'ExtractosBancarios' }
         { name: 'M365_BANK_PROCESSED_FOLDER', value: 'Procesados' }
         { name: 'M365_BANK_ERROR_FOLDER', value: 'Errores' }

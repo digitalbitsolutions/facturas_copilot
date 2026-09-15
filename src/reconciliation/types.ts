@@ -15,7 +15,8 @@ export type BankImportConfig = {
   schemaVersion: string;
   columns: BankColumnMap;
   defaultCurrency?: string;
-  debitSign: "negative" | "positive";
+  /** How the bank represents signs: all debits negative, all debits positive, or signed values as supplied. */
+  debitSign: "negative" | "positive" | "preserve";
 };
 
 export type BankMovement = {

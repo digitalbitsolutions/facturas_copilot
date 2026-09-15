@@ -29,6 +29,20 @@ describe("bank import", () => {
     assert.equal(first.batch.movements[0].fingerprint, second.batch.movements[0].fingerprint);
   });
 
+  it("preserves mixed debit and credit signs when the profile declares signed amounts", () => {
+    const signed: BankImportConfig = { ...config, schemaVersion: "signed-v1", debitSign: "preserve" };
+    const result = importBankRows({
+      sourceFilename: "signed.csv", sourceHash: "signed", config: signed,
+      rows: [
+        { Fecha: "08/09/2026", Concepto: "Cargo", Importe: "-12,50" },
+        { Fecha: "09/09/2026", Concepto: "Abono", Importe: "30,00" },
+      ],
+    });
+    assert.equal(result.accepted, true);
+    if (!result.accepted) return;
+    assert.deepEqual(result.batch.movements.map(({ amountMinor }) => amountMinor), [-1250, 3000]);
+  });
+
   it("rejects invalid headers and malformed values with actionable issues", () => {
     const missing = importBankRows({ sourceFilename: "bad.xlsx", sourceHash: "bad", config, rows: [{ Fecha: "31/02/2026" }] });
     assert.equal(missing.accepted, false);

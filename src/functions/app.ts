@@ -3,7 +3,7 @@ import { assignExceptionRequest, decideReconciliationRequest, importBankRequest,
 import { DocumentIntelligenceDocumentClassifier } from "../classification/index.ts";
 import { DocumentIntelligenceInvoiceExtractor } from "../extraction/index.ts";
 import { resolveSupplierIdentity, validateInvoice, validationConfigForSupplier } from "../invoices/index.ts";
-import { DEFAULT_BANK_IMPORT_CONFIG, GraphClient, ManagedIdentityTokenProvider, SharePointBankPoller, SharePointDocumentRepository, SharePointExceptionResolutionStore, SharePointInvoiceMailboxPoller, SharePointInvoiceRegistry, SharePointProcessStore, SharePointReconciliationStore, SharePointSupplierDirectory } from "../microsoft365/index.ts";
+import { bankImportConfigForProfile, GraphClient, ManagedIdentityTokenProvider, SharePointBankPoller, SharePointDocumentRepository, SharePointExceptionResolutionStore, SharePointInvoiceMailboxPoller, SharePointInvoiceRegistry, SharePointProcessStore, SharePointReconciliationStore, SharePointSupplierDirectory } from "../microsoft365/index.ts";
 import { AttachmentProcessor } from "../processing/index.ts";
 
 function json(status: number, body: unknown): HttpResponseInit {
@@ -173,7 +173,7 @@ app.timer("pollBankExtracts", {
         importsList: process.env.M365_BANK_IMPORTS_LIST ?? "ImportacionesBancarias",
         movementsList: process.env.M365_BANK_MOVEMENTS_LIST ?? "MovimientosBancarios",
         exceptionsList: process.env.M365_EXCEPTIONS_LIST ?? "Excepciones",
-        importConfig: DEFAULT_BANK_IMPORT_CONFIG,
+        importConfig: bankImportConfigForProfile(process.env.BANK_IMPORT_PROFILE),
       });
       const result = await poller.run();
       context.log("Bank extract polling completed", result);

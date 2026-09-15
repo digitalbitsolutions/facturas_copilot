@@ -11,20 +11,58 @@ export type BankPollingConfig = {
   importsList: string; movementsList: string; exceptionsList: string; importConfig: BankImportConfig;
 };
 
-export const DEFAULT_BANK_IMPORT_CONFIG: BankImportConfig = {
-  schemaVersion: "1.0", debitSign: "negative", defaultCurrency: "EUR",
+const STANDARD_ES_V1: BankImportConfig = {
+  schemaVersion: "standard-es-v1", debitSign: "negative", defaultCurrency: "EUR",
   columns: { id: "IdMovimiento", bookingDate: "FechaMovimiento", valueDate: "FechaValor", description: "Concepto", amount: "Importe", currency: "Moneda", reference: "Referencia", counterparty: "Contraparte" },
 };
 
+const BANKINTER_SIMULATED_CSV_V1: BankImportConfig = {
+  schemaVersion: "bankinter-simulated-csv-v1", debitSign: "preserve", defaultCurrency: "EUR",
+  columns: { bookingDate: "fecha_operacion", valueDate: "fecha_valor", description: "concepto", amount: "importe", currency: "moneda", reference: "referencia_bancaria", counterparty: "contraparte" },
+};
+
+const BANK_IMPORT_PROFILES: Record<string, BankImportConfig> = {
+  "standard-es-v1": STANDARD_ES_V1,
+  "bankinter-simulated-csv-v1": BANKINTER_SIMULATED_CSV_V1,
+};
+
+/** Backward-compatible profile used unless an explicit version is configured. */
+export const DEFAULT_BANK_IMPORT_CONFIG = STANDARD_ES_V1;
+
+export function bankImportConfigForProfile(profile = "standard-es-v1"): BankImportConfig {
+  const config = BANK_IMPORT_PROFILES[profile];
+  if (!config) throw new Error(`Unsupported BANK_IMPORT_PROFILE '${profile}'. Supported profiles: ${Object.keys(BANK_IMPORT_PROFILES).join(", ")}`);
+  return structuredClone(config);
+}
+
 function graphPath(value: string): string { return encodeURIComponent(value); }
 function folderPath(value: string): string { return value.split("/").filter(Boolean).map(graphPath).join("/"); }
+
+function parseCsvLine(line: string, delimiter: string): string[] {
+  const values: string[] = [];
+  let value = "";
+  let quoted = false;
+  for (let index = 0; index < line.length; index += 1) {
+    const character = line[index];
+    if (character === '"') {
+      if (quoted && line[index + 1] === '"') { value += '"'; index += 1; }
+      else quoted = !quoted;
+    } else if (character === delimiter && !quoted) { values.push(value.trim()); value = ""; }
+    else value += character;
+  }
+  values.push(value.trim());
+  return values;
+}
 
 function parseCsv(content: ArrayBuffer): Record<string, unknown>[] {
   const [headerLine, ...lines] = Buffer.from(content).toString("utf8").replace(/^\uFEFF/, "").split(/\r?\n/).filter(Boolean);
   if (!headerLine) return [];
   const delimiter = headerLine.includes(";") ? ";" : ",";
-  const headers = headerLine.split(delimiter).map((heading) => heading.trim());
-  return lines.map((line) => Object.fromEntries(headers.map((header, index) => [header, line.split(delimiter)[index]?.trim() ?? ""])));
+  const headers = parseCsvLine(headerLine, delimiter);
+  return lines.map((line) => {
+    const values = parseCsvLine(line, delimiter);
+    return Object.fromEntries(headers.map((header, index) => [header, values[index] ?? ""]));
+  });
 }
 
 /** Reads the first worksheet. The heading row must use the configured column names. */

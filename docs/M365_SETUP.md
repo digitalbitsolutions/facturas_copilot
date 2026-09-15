@@ -57,8 +57,20 @@ Copiar `.env.example` como `.env` y completar solo identificadores y nombres. `.
 | `M365_SHAREPOINT_DRIVE_ID` | Se resolverá por Graph al conectar el sitio |
 | `M365_INVOICE_FOLDER` | Carpeta de PDF, inicialmente `Facturas` |
 | `M365_BANK_FOLDER` | Carpeta restringida de extractos, inicialmente `ExtractosBancarios` |
+| `BANK_IMPORT_PROFILE` | Perfil versionado del extracto: `standard-es-v1` (anterior) o `bankinter-simulated-csv-v1` (CSV de pruebas firmado) |
 | `M365_MAILBOX_ADDRESS` | Buzón que recibe facturas |
 | `M365_MAIL_FOLDER` | Carpeta vigilada, inicialmente `Inbox` |
+
+### Perfiles versionados de extractos bancarios
+
+La Function importa extractos mediante `BANK_IMPORT_PROFILE`, no mediante detección automática. Esto permite conocer qué formato se aplicó a cada lote y volver al perfil anterior sin modificar movimientos ya registrados.
+
+| Perfil | Formato y comportamiento |
+|---|---|
+| `standard-es-v1` | Perfil anterior: cabeceras `FechaMovimiento`, `Concepto`, `Importe`, etc.; convierte todos los importes según la convención de cargo configurada. Es el valor predeterminado. |
+| `bankinter-simulated-csv-v1` | CSV de pruebas: cabeceras en minúscula (`fecha_operacion`, `importe`, `concepto`, etc.) y signo ya incluido en el importe. Conserva cargos negativos y abonos positivos. |
+
+Para este piloto, desplegar con `bank_import_profile = bankinter-simulated-csv-v1`. Para rollback, se vuelve a desplegar seleccionando `standard-es-v1`; los lotes ya importados conservan su `schemaVersion` y su hash de origen, por lo que no se reinterpretan. No se debe cambiar de perfil mientras haya un archivo pendiente en `ExtractosBancarios`.
 
 ## Credenciales
 

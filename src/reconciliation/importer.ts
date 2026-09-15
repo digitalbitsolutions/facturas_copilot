@@ -31,7 +31,9 @@ export function importBankRows(input: {
     if (!currency) issues.push({ code: "invalid_currency", row: rowNumber, column: input.config.columns.currency, message: "Missing or invalid ISO currency" });
     if (!date || amount === undefined || !currency) return;
 
-    const signedAmount = input.config.debitSign === "negative" ? -Math.abs(amount) : Math.abs(amount);
+    const signedAmount = input.config.debitSign === "preserve"
+      ? amount
+      : input.config.debitSign === "negative" ? -Math.abs(amount) : Math.abs(amount);
     const description = String(row[input.config.columns.description] ?? "").trim();
     const sourceId = input.config.columns.id ? String(row[input.config.columns.id] ?? "").trim() || undefined : undefined;
     const reference = input.config.columns.reference ? String(row[input.config.columns.reference] ?? "").trim() || undefined : undefined;
