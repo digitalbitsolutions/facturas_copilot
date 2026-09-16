@@ -52,6 +52,9 @@ export class SharePointPaymentForecastPoller {
       for (const row of rows) { const existing = await this.items(this.config.forecastsList, "PrevisionId", String(row.PrevisionId)); for (const record of existing) { knownIds.add(String(row.PrevisionId)); const key = record.fields?.ClavePrevision; if (typeof key === "string") knownKeys.add(key); } }
       const result = importPaymentForecastRows({ sourceFilename: item.name, sourceHash: hash, rows, knownForecastKeys: knownKeys, knownPrevisionIds: knownIds });
       if (!result.accepted) throw new Error(result.issues.map((issue) => issue.message).join("; "));
+      // A SharePoint/Office rewrite can alter an XLSX package while every business row
+      // remains known. Do not create a second audit batch for that no-op replay.
+      if (result.batch.forecasts.length === 0) { await this.move(item, this.config.processedFolder); return "processed"; }
       await this.add(this.config.importsList, { Title: result.batch.batchId, LoteId: result.batch.batchId, ArchivoOrigen: item.name, HashOrigen: hash, Estado: "Importado", FilasLeidas: result.batch.rowCount, PrevisionesImportadas: result.batch.forecasts.length, FechaImportacion: result.batch.importedAt });
       for (const forecast of result.batch.forecasts) await this.save(forecast, item.name);
       await this.move(item, this.config.processedFolder); return "processed";
