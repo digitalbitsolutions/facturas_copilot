@@ -4,13 +4,26 @@ param(
     [string]$TenantId,
 
     [string]$HostName = 'integramente.sharepoint.com',
-    [string]$SitePath = '/sites/facturas'
+    [string]$SitePath = '/sites/facturas',
+
+    [switch]$UseAzureCliToken
 )
 
 $ErrorActionPreference = 'Stop'
 $clientId = '14d82eec-204b-4c2f-b7e8-296a70dab67e' # Microsoft Graph Command Line Tools
 $scope = @('openid', 'profile', 'https://graph.microsoft.com/Sites.ReadWrite.All') -join ' '
 
+$device = $null
+$token = $null
+if ($UseAzureCliToken) {
+    $azCommand = Get-Command az -ErrorAction SilentlyContinue
+    if (-not $azCommand -and (Test-Path "$env:ProgramFiles\Microsoft SDKs\Azure\CLI2\wbin\az.cmd")) { $azCommand = Get-Item "$env:ProgramFiles\Microsoft SDKs\Azure\CLI2\wbin\az.cmd" }
+    if (-not $azCommand) { throw 'Azure CLI was not found. Remove -UseAzureCliToken to use device authentication.' }
+    $azExe = if ($azCommand.Source) { $azCommand.Source } else { $azCommand.FullName }
+    $token = @{ access_token = (& $azExe account get-access-token --resource-type ms-graph --query accessToken -o tsv) }
+    if (-not $token.access_token) { throw 'Azure CLI did not return a Microsoft Graph token.' }
+}
+else {
 $device = Invoke-RestMethod -Method Post `
     -Uri "https://login.microsoftonline.com/$TenantId/oauth2/v2.0/devicecode" `
     -ContentType 'application/x-www-form-urlencoded' `
@@ -38,6 +51,7 @@ while ((Get-Date) -lt $deadline -and -not $token) {
     }
 }
 if (-not $token) { throw 'Device authentication expired.' }
+}
 
 $headers = @{ Authorization = "Bearer $($token.access_token)"; 'Content-Type' = 'application/json' }
 $site = Invoke-RestMethod -Headers $headers -Uri "https://graph.microsoft.com/v1.0/sites/$HostName`:$SitePath"
