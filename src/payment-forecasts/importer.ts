@@ -6,7 +6,14 @@ const CONFIDENCES = new Set<ForecastConfidence>(["Alta", "Media", "Baja"]);
 
 /** Stable logical source identity. SharePoint/Office may reserialize an XLSX without changing its rows. */
 export function paymentForecastSourceHash(rows: PaymentForecastRow[]): string {
-  return stableHash(JSON.stringify(rows.map((row) => Object.fromEntries(PAYMENT_FORECAST_COLUMNS.map((column) => [column, row[column] ?? ""])))));
+  const dates = new Set(["FechaFactura", "FechaVencimiento", "FechaPagoPrevista"]);
+  const amounts = new Set(["ImporteFactura", "ImportePagoPrevisto"]);
+  return stableHash(JSON.stringify(rows.map((row) => Object.fromEntries(PAYMENT_FORECAST_COLUMNS.map((column) => {
+    const value = row[column];
+    if (dates.has(column)) return [column, normalizeDate(value) ?? String(value ?? "").trim()];
+    if (amounts.has(column)) return [column, parseMoneyMinor(value) ?? String(value ?? "").trim()];
+    return [column, String(value ?? "").trim()];
+  })))));
 }
 
 function text(value: unknown): string | undefined {
