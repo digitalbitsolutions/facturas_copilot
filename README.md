@@ -41,6 +41,19 @@ El contexto declarado por el modelo no es el contexto operativo. En este hardwar
 6. No se ejecutan modelos locales en paralelo en este equipo.
 7. Toda delegación registra tokens estimados evitados, latencia, resultado y retrabajo.
 
+## Plan de orquestación por sesión
+
+Este protocolo se ejecuta al inicio y al cierre de cada sesión de Codex. El objetivo es reducir consumo cloud sin trasladar riesgo, datos sensibles ni retrabajo al equipo.
+
+1. **Situar el trabajo.** Leer `README.md`, `CONTEXT.md` y el apartado relevante de `TODO.md`; comprobar `git status --short` y los últimos commits. No cargar el repositorio completo ni documentación no relacionada.
+2. **Clasificar antes de delegar.** Ejecutar directamente tareas deterministas (búsquedas, compilación, pruebas, formato y cambios mecánicos). Reservar Codex para arquitectura, seguridad, integraciones Microsoft 365/Azure, cambios transversales y toda ambigüedad.
+3. **Delegación local opcional.** Solo enviar a Ollama texto mínimo, ya seleccionado y sin secretos ni datos fiscales personales. Exigir salida JSON breve y validar el resultado con pruebas, tipos o reglas. Una sola tarea y un solo modelo local simultáneos.
+4. **Escalado inmediato.** Si el formato es inválido, la respuesta es ambigua, se detecta un dato sensible, falla una validación o aparece un segundo intento, detener la ruta local y resolver con Codex. No perseverar para justificar el uso del modelo local.
+5. **Medir ahorro neto.** Por cada ensayo local registrar: tarea, modelo, tamaño aproximado de entrada/salida, latencia, aceptación directa, correcciones y motivo de escalado. La fórmula es `tokens_cloud_base - tokens_cloud_orquestados - equivalente_del_retrabajo`.
+6. **Cerrar con evidencia.** Ejecutar las comprobaciones pertinentes, actualizar solo la documentación afectada y dejar el siguiente paso y bloqueos en `CONTEXT.md` o `TODO.md`. Si no hay evidencia de ahorro o la calidad baja, la ruta local queda desactivada.
+
+Perfil inicial: `qwen3:1.7b` para clasificación y JSON breve; `qwen2.5-coder:3b-instruct` para propuestas mecánicas de tests o parches pequeños; `deepseek-r1:1.5b` solo para hipótesis puntuales; `ministral-3:3b` o Gemma para evaluación visual. No se descarga ningún modelo adicional hasta completar el benchmark de P2 con diez tareas de clasificación y diez de código, comparadas contra una línea base de Codex.
+
 ## Enrutamiento inicial
 
 ```text

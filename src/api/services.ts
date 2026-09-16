@@ -51,6 +51,7 @@ export function importPaymentForecastRequest(body: unknown) {
     sourceHash: body.sourceHash,
     rows: body.rows as PaymentForecastRow[],
     knownForecastKeys: Array.isArray(body.knownForecastKeys) ? new Set(body.knownForecastKeys as string[]) : undefined,
+    knownPrevisionIds: Array.isArray(body.knownPrevisionIds) ? new Set(body.knownPrevisionIds as string[]) : undefined,
   });
 }
 

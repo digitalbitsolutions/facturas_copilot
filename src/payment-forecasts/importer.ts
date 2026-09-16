@@ -18,6 +18,7 @@ export function importPaymentForecastRows(input: {
   sourceHash: string;
   rows: PaymentForecastRow[];
   knownForecastKeys?: ReadonlySet<string>;
+  knownPrevisionIds?: ReadonlySet<string>;
   importedAt?: string;
 }): PaymentForecastImportResult {
   const batchId = stableHash(input.sourceHash, "payment-forecast-v1");
@@ -59,8 +60,8 @@ export function importPaymentForecastRows(input: {
     if (!previsionId || !invoiceNumber || !supplierName || !invoiceDate || invoiceAmountMinor === undefined || invoiceAmountMinor <= 0 || !currency || plannedPaymentAmountMinor === undefined || plannedPaymentAmountMinor <= 0 || !statusText || !STATUSES.has(statusText as PaymentForecastStatus) || (reviewText !== "Sí" && reviewText !== "No")) return;
 
     const forecastKey = stableHash(previsionId, normalizeText(invoiceNumber), normalizeText(supplierName), normalizeText(text(row.NIFProveedor) ?? ""), invoiceDate, String(plannedPaymentAmountMinor), currency);
-    if (seen.has(forecastKey) || input.knownForecastKeys?.has(forecastKey)) {
-      issues.push({ code: "duplicate_forecast", row: sourceRow, message: "Forecast was already present in this or a previous import" });
+    if (seen.has(forecastKey) || input.knownForecastKeys?.has(forecastKey) || input.knownPrevisionIds?.has(previsionId)) {
+      issues.push({ code: "duplicate_forecast", row: sourceRow, message: "Forecast identity was already present in this or a previous import" });
       return;
     }
     seen.add(forecastKey);

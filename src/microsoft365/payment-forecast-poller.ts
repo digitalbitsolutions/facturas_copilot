@@ -49,9 +49,9 @@ export class SharePointPaymentForecastPoller {
       const bytes = await response.arrayBuffer(); const hash = createHash("sha256").update(Buffer.from(bytes)).digest("hex");
       if ((await this.items(this.config.importsList, "HashOrigen", hash)).length) { await this.move(item, this.config.processedFolder); return "processed"; }
       const rows = await parsePaymentForecastFile(item.name, bytes);
-      const known = new Set<string>();
-      for (const row of rows) { const existing = await this.items(this.config.forecastsList, "PrevisionId", String(row.PrevisionId)); for (const record of existing) { const key = record.fields?.ClavePrevision; if (typeof key === "string") known.add(key); } }
-      const result = importPaymentForecastRows({ sourceFilename: item.name, sourceHash: hash, rows, knownForecastKeys: known });
+      const knownKeys = new Set<string>(); const knownIds = new Set<string>();
+      for (const row of rows) { const existing = await this.items(this.config.forecastsList, "PrevisionId", String(row.PrevisionId)); for (const record of existing) { knownIds.add(String(row.PrevisionId)); const key = record.fields?.ClavePrevision; if (typeof key === "string") knownKeys.add(key); } }
+      const result = importPaymentForecastRows({ sourceFilename: item.name, sourceHash: hash, rows, knownForecastKeys: knownKeys, knownPrevisionIds: knownIds });
       if (!result.accepted) throw new Error(result.issues.map((issue) => issue.message).join("; "));
       await this.add(this.config.importsList, { Title: result.batch.batchId, LoteId: result.batch.batchId, ArchivoOrigen: item.name, HashOrigen: hash, Estado: "Importado", FilasLeidas: result.batch.rowCount, PrevisionesImportadas: result.batch.forecasts.length, FechaImportacion: result.batch.importedAt });
       for (const forecast of result.batch.forecasts) await this.save(forecast, item.name);

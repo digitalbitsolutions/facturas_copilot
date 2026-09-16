@@ -41,4 +41,8 @@ test("imports forecasts idempotently and never promotes them to paid", async () 
     assert.equal(replay.batch.forecasts.length, 0);
     assert.equal(replay.issues.filter((issue) => issue.code === "duplicate_forecast").length, 2);
   }
+  const changed = rows.map((row) => row.PrevisionId === "PREV-0001" ? { ...row, ImportePagoPrevisto: 201 } : row);
+  const reusedId = importPaymentForecastRows({ sourceFilename: "changed.xlsx", sourceHash: "source-v3", rows: changed, knownPrevisionIds: new Set(["PREV-0001"]) });
+  assert.equal(reusedId.accepted, true);
+  if (reusedId.accepted) assert.equal(reusedId.issues.filter((issue) => issue.code === "duplicate_forecast").length, 1);
 });
