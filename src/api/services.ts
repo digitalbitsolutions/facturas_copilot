@@ -2,6 +2,8 @@ import { validateInvoice } from "../invoices/index.ts";
 import type { ExtractedInvoice, ExtractionConfidence, InvoiceValidationConfig } from "../invoices/types.ts";
 import { importBankRows, reconcileBatch } from "../reconciliation/index.ts";
 import type { BankImportConfig, BankMovement, ReconciliationConfig, ReconciliationInvoice } from "../reconciliation/types.ts";
+import { importPaymentForecastRows } from "../payment-forecasts/index.ts";
+import type { PaymentForecastRow } from "../payment-forecasts/index.ts";
 import { validateResolution } from "../processing/exception-resolution.ts";
 import type { ReconciliationProposal } from "../reconciliation/types.ts";
 import type { ReconciliationDecision } from "../microsoft365/reconciliation-resolution.ts";
@@ -36,6 +38,20 @@ export function reconcileBankRequest(body: unknown) {
   if (!Array.isArray(body.movements)) throw new TypeError("movements must be an array");
   if (!Array.isArray(body.invoices)) throw new TypeError("invoices must be an array");
   return reconcileBatch(body.movements as BankMovement[], body.invoices as ReconciliationInvoice[], body.config as Partial<ReconciliationConfig> | undefined);
+}
+
+/** Contract for an already-parsed PrevisionPagos worksheet. Binary XLSX intake is handled separately. */
+export function importPaymentForecastRequest(body: unknown) {
+  object(body, "request body");
+  if (typeof body.sourceFilename !== "string" || !body.sourceFilename.trim()) throw new TypeError("sourceFilename is required");
+  if (typeof body.sourceHash !== "string" || !body.sourceHash.trim()) throw new TypeError("sourceHash is required");
+  if (!Array.isArray(body.rows)) throw new TypeError("rows must be an array");
+  return importPaymentForecastRows({
+    sourceFilename: body.sourceFilename,
+    sourceHash: body.sourceHash,
+    rows: body.rows as PaymentForecastRow[],
+    knownForecastKeys: Array.isArray(body.knownForecastKeys) ? new Set(body.knownForecastKeys as string[]) : undefined,
+  });
 }
 
 export function proposeReconciliationRequest(body: unknown): ReconciliationProposal[] {

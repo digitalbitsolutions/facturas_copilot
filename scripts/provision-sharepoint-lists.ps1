@@ -193,6 +193,43 @@ $definitions = @(
             @{ name = 'FechaDecision'; dateTime = @{ format = 'dateTime' } }
         )
     }
+    ,@{
+        displayName = 'ImportacionesPrevisiones'
+        columns = @(
+            @{ name = 'LoteId'; text = @{} }
+            @{ name = 'ArchivoOrigen'; text = @{} }
+            @{ name = 'HashOrigen'; indexed = $true; enforceUniqueValues = $true; text = @{} }
+            @{ name = 'Estado'; choice = @{ choices = @('Importado','Error') } }
+            @{ name = 'FilasLeidas'; number = @{ decimalPlaces = 'none' } }
+            @{ name = 'PrevisionesImportadas'; number = @{ decimalPlaces = 'none' } }
+            @{ name = 'FechaImportacion'; dateTime = @{ format = 'dateTime' } }
+        )
+    }
+    ,@{
+        displayName = 'PrevisionesPagos'
+        columns = @(
+            @{ name = 'PrevisionId'; indexed = $true; text = @{} }
+            @{ name = 'ClavePrevision'; indexed = $true; enforceUniqueValues = $true; text = @{} }
+            @{ name = 'LoteId'; text = @{} }
+            @{ name = 'ArchivoOrigen'; text = @{} }
+            @{ name = 'NumeroFactura'; text = @{} }
+            @{ name = 'Proveedor'; text = @{} }
+            @{ name = 'NIFProveedor'; text = @{} }
+            @{ name = 'FechaFactura'; dateTime = @{ format = 'dateOnly' } }
+            @{ name = 'FechaVencimiento'; dateTime = @{ format = 'dateOnly' } }
+            @{ name = 'ImporteFacturaMenor'; number = @{ decimalPlaces = 'none' } }
+            @{ name = 'Moneda'; text = @{} }
+            @{ name = 'FechaPagoPrevista'; dateTime = @{ format = 'dateOnly' } }
+            @{ name = 'ImportePagoPrevistoMenor'; number = @{ decimalPlaces = 'none' } }
+            @{ name = 'Estado'; choice = @{ choices = @('Pendiente','Programado','Parcial','Cancelado') } }
+            @{ name = 'RequiereRevision'; boolean = @{} }
+            @{ name = 'ReferenciaPago'; text = @{} }
+            @{ name = 'MetodoPago'; text = @{} }
+            @{ name = 'Observaciones'; text = @{ allowMultipleLines = $true } }
+            @{ name = 'FuenteDocumento'; text = @{} }
+            @{ name = 'ConfianzaExtraccion'; choice = @{ choices = @('Alta','Media','Baja') } }
+        )
+    }
 )
 
 $created = @()

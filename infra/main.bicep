@@ -38,6 +38,9 @@ param invoiceProcessingNotBefore string = '9999-12-31T23:59:59Z'
 @description('Versioned bank-import profile. Keep standard-es-v1 to retain the previous mapping; use bankinter-simulated-csv-v1 only for the supplied signed CSV pilot.')
 param bankImportProfile string = 'standard-es-v1'
 
+@description('Safety switch for scheduled payment forecast imports. Keep disabled until the SharePoint lists and folders have been verified.')
+param paymentForecastImportEnabled bool = false
+
 param tags object = {
   application: 'facturas-copilot'
   environment: environmentName
@@ -179,6 +182,13 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
         { name: 'M365_BANK_ERROR_FOLDER', value: 'Errores' }
         { name: 'M365_BANK_IMPORTS_LIST', value: 'ImportacionesBancarias' }
         { name: 'M365_BANK_MOVEMENTS_LIST', value: 'MovimientosBancarios' }
+        { name: 'PAYMENT_FORECAST_IMPORT_SCHEDULE', value: '15 */10 * * * *' }
+        { name: 'PAYMENT_FORECAST_IMPORT_ENABLED', value: string(paymentForecastImportEnabled) }
+        { name: 'M365_PAYMENT_FORECAST_FOLDER', value: 'PrevisionesPagos' }
+        { name: 'M365_PAYMENT_FORECAST_PROCESSED_FOLDER', value: 'ProcesadosPrevisiones' }
+        { name: 'M365_PAYMENT_FORECAST_ERROR_FOLDER', value: 'ErroresPrevisiones' }
+        { name: 'M365_PAYMENT_FORECAST_IMPORTS_LIST', value: 'ImportacionesPrevisiones' }
+        { name: 'M365_PAYMENT_FORECASTS_LIST', value: 'PrevisionesPagos' }
         { name: 'M365_EXCEPTIONS_LIST', value: 'Excepciones' }
         { name: 'M365_SUPPLIERS_LIST', value: 'MaestroProveedores' }
         { name: 'M365_INVOICE_PROCESSES_LIST', value: 'ProcesosFacturas' }

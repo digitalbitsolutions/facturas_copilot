@@ -9,6 +9,7 @@ La API usa Azure Functions Runtime 4, modelo de programación Node.js v4 y Node.
 | POST | `/api/invoices/validate` | Validar una extracción de factura |
 | POST | `/api/invoices/extract` | Extraer y validar un PDF durante el piloto (cuerpo `application/pdf`) |
 | POST | `/api/bank/import` | Validar y normalizar filas de un extracto |
+| POST | `/api/payment-forecasts/import` | Validar e importar previsiones de pago ya leídas del XLSX |
 | POST | `/api/bank/reconcile` | Puntuar movimientos contra facturas pendientes |
 | POST | `/api/bank/reconciliations/propose` | Persistir propuestas que exigen revisión humana |
 | POST | `/api/bank/reconciliations/decide` | Confirmar o rechazar una propuesta con auditoría |
@@ -85,6 +86,12 @@ El temporizador de Azure Functions conserva el fichero original en SharePoint, c
 ```
 
 Los errores de datos devuelven `accepted: false` con todas las incidencias detectadas. Los duplicados no bloquean el resto del lote y quedan informados.
+
+## Importar previsiones de pago
+
+`POST /api/payment-forecasts/import` recibe las filas ya leídas de la hoja `PrevisionPagos`. El contrato fijo `payment-forecast-v1` exige estas 17 columnas: `PrevisionId`, `NumeroFactura`, `Proveedor`, `NIFProveedor`, `FechaFactura`, `FechaVencimiento`, `ImporteFactura`, `Moneda`, `FechaPagoPrevista`, `ImportePagoPrevisto`, `EstadoPrevision`, `ReferenciaPago`, `MetodoPago`, `Observaciones`, `FuenteDocumento`, `ConfianzaExtraccion` y `RequiereRevision`.
+
+Los estados admitidos son `Pendiente`, `Programado`, `Parcial` y `Cancelado`; el endpoint rechaza de forma explícita `Pagado` o `Pagada`. El pago solo puede confirmarse mediante conciliación bancaria y una decisión humana. El lote conserva nombre y hash del origen, y la clave idempotente combina el identificador de previsión, factura, proveedor, fecha, importe previsto y moneda. Los duplicados conocidos se informan sin bloquear el lote.
 
 ## Conciliar
 

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { assignExceptionRequest, decideReconciliationRequest, importBankRequest, proposeReconciliationRequest, reconcileBankRequest, resolveExceptionRequest, validateInvoiceRequest } from "./services.ts";
+import { assignExceptionRequest, decideReconciliationRequest, importBankRequest, importPaymentForecastRequest, proposeReconciliationRequest, reconcileBankRequest, resolveExceptionRequest, validateInvoiceRequest } from "./services.ts";
 
 describe("HTTP service contracts", () => {
   it("validates an extracted invoice payload", () => {
@@ -17,6 +17,16 @@ describe("HTTP service contracts", () => {
 
   it("accepts an empty reconciliation workload", () => {
     assert.deepEqual(reconcileBankRequest({ movements: [], invoices: [] }), []);
+  });
+
+  it("rejects forecast imports that attempt to declare a payment as paid", () => {
+    const result = importPaymentForecastRequest({ sourceFilename: "prevision.xlsx", sourceHash: "abc", rows: [{
+      PrevisionId: "PREV-1", NumeroFactura: "F-1", Proveedor: "ACME", NIFProveedor: "B123", FechaFactura: "2026-09-01", FechaVencimiento: "2026-09-30",
+      ImporteFactura: 12, Moneda: "EUR", FechaPagoPrevista: "2026-09-30", ImportePagoPrevisto: 12, EstadoPrevision: "Pagado",
+      ReferenciaPago: "F-1", MetodoPago: "Transferencia", Observaciones: "", FuenteDocumento: "F-1.pdf", ConfianzaExtraccion: "Alta", RequiereRevision: "No",
+    }] });
+    assert.equal(result.accepted, false);
+    assert.equal(result.issues[0]?.code, "paid_status_forbidden");
   });
 
   it("accepts only the approved resolution action for each exception code", () => {

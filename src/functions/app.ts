@@ -1,9 +1,9 @@
 import { app, type HttpRequest, type HttpResponseInit, type InvocationContext } from "@azure/functions";
-import { assignExceptionRequest, decideReconciliationRequest, importBankRequest, proposeReconciliationRequest, reconcileBankRequest, resolveExceptionRequest, validateInvoiceRequest } from "../api/services.ts";
+import { assignExceptionRequest, decideReconciliationRequest, importBankRequest, importPaymentForecastRequest, proposeReconciliationRequest, reconcileBankRequest, resolveExceptionRequest, validateInvoiceRequest } from "../api/services.ts";
 import { DocumentIntelligenceDocumentClassifier } from "../classification/index.ts";
 import { DocumentIntelligenceInvoiceExtractor } from "../extraction/index.ts";
 import { resolveSupplierIdentity, validateInvoice, validationConfigForSupplier } from "../invoices/index.ts";
-import { bankImportConfigForProfile, GraphClient, ManagedIdentityTokenProvider, SharePointBankPoller, SharePointDocumentRepository, SharePointExceptionResolutionStore, SharePointInvoiceMailboxPoller, SharePointInvoiceRegistry, SharePointProcessStore, SharePointReconciliationStore, SharePointSupplierDirectory } from "../microsoft365/index.ts";
+import { bankImportConfigForProfile, GraphClient, ManagedIdentityTokenProvider, SharePointBankPoller, SharePointDocumentRepository, SharePointExceptionResolutionStore, SharePointInvoiceMailboxPoller, SharePointInvoiceRegistry, SharePointPaymentForecastPoller, SharePointProcessStore, SharePointReconciliationStore, SharePointSupplierDirectory } from "../microsoft365/index.ts";
 import { AttachmentProcessor } from "../processing/index.ts";
 
 function json(status: number, body: unknown): HttpResponseInit {
@@ -87,6 +87,11 @@ app.http("importBankBatch", {
 app.http("reconcileBankBatch", {
   route: "bank/reconcile", methods: ["POST"], authLevel: "anonymous",
   handler: (request, context) => execute(request, context, reconcileBankRequest),
+});
+
+app.http("importPaymentForecast", {
+  route: "payment-forecasts/import", methods: ["POST"], authLevel: "anonymous",
+  handler: (request, context) => execute(request, context, importPaymentForecastRequest),
 });
 
 function exceptionResolutionStore(): SharePointExceptionResolutionStore {
@@ -181,6 +186,19 @@ app.timer("pollBankExtracts", {
       context.error("Bank extract polling failed", error);
       throw error;
     }
+  },
+});
+
+app.timer("pollPaymentForecasts", {
+  schedule: process.env.PAYMENT_FORECAST_IMPORT_SCHEDULE ?? "15 */10 * * * *",
+  handler: async (_timer, context) => {
+    if (process.env.PAYMENT_FORECAST_IMPORT_ENABLED?.toLowerCase() !== "true") { context.log("Payment forecast import is disabled"); return; }
+    const poller = new SharePointPaymentForecastPoller(new GraphClient(new ManagedIdentityTokenProvider()), {
+      siteId: requiredSetting("M365_SHAREPOINT_SITE_ID"), driveId: requiredSetting("M365_SHAREPOINT_DRIVE_ID"),
+      incomingFolder: process.env.M365_PAYMENT_FORECAST_FOLDER ?? "PrevisionesPagos", processedFolder: process.env.M365_PAYMENT_FORECAST_PROCESSED_FOLDER ?? "ProcesadosPrevisiones", errorFolder: process.env.M365_PAYMENT_FORECAST_ERROR_FOLDER ?? "ErroresPrevisiones",
+      importsList: process.env.M365_PAYMENT_FORECAST_IMPORTS_LIST ?? "ImportacionesPrevisiones", forecastsList: process.env.M365_PAYMENT_FORECASTS_LIST ?? "PrevisionesPagos", exceptionsList: process.env.M365_EXCEPTIONS_LIST ?? "Excepciones",
+    });
+    const result = await poller.run(); context.log("Payment forecast polling completed", result);
   },
 });
 

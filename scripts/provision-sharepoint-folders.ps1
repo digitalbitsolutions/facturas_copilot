@@ -46,7 +46,7 @@ $existing = (Invoke-RestMethod -Headers $headers -Uri "https://graph.microsoft.c
 
 $created = @()
 $alreadyPresent = @()
-foreach ($folderName in @('Facturas', 'ExtractosBancarios', 'Configuracion', 'Procesados', 'Errores')) {
+foreach ($folderName in @('Facturas', 'ExtractosBancarios', 'PrevisionesPagos', 'Configuracion', 'Procesados', 'Errores', 'ProcesadosPrevisiones', 'ErroresPrevisiones')) {
     if ($existing | Where-Object { $_.name -eq $folderName -and $null -ne $_.folder }) {
         $alreadyPresent += $folderName
         continue

@@ -11,7 +11,7 @@ Este repositorio contiene el núcleo TypeScript y la documentación de una soluc
 - Azure Functions: endpoints de salud, validación, importación y conciliación compilables sobre Runtime 4 / Node.js 24.
 - Infraestructura: Bicep para Flex Consumption, Storage, Application Insights, Log Analytics y Key Vault con identidades administradas.
 - Arquitectura operativa: Azure Functions, Microsoft Graph, Document Intelligence y SharePoint Lists, sin conectores de automatización externos.
-- Pruebas: 60 superadas.
+- Pruebas: 73 superadas.
 - Ollama: `0.33.3`, API disponible en `http://127.0.0.1:11434`.
 - Equipo: Intel i5-10210U, 4 núcleos/8 hilos, 7,78 GB RAM, sin GPU dedicada.
 - Restricción operativa: un único modelo local cargado y contexto corto.
@@ -94,3 +94,20 @@ También se medirán latencia total, tasa de aceptación directa, fallos de form
 Cada diez minutos, la Function revisa `ExtractosBancarios`. Un archivo válido se convierte en registros de las listas `ImportacionesBancarias` y `MovimientosBancarios`, y pasa a `Procesados`. Si falla, registra una excepción y lo mueve a `Errores`. Se usa la primera hoja y las columnas: `IdMovimiento`, `FechaMovimiento`, `FechaValor`, `Concepto`, `Importe`, `Moneda`, `Referencia`, `Contraparte`.
 
 El alta se hace una vez con `scripts/provision-sharepoint-folders.ps1` y `scripts/provision-sharepoint-lists.ps1`; después se configuran los identificadores del sitio y de la biblioteca como ajustes de la Function.
+
+## Previsión de pagos — estado y siguiente paso
+
+La previsión de pagos es un insumo operativo independiente de las facturas recibidas: parte de las facturas pendientes y añade la fecha e importe de pago previstos, estado, referencia y observaciones. No acredita que una factura haya sido pagada; la confirmación procede exclusivamente de la conciliación con el extracto bancario.
+
+El 16 de septiembre de 2026 se revisó el borrador `assets/facturas-prueba/Prevision_Pagos.xlsx`. Contiene las hojas `PrevisionPagos`, `Resumen` y `Excluidas`, una tabla con las 17 columnas previstas y validaciones de valores. Es un buen borrador de operación, pero todavía **no debe cargarse en SharePoint ni importarse**.
+
+Correcciones necesarias antes de aceptarlo como muestra de importación:
+
+1. Mover `F26/1334` de EMAS a `Excluidas`: es una factura emitida a un cliente y representa un cobro, no un pago pendiente a proveedor.
+2. Marcar la fila de Endesa como `RequiereRevision = Sí` hasta confirmar en el extracto el cargo por domiciliación indicado para el 12/09/2026.
+3. Recalcular el resumen tras excluir EMAS: dos facturas y 588,07 EUR pendientes; sustituir los valores estáticos del resumen por fórmulas o recalcularlos en el futuro importador.
+4. Eliminar referencias fijas a “vencida a 16/09/2026” en observaciones; usar una nota temporalmente neutra, como “Pendiente de conciliación contra extracto bancario”.
+
+Además, la librería actual del proyecto (`xlsx-populate`) no puede abrir este XLSX por la estructura de su hoja de estilos, aunque el contenido sea legible por Excel. Antes de implementar el importador se debe guardar de nuevo con Microsoft Excel o generar un archivo mínimo compatible y añadir una prueba de regresión que lo lea con el parser elegido.
+
+El contrato `payment-forecast-v1` y el importador separado ya están implementados. Lee exclusivamente `PrevisionPagos`, exige sus 17 columnas, conserva nombre y hash de origen, valida fechas, importes, moneda, estado y revisión, e identifica duplicados de forma idempotente. Rechaza explícitamente `Pagado` o `Pagada`: una previsión nunca cambia a pagada sin una decisión humana respaldada por conciliación bancaria. El siguiente paso es persistir los lotes y previsiones validados en listas SharePoint y activar su importación programada de forma controlada.

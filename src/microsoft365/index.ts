@@ -4,6 +4,8 @@ export { ManagedIdentityTokenProvider } from "./managed-identity.ts";
 export { SharePointDocumentRepository } from "./sharepoint-documents.ts";
 export { DEFAULT_BANK_IMPORT_CONFIG, SharePointBankPoller, bankImportConfigForProfile, parseBankFile } from "./bank-poller.ts";
 export type { BankPollingConfig } from "./bank-poller.ts";
+export { SharePointPaymentForecastPoller } from "./payment-forecast-poller.ts";
+export type { PaymentForecastPollingConfig } from "./payment-forecast-poller.ts";
 export { SharePointInvoiceMailboxPoller } from "./mail-poller.ts";
 export type { MailboxPollingResult } from "./mail-poller.ts";
 export { SharePointInvoiceRegistry, SharePointProcessStore } from "./invoice-state.ts";
