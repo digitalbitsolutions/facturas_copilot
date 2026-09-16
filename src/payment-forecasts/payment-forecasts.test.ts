@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import XlsxPopulate from "xlsx-populate";
-import { importPaymentForecastRows, parsePaymentForecastFile } from "./index.ts";
+import { importPaymentForecastRows, parsePaymentForecastFile, paymentForecastSourceHash } from "./index.ts";
 
 const headers = ["PrevisionId", "NumeroFactura", "Proveedor", "NIFProveedor", "FechaFactura", "FechaVencimiento", "ImporteFactura", "Moneda", "FechaPagoPrevista", "ImportePagoPrevisto", "EstadoPrevision", "ReferenciaPago", "MetodoPago", "Observaciones", "FuenteDocumento", "ConfianzaExtraccion", "RequiereRevision"];
 const sourceRows = [
@@ -45,4 +45,9 @@ test("imports forecasts idempotently and never promotes them to paid", async () 
   const reusedId = importPaymentForecastRows({ sourceFilename: "changed.xlsx", sourceHash: "source-v3", rows: changed, knownPrevisionIds: new Set(["PREV-0001"]) });
   assert.equal(reusedId.accepted, true);
   if (reusedId.accepted) assert.equal(reusedId.issues.filter((issue) => issue.code === "duplicate_forecast").length, 1);
+});
+
+test("uses a logical source hash so workbook serialization does not create another batch", async () => {
+  const rows = await parsePaymentForecastFile("prevision.xlsx", await compatibleWorkbook());
+  assert.equal(paymentForecastSourceHash(rows), paymentForecastSourceHash(structuredClone(rows)));
 });

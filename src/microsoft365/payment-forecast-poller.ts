@@ -1,5 +1,4 @@
-import { createHash } from "node:crypto";
-import { importPaymentForecastRows, parsePaymentForecastFile, type PaymentForecast } from "../payment-forecasts/index.ts";
+import { importPaymentForecastRows, parsePaymentForecastFile, paymentForecastSourceHash, type PaymentForecast } from "../payment-forecasts/index.ts";
 import type { GraphClient } from "./graph-client.ts";
 
 type DriveItem = { id: string; name: string; file?: { mimeType?: string } };
@@ -46,9 +45,9 @@ export class SharePointPaymentForecastPoller {
   private async process(item: DriveItem): Promise<"processed" | "error"> {
     try {
       const response = await this.graph.requestResponse(`/drives/${path(this.config.driveId)}/items/${path(item.id)}/content`);
-      const bytes = await response.arrayBuffer(); const hash = createHash("sha256").update(Buffer.from(bytes)).digest("hex");
+      const bytes = await response.arrayBuffer();
+      const rows = await parsePaymentForecastFile(item.name, bytes); const hash = paymentForecastSourceHash(rows);
       if ((await this.items(this.config.importsList, "HashOrigen", hash)).length) { await this.move(item, this.config.processedFolder); return "processed"; }
-      const rows = await parsePaymentForecastFile(item.name, bytes);
       const knownKeys = new Set<string>(); const knownIds = new Set<string>();
       for (const row of rows) { const existing = await this.items(this.config.forecastsList, "PrevisionId", String(row.PrevisionId)); for (const record of existing) { knownIds.add(String(row.PrevisionId)); const key = record.fields?.ClavePrevision; if (typeof key === "string") knownKeys.add(key); } }
       const result = importPaymentForecastRows({ sourceFilename: item.name, sourceHash: hash, rows, knownForecastKeys: knownKeys, knownPrevisionIds: knownIds });

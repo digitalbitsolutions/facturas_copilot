@@ -11,7 +11,7 @@ Este repositorio contiene el núcleo TypeScript y la documentación de una soluc
 - Azure Functions: endpoints de salud, validación, importación y conciliación compilables sobre Runtime 4 / Node.js 24.
 - Infraestructura: Bicep para Flex Consumption, Storage, Application Insights, Log Analytics y Key Vault con identidades administradas.
 - Arquitectura operativa: Azure Functions, Microsoft Graph, Document Intelligence y SharePoint Lists, sin conectores de automatización externos.
-- Pruebas: 73 superadas.
+- Pruebas: 74 superadas.
 - Ollama: `0.33.3`, API disponible en `http://127.0.0.1:11434`.
 - Equipo: Intel i5-10210U, 4 núcleos/8 hilos, 7,78 GB RAM, sin GPU dedicada.
 - Restricción operativa: un único modelo local cargado y contexto corto.
