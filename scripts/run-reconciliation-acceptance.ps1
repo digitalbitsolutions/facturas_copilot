@@ -86,7 +86,10 @@ function Read-Movement([string]$MovementId) {
     $result = (Invoke-RestMethod -Headers $graphHeaders -Uri (GraphUrl "lists/$($movements.id)/items?%24expand=fields")).value | Where-Object { $_.fields.MovimientoId -eq $MovementId }
     if ($result.Count -ne 1) { throw "Expected one movement for $MovementId" }; return $result[0]
 }
-function Read-Reconciliation([string]$ReconciliationId) { Invoke-RestMethod -Headers $graphHeaders -Uri (GraphUrl "lists/$($reconciliations.id)/items/$ReconciliationId?%24expand=fields") }
+function Read-Reconciliation([string]$ReconciliationId) {
+    $result = (Invoke-RestMethod -Headers $graphHeaders -Uri (GraphUrl "lists/$($reconciliations.id)/items?%24expand=fields")).value | Where-Object { $_.id -eq $ReconciliationId }
+    if ($result.Count -ne 1) { throw "Expected one reconciliation for $ReconciliationId" }; return $result[0]
+}
 
 Set-Phase 'request_api_token'
 $apiToken = Get-DeviceToken $azureCliClientId "openid profile api://$ApiClientId/access_as_user" 'API: ejecutar CA-17 a CA-19'
