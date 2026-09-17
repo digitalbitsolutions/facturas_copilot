@@ -8,7 +8,6 @@ export type ReconciliationDecision = "confirm_match" | "reject_match";
 
 function text(value: unknown): string { return typeof value === "string" ? value.trim() : ""; }
 function path(value: string): string { return encodeURIComponent(value); }
-function quote(value: string): string { return value.replace(/'/g, "''"); }
 
 /**
  * Persists reconciliation proposals and the subsequent human decision in SharePoint Lists.
@@ -95,7 +94,7 @@ export class SharePointReconciliationStore {
   private async find(listName: string, field: string, value: string): Promise<Item | undefined> {
     const listId = await this.listId(listName);
     const response = await this.graph.request<ItemResponse>(
-      `/sites/${path(this.siteId)}/lists/${path(listId)}/items?expand=fields`,
+      `/sites/${path(this.siteId)}/lists/${path(listId)}/items?$expand=fields`,
       { headers: { Prefer: "HonorNonIndexedQueriesWarningMayFailRandomly" } },
     );
     const matches = response.value.filter((item) => text(item.fields?.[field]) === value);
