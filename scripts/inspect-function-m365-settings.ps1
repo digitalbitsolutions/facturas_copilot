@@ -6,6 +6,10 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+trap {
+    if ($StatusPath) { "ERROR=$($_.Exception.Message)" | Add-Content -LiteralPath $StatusPath -Encoding utf8 }
+    throw
+}
 $clientId = '04b07795-8ddb-461a-bbee-02f9e1bf7b46' # Azure CLI public client
 $device = Invoke-RestMethod -Method Post -Uri "https://login.microsoftonline.com/$TenantId/oauth2/v2.0/devicecode" -ContentType 'application/x-www-form-urlencoded' -Body @{ client_id = $clientId; scope = 'https://management.azure.com/user_impersonation' }
 "AUTH_LABEL=Azure Resource Manager: lectura de ajustes M365 no secretos`nAUTH_URL=$($device.verification_uri)`nUSER_CODE=$($device.user_code)`nEXPIRES_SECONDS=$($device.expires_in)" | Tee-Object -Variable status | Write-Host
@@ -20,11 +24,16 @@ while ((Get-Date) -lt $deadline) {
     } catch { if ($_.ErrorDetails.Message -notmatch 'authorization_pending|slow_down') { throw } }
 }
 if (-not $token) { throw 'Azure Resource Manager device authorization expired' }
+if ($StatusPath) { 'AUTH_GRANTED=Azure Resource Manager' | Add-Content -LiteralPath $StatusPath -Encoding utf8 }
 
 $headers = @{ Authorization = "Bearer $token" }
+$phase = 'read_subscription'
+if ($StatusPath) { "PHASE=$phase" | Add-Content -LiteralPath $StatusPath -Encoding utf8 }
 $subscription = (Invoke-RestMethod -Headers $headers -Uri 'https://management.azure.com/subscriptions?api-version=2022-12-01').value | Select-Object -First 1
 if (-not $subscription) { throw 'No Azure subscription is available to this account' }
 $uri = "https://management.azure.com/subscriptions/$($subscription.subscriptionId)/resourceGroups/$ResourceGroup/providers/Microsoft.Web/sites/$FunctionName/config/appsettings/list?api-version=2024-04-01"
+$phase = 'read_m365_settings'
+if ($StatusPath) { "PHASE=$phase" | Add-Content -LiteralPath $StatusPath -Encoding utf8 }
 $settings = (Invoke-RestMethod -Method Post -Headers $headers -Uri $uri).properties
 [pscustomobject]@{
     subscriptionId = $subscription.subscriptionId
