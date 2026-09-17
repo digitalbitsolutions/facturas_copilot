@@ -5,6 +5,8 @@
   "main": "dist/src/functions/app.js",
   "scripts": {
     "benchmark:models": "node scripts/benchmark-models.ts",
+    "benchmark:p2:classification": "node scripts/run-p2-classification.ts",
+    "benchmark:p2:code": "node scripts/run-p2-code.ts",
     "check:m365": "node --env-file-if-exists=.env scripts/check-m365-config.ts",
     "build": "tsc -p tsconfig.json",
     "start": "func start",

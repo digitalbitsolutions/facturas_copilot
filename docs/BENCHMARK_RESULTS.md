@@ -48,3 +48,14 @@ Equipo: Intel Core i7-12700T, 15,7 GB RAM y RTX 3050 Ti Laptop GPU con 4 GB VRAM
 | `qwen2.5-coder:7b` | 10,93 s | 7,14 s | 11,85 tok/s | Sí |
 
 Conclusión provisional: los dos Qwen 3B son la ruta preferida para tareas locales breves y verificables. El 3B general se descargó íntegramente a GPU durante la prueba; los 7B muestran una penalización clara de carga y generación compatible con descarga parcial GPU/CPU. Esta prueba técnica no demuestra todavía ahorro neto: falta la P2 con tareas representativas, control de Codex, aceptación y retrabajo.
+
+## P2 — primera ejecución sobre el perfil casa, 17 de septiembre de 2026
+
+La batería versionada está en `docs/LOCAL_AI_P2_TASKS.md`; los registros de cada ejecución permanecen en `.local-ai/` y no se versionan. Se mantuvo un único modelo, contexto de 2.048, temperatura `0`, `keep_alive: 0` y cero reintentos.
+
+| Pareja evaluada | Resultado local | Comparación / decisión |
+|---|---:|---|
+| Clasificación sintética + `qwen2.5:3b` | 7/10 (70 %), 4,44 s de latencia mediana, 3 escalados | El control de Codex clasificó 10/10. La ruta local alcanza el mínimo de aceptación, pero no se habilita por defecto hasta disponer de tokens cloud reales y demostrar ahorro neto. |
+| Código pequeño + `qwen2.5-coder:3b` | 0/10 (0 %), 8,77 s de latencia mediana, 10 escalados | Descartada para la ruta local: cinco propuestas no cumplieron el contrato y cinco diffs devolvieron JSON inválido. |
+
+El control de clasificación de Codex está versionado en `fixtures/local-ai/p2-codex-classification-control.json`. La interfaz usada para Codex no expone sus tokens ni su latencia interna; por ello no se calcula ni se declara una reducción de tokens cloud. La decisión operativa provisional es **Codex como ruta predeterminada**. Solo se reconsiderará la clasificación local con una métrica cloud verificable y una batería ampliada; el código local no se reintentará en esta P2.

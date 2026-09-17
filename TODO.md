@@ -83,15 +83,16 @@
 
 ### P2 — Primer experimento
 
-- [ ] Preparar 10 tareas de clasificación.
-- [ ] Preparar 10 tareas pequeñas de código.
-- [ ] Ejecutar control con Codex.
-- [ ] Ejecutar variante local.
+- [x] Preparar 10 tareas de clasificación (`docs/LOCAL_AI_P2_TASKS.md`).
+- [x] Preparar 10 tareas pequeñas de código (`docs/LOCAL_AI_P2_TASKS.md`).
+- [x] Ejecutar control de clasificación con Codex (10/10; sin métrica de tokens expuesta).
+- [x] Ejecutar variante local (clasificación 7/10; código 0/10; evidencia en `docs/BENCHMARK_RESULTS.md`).
 - [ ] Comparar tokens, latencia, aceptación y retrabajo.
-- [ ] Decidir qué rutas se habilitan por defecto.
+- [x] Decidir qué rutas se habilitan por defecto: Codex; no habilitar rutas locales hasta nueva evidencia.
 
 ### No hacer todavía
 
+- No delegar trabajo de desarrollo a Ollama: la ruta vigente es Codex GPT-5.6 Terra con razonamiento Medium.
 - No descargar modelos de 7B o más.
 - No ejecutar dos modelos simultáneamente.
 - No dar acceso de red a Ollama.

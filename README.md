@@ -15,6 +15,7 @@ Este repositorio contiene el núcleo TypeScript y la documentación de una soluc
 - Ollama: `0.33.3`, API disponible en `http://127.0.0.1:11434`.
 - Perfil local activo: **casa** — Intel Core i7-12700T (12 núcleos/20 hilos), 15,7 GB de RAM y NVIDIA GeForce RTX 3050 Ti Laptop GPU (4 GB VRAM). Inventario comprobado el 17 de septiembre de 2026.
 - Restricción operativa: un único modelo local cargado y contexto corto.
+- Política de desarrollo vigente: **solo Codex GPT-5.6 Terra con razonamiento Medium**. Ollama y sus modelos locales no participan en desarrollo, revisión ni generación de código; solo podrán volver a evaluarse con autorización expresa del usuario y una nueva evidencia de ahorro neto.
 - PRD funcional vigente: [PRD_Automatizacion_Facturas_M365_Copilot_v4.md](./PRD_Automatizacion_Facturas_M365_Copilot_v4.md).
 
 ## Modelos instalados
@@ -45,6 +46,8 @@ El contexto declarado por el modelo no es el contexto operativo. En este hardwar
 ## Plan de orquestación por sesión
 
 Este protocolo se ejecuta al inicio y al cierre de cada sesión de Codex. El objetivo es reducir consumo cloud sin trasladar riesgo, datos sensibles ni retrabajo al equipo.
+
+La política vigente suspende la delegación local: todo desarrollo se realiza con Codex GPT-5.6 Terra, razonamiento Medium. Los pasos relativos a Ollama se conservan como historial de evaluación y no se ejecutan salvo instrucción expresa del usuario.
 
 1. **Identificar el equipo.** Antes de empezar trabajo, Codex preguntará en qué ordenador se trabaja, salvo que el usuario ya lo haya indicado en la sesión. Se registrará el perfil activo y se ajustarán modelo, contexto y expectativas de latencia; nunca se asumirá que dos equipos tienen la misma capacidad.
 2. **Situar el trabajo.** Leer `README.md`, `CONTEXT.md` y el apartado relevante de `TODO.md`; comprobar `git status --short` y los últimos commits. No cargar el repositorio completo ni documentación no relacionada.
@@ -97,6 +100,7 @@ También se medirán latencia total, tasa de aceptación directa, fallos de form
 - [Protocolo de evaluación](./docs/EVALUATION.md)
 - [Política de datos](./docs/DATA_POLICY.md)
 - [Resultados del benchmark local](./docs/BENCHMARK_RESULTS.md)
+- [Batería P2 de evaluación local](./docs/LOCAL_AI_P2_TASKS.md)
 - [Preparación de Microsoft 365](./docs/M365_SETUP.md)
 - [Ejecución y diagnóstico del piloto de correo](./docs/MAILBOX_PILOT_RUNBOOK.md)
 - [Contratos de la API](./docs/API.md)

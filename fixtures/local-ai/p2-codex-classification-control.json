@@ -1,0 +1,18 @@
+{
+  "run": "codex-interactive-control",
+  "taskSuite": "fixtures/local-ai/p2-classification.json",
+  "modelMetricsAvailable": false,
+  "metricLimitation": "La interfaz de Codex no expone tokens ni latencia interna para este control.",
+  "results": [
+    { "taskId": "C-01", "category": "invoice", "confidence": 0.99, "reasons": ["Encabezado de factura", "Base, IVA y total", "Fecha fiscal"] },
+    { "taskId": "C-02", "category": "bank_settlement", "confidence": 0.99, "reasons": ["Liquidación de recibos", "Fecha valor", "Intereses, comisiones y gastos"] },
+    { "taskId": "C-03", "category": "other", "confidence": 0.99, "reasons": ["Currículum profesional", "Sin señales fiscales"] },
+    { "taskId": "C-04", "category": "invoice", "confidence": 0.96, "reasons": ["Factura simplificada", "Ticket con total e IVA"] },
+    { "taskId": "C-05", "category": "other", "confidence": 0.98, "reasons": ["Extracto de movimientos", "Saldos y cargos", "Sin liquidación ni factura"] },
+    { "taskId": "C-06", "category": "other", "confidence": 0.99, "reasons": ["Aviso de pago", "Indica expresamente que no es factura"] },
+    { "taskId": "C-07", "category": "invoice", "confidence": 0.98, "reasons": ["Encabezado de factura", "Importe total y vencimiento"] },
+    { "taskId": "C-08", "category": "bank_settlement", "confidence": 0.99, "reasons": ["Liquidación bancaria", "Fecha valor y comisión"] },
+    { "taskId": "C-09", "category": "other", "confidence": 0.99, "reasons": ["Oferta comercial", "Sin evidencia fiscal de factura"] },
+    { "taskId": "C-10", "category": "bank_settlement", "confidence": 0.97, "reasons": ["Recibo domiciliado", "Mandato SEPA y fecha valor"] }
+  ]
+}

@@ -4,6 +4,8 @@
 
 Reducir el contexto y la generación enviados a Codex delegando tareas pequeñas, repetibles y verificables a Ollama. Codex seguirá siendo el coordinador y resolverá las tareas que exijan visión global, edición sensible o criterio arquitectónico.
 
+> Estado vigente desde el 17 de septiembre de 2026: la delegación a Ollama está suspendida. Todo desarrollo, revisión y generación de cambios se realiza exclusivamente con Codex GPT-5.6 Terra, razonamiento Medium. Este documento conserva el experimento y sus salvaguardas para consulta; no autoriza una nueva ruta local sin instrucción expresa del usuario.
+
 ## 1.1 Perfil de ejecución activo: casa
 
 Al comienzo de cada sesión, Codex debe preguntar en qué ordenador se trabaja, a menos que ya haya sido declarado por el usuario en esa sesión. El perfil actual es el ordenador de casa: Intel Core i7-12700T (12 núcleos/20 hilos), 15,7 GB RAM, SSD NVMe y RTX 3050 Ti Laptop GPU con 4 GB de VRAM (3,38 GB libres observados el 17 de septiembre de 2026).
