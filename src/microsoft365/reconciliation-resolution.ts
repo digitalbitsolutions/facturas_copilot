@@ -94,7 +94,7 @@ export class SharePointReconciliationStore {
   private async find(listName: string, field: string, value: string): Promise<Item | undefined> {
     const listId = await this.listId(listName);
     const response = await this.graph.request<ItemResponse>(
-      `/sites/${path(this.siteId)}/lists/${path(listId)}/items?$expand=fields`,
+      `/sites/${path(this.siteId)}/lists/${path(listId)}/items?%24expand=fields`,
       { headers: { Prefer: "HonorNonIndexedQueriesWarningMayFailRandomly" } },
     );
     const matches = response.value.filter((item) => text(item.fields?.[field]) === value);
