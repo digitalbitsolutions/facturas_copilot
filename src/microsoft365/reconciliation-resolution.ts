@@ -8,6 +8,9 @@ export type ReconciliationDecision = "confirm_match" | "reject_match";
 
 function text(value: unknown): string { return typeof value === "string" ? value.trim() : ""; }
 function path(value: string): string { return encodeURIComponent(value); }
+// Graph site IDs are comma-delimited composite IDs. Preserve the delimiters so
+// Graph continues to recognise the site resource while encoding each component.
+function sitePath(value: string): string { return value.split(",").map(path).join(","); }
 
 /**
  * Persists reconciliation proposals and the subsequent human decision in SharePoint Lists.
@@ -84,7 +87,7 @@ export class SharePointReconciliationStore {
   private async listId(name: string): Promise<string> {
     const cached = this.listIds.get(name);
     if (cached) return cached;
-    const lists = await this.graph.request<ListResponse>(`/sites/${path(this.siteId)}/lists?$select=id,displayName`);
+    const lists = await this.graph.request<ListResponse>(`/sites/${sitePath(this.siteId)}/lists?$select=id,displayName`);
     const list = lists.value.find((value) => value.displayName === name);
     if (!list) throw new TypeError(`SharePoint list '${name}' was not found`);
     this.listIds.set(name, list.id);
@@ -94,7 +97,7 @@ export class SharePointReconciliationStore {
   private async find(listName: string, field: string, value: string): Promise<Item | undefined> {
     const listId = await this.listId(listName);
     const response = await this.graph.request<ItemResponse>(
-      `/sites/${path(this.siteId)}/lists/${path(listId)}/items?%24expand=fields`,
+      `/sites/${sitePath(this.siteId)}/lists/${path(listId)}/items?%24expand=fields`,
       { headers: { Prefer: "HonorNonIndexedQueriesWarningMayFailRandomly" } },
     );
     const matches = response.value.filter((item) => text(item.fields?.[field]) === value);
@@ -103,18 +106,18 @@ export class SharePointReconciliationStore {
   }
 
   private async item(listName: string, id: string): Promise<Item> {
-    try { return await this.graph.request<Item>(`/sites/${path(this.siteId)}/lists/${path(await this.listId(listName))}/items/${path(id)}?$expand=fields`); }
+    try { return await this.graph.request<Item>(`/sites/${sitePath(this.siteId)}/lists/${path(await this.listId(listName))}/items/${path(id)}?$expand=fields`); }
     catch (error) { if (error instanceof GraphError && error.status === 404) throw new TypeError("reconciliationId was not found"); throw error; }
   }
 
   private async create(listName: string, fields: Record<string, unknown>): Promise<Item> {
-    return await this.graph.request<Item>(`/sites/${path(this.siteId)}/lists/${path(await this.listId(listName))}/items`, {
+    return await this.graph.request<Item>(`/sites/${sitePath(this.siteId)}/lists/${path(await this.listId(listName))}/items`, {
       method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ fields }),
     });
   }
 
   private async patch(listName: string, id: string, fields: Record<string, unknown>): Promise<void> {
-    await this.graph.request(`/sites/${path(this.siteId)}/lists/${path(await this.listId(listName))}/items/${path(id)}/fields`, {
+    await this.graph.request(`/sites/${sitePath(this.siteId)}/lists/${path(await this.listId(listName))}/items/${path(id)}/fields`, {
       method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(fields),
     });
   }
