@@ -35,7 +35,7 @@ $uri = "https://management.azure.com/subscriptions/$($subscription.subscriptionI
 $phase = 'read_m365_settings'
 if ($StatusPath) { "PHASE=$phase" | Add-Content -LiteralPath $StatusPath -Encoding utf8 }
 $settings = (Invoke-RestMethod -Method Post -Headers $headers -Uri $uri).properties
-[pscustomobject]@{
+$result = [pscustomobject]@{
     subscriptionId = $subscription.subscriptionId
     functionName = $FunctionName
     settings = [ordered]@{
@@ -43,4 +43,6 @@ $settings = (Invoke-RestMethod -Method Post -Headers $headers -Uri $uri).propert
         M365_RECONCILIATIONS_LIST = $settings.M365_RECONCILIATIONS_LIST
         M365_BANK_MOVEMENTS_LIST = $settings.M365_BANK_MOVEMENTS_LIST
     }
-} | ConvertTo-Json -Depth 4
+} | ConvertTo-Json -Depth 4 -Compress
+if ($StatusPath) { "RESULT=$result" | Add-Content -LiteralPath $StatusPath -Encoding utf8 }
+Write-Output $result
