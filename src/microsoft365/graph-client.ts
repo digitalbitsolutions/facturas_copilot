@@ -3,11 +3,13 @@ export interface AccessTokenProvider { getAccessToken(): Promise<string>; }
 export class GraphError extends Error {
   readonly status: number;
   readonly responseBody: string;
-  constructor(status: number, responseBody: string) {
-    super(`Microsoft Graph returned HTTP ${status}`);
+  readonly requestPath: string;
+  constructor(status: number, responseBody: string, requestPath = "") {
+    super(`Microsoft Graph returned HTTP ${status}${requestPath ? ` for ${requestPath}` : ""}`);
     this.name = "GraphError";
     this.status = status;
     this.responseBody = responseBody;
+    this.requestPath = requestPath;
   }
 }
 
@@ -36,7 +38,7 @@ export class GraphClient {
         headers: { authorization: `Bearer ${token}`, ...init.headers },
       });
       if ((response.status === 429 || response.status >= 500) && attempt === 0) continue;
-      if (!response.ok) throw new GraphError(response.status, await response.text());
+      if (!response.ok) throw new GraphError(response.status, await response.text(), path);
       return response;
     }
     throw new Error("Unreachable Graph retry state");
