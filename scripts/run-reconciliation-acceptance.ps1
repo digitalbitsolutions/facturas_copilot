@@ -83,11 +83,11 @@ function New-Movement([string]$CaseId) {
     return $movementId
 }
 function Read-Movement([string]$MovementId) {
-    $result = (Invoke-RestMethod -Headers $graphHeaders -Uri (GraphUrl "lists/$($movements.id)/items?%24expand=fields")).value | Where-Object { $_.fields.MovimientoId -eq $MovementId }
+    $result = @((Invoke-RestMethod -Headers $graphHeaders -Uri (GraphUrl "lists/$($movements.id)/items?%24expand=fields")).value | Where-Object { $_.fields.MovimientoId -eq $MovementId })
     if ($result.Count -ne 1) { throw "Expected one movement for $MovementId" }; return $result[0]
 }
 function Read-Reconciliation([string]$ReconciliationId) {
-    $result = (Invoke-RestMethod -Headers $graphHeaders -Uri (GraphUrl "lists/$($reconciliations.id)/items?%24expand=fields")).value | Where-Object { $_.id -eq $ReconciliationId }
+    $result = @((Invoke-RestMethod -Headers $graphHeaders -Uri (GraphUrl "lists/$($reconciliations.id)/items?%24expand=fields")).value | Where-Object { $_.id -eq $ReconciliationId })
     if ($result.Count -ne 1) { throw "Expected one reconciliation for $ReconciliationId" }; return $result[0]
 }
 
