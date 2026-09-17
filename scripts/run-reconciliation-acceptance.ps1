@@ -71,6 +71,10 @@ $lists = (Invoke-RestMethod -Headers $graphHeaders -Uri (GraphUrl 'lists?%24sele
 $movements = $lists | Where-Object { $_.displayName -eq 'MovimientosBancarios' } | Select-Object -First 1
 $reconciliations = $lists | Where-Object { $_.displayName -eq 'Conciliaciones' } | Select-Object -First 1
 if (-not $movements -or -not $reconciliations) { throw 'MovimientosBancarios or Conciliaciones was not found' }
+Set-Phase 'verify_graph_item_reads'
+# Verify the exact collection URIs used by the reconciliation store before calling the Function.
+Invoke-RestMethod -Headers $graphHeaders -Uri (GraphUrl "lists/$($reconciliations.id)/items?%24expand=fields") | Out-Null
+Invoke-RestMethod -Headers $graphHeaders -Uri (GraphUrl "lists/$($movements.id)/items?%24expand=fields") | Out-Null
 
 function New-Movement([string]$CaseId) {
     $movementId = "$CaseId-$([guid]::NewGuid().ToString('N').Substring(0, 12))"
