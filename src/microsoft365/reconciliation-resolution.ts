@@ -95,7 +95,10 @@ export class SharePointReconciliationStore {
   private async find(listName: string, field: string, value: string): Promise<Item | undefined> {
     const listId = await this.listId(listName);
     const filter = encodeURIComponent(`fields/${field} eq '${quote(value)}'`);
-    const response = await this.graph.request<ItemResponse>(`/sites/${path(this.siteId)}/lists/${path(listId)}/items?$expand=fields&$filter=${filter}`);
+    const response = await this.graph.request<ItemResponse>(
+      `/sites/${path(this.siteId)}/lists/${path(listId)}/items?$expand=fields&$filter=${filter}`,
+      { headers: { Prefer: "HonorNonIndexedQueriesWarningMayFailRandomly" } },
+    );
     if (response.value.length > 1) throw new TypeError(`Multiple ${listName} items match ${field}`);
     return response.value[0];
   }

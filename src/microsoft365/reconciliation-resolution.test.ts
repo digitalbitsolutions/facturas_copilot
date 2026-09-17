@@ -8,10 +8,10 @@ function graph(responder: (path: string, init?: RequestInit) => Response): Graph
 }
 
 test("persists a review-only proposal and marks its movement for review", async () => {
-  const calls: Array<{ path: string; body?: Record<string, unknown> }> = [];
+  const calls: Array<{ path: string; body?: Record<string, unknown>; headers?: HeadersInit }> = [];
   const client = graph((path, init) => {
     const body = init?.body ? JSON.parse(String(init.body)) as Record<string, unknown> : undefined;
-    calls.push({ path, body });
+    calls.push({ path, body, headers: init?.headers });
     if (path.includes("/lists?$select")) return Response.json({ value: [{ id: "recs", displayName: "Conciliaciones" }, { id: "moves", displayName: "MovimientosBancarios" }] });
     if (path.includes("recs/items?$expand") && path.includes("MovimientoId")) return Response.json({ value: [] });
     if (path.includes("moves/items?$expand")) return Response.json({ value: [{ id: "movement-item", fields: { MovimientoId: "mov-1" } }] });
@@ -22,6 +22,7 @@ test("persists a review-only proposal and marks its movement for review", async 
   const store = new SharePointReconciliationStore(client, "site", "Conciliaciones", "MovimientosBancarios", () => new Date("2026-09-12T10:00:00Z"));
   const result = await store.propose({ movementId: "mov-1", classification: "high", candidates: [{ invoiceId: "inv-1", score: 95, factors: [] }], requiresHumanReview: true, reason: "Automatic acceptance is disabled" });
   assert.deepEqual(result, { reconciliationId: "rec-1", state: "PendienteRevision", created: true });
+  assert.deepEqual(calls.find((call) => call.path.includes("recs/items?$expand"))?.headers, { Prefer: "HonorNonIndexedQueriesWarningMayFailRandomly" });
   assert.deepEqual(calls.find((call) => call.path.endsWith("recs/items"))?.body, { fields: {
     Title: "mov-1", MovimientoId: "mov-1", FacturaIdPropuesta: "inv-1", Clasificacion: "high", Puntuacion: 95,
     Motivo: "Automatic acceptance is disabled", Candidatos: "[{\"invoiceId\":\"inv-1\",\"score\":95,\"factors\":[]}]",
