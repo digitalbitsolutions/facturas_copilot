@@ -83,11 +83,10 @@ function New-Movement([string]$CaseId) {
     return $movementId
 }
 function Read-Movement([string]$MovementId) {
-    $filter = [uri]::EscapeDataString("fields/MovimientoId eq '$MovementId'")
-    $result = (Invoke-RestMethod -Headers $graphHeaders -Uri (GraphUrl "lists/$($movements.id)/items?%24expand=fields&%24filter=$filter")).value
+    $result = (Invoke-RestMethod -Headers $graphHeaders -Uri (GraphUrl "lists/$($movements.id)/items?%24expand=fields")).value | Where-Object { $_.fields.MovimientoId -eq $MovementId }
     if ($result.Count -ne 1) { throw "Expected one movement for $MovementId" }; return $result[0]
 }
-function Read-Reconciliation([string]$ReconciliationId) { Invoke-RestMethod -Headers $graphHeaders -Uri (GraphUrl "lists/$($reconciliations.id)/items/$ReconciliationId?`$expand=fields") }
+function Read-Reconciliation([string]$ReconciliationId) { Invoke-RestMethod -Headers $graphHeaders -Uri (GraphUrl "lists/$($reconciliations.id)/items/$ReconciliationId?%24expand=fields") }
 
 Set-Phase 'request_api_token'
 $apiToken = Get-DeviceToken $azureCliClientId "openid profile api://$ApiClientId/access_as_user" 'API: ejecutar CA-17 a CA-19'
@@ -103,17 +102,17 @@ function Decide([string]$ReconciliationId, [string]$Action, [string]$Result) {
 
 $evidence = @()
 Set-Phase 'execute_ca17'
-$movement17 = New-Movement 'CA17'; $proposal17 = Propose $movement17 'CA17'; $record17 = Read-Reconciliation $proposal17.reconciliationId; $move17 = Read-Movement $movement17
+Set-Phase 'ca17_create_movement'; $movement17 = New-Movement 'CA17'; Set-Phase 'ca17_propose'; $proposal17 = Propose $movement17 'CA17'; Set-Phase 'ca17_read_reconciliation'; $record17 = Read-Reconciliation $proposal17.reconciliationId; Set-Phase 'ca17_read_movement'; $move17 = Read-Movement $movement17
 if ($proposal17.state -ne 'PendienteRevision' -or $record17.fields.Estado -ne 'PendienteRevision' -or $move17.fields.Estado -ne 'EnRevision') { throw 'CA-17 verification failed' }
 $evidence += @{ criterion = 'CA-17'; movementId = $movement17; reconciliationId = $proposal17.reconciliationId; result = 'PendienteRevision'; movementState = $move17.fields.Estado }
 
 Set-Phase 'execute_ca18'
-$movement18 = New-Movement 'CA18'; $proposal18 = Propose $movement18 'CA18'; $decision18 = Decide $proposal18.reconciliationId 'confirm_match' 'Synthetic reference and amount verified'; $record18 = Read-Reconciliation $proposal18.reconciliationId; $move18 = Read-Movement $movement18
+Set-Phase 'ca18_create_movement'; $movement18 = New-Movement 'CA18'; Set-Phase 'ca18_propose'; $proposal18 = Propose $movement18 'CA18'; Set-Phase 'ca18_decide'; $decision18 = Decide $proposal18.reconciliationId 'confirm_match' 'Synthetic reference and amount verified'; Set-Phase 'ca18_read_reconciliation'; $record18 = Read-Reconciliation $proposal18.reconciliationId; Set-Phase 'ca18_read_movement'; $move18 = Read-Movement $movement18
 if ($decision18.state -ne 'Conciliada' -or $record18.fields.Decision -ne 'confirm_match' -or $record18.fields.Responsable -ne $Responsible -or $move18.fields.Estado -ne 'Conciliado') { throw 'CA-18 verification failed' }
 $evidence += @{ criterion = 'CA-18'; movementId = $movement18; reconciliationId = $proposal18.reconciliationId; result = $record18.fields.Estado; decision = $record18.fields.Decision; movementState = $move18.fields.Estado }
 
 Set-Phase 'execute_ca19'
-$movement19 = New-Movement 'CA19'; $proposal19 = Propose $movement19 'CA19'; $decision19 = Decide $proposal19.reconciliationId 'reject_match' 'Synthetic candidate rejected after review'; $record19 = Read-Reconciliation $proposal19.reconciliationId; $move19 = Read-Movement $movement19
+Set-Phase 'ca19_create_movement'; $movement19 = New-Movement 'CA19'; Set-Phase 'ca19_propose'; $proposal19 = Propose $movement19 'CA19'; Set-Phase 'ca19_decide'; $decision19 = Decide $proposal19.reconciliationId 'reject_match' 'Synthetic candidate rejected after review'; Set-Phase 'ca19_read_reconciliation'; $record19 = Read-Reconciliation $proposal19.reconciliationId; Set-Phase 'ca19_read_movement'; $move19 = Read-Movement $movement19
 if ($decision19.state -ne 'Rechazada' -or $record19.fields.Decision -ne 'reject_match' -or $record19.fields.Responsable -ne $Responsible -or $move19.fields.Estado -ne 'EnRevision') { throw 'CA-19 verification failed' }
 $evidence += @{ criterion = 'CA-19'; movementId = $movement19; reconciliationId = $proposal19.reconciliationId; result = $record19.fields.Estado; decision = $record19.fields.Decision; movementState = $move19.fields.Estado }
 
