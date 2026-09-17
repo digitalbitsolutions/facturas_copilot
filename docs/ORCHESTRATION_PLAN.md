@@ -4,6 +4,12 @@
 
 Reducir el contexto y la generación enviados a Codex delegando tareas pequeñas, repetibles y verificables a Ollama. Codex seguirá siendo el coordinador y resolverá las tareas que exijan visión global, edición sensible o criterio arquitectónico.
 
+## 1.1 Perfil de ejecución activo: casa
+
+Al comienzo de cada sesión, Codex debe preguntar en qué ordenador se trabaja, a menos que ya haya sido declarado por el usuario en esa sesión. El perfil actual es el ordenador de casa: Intel Core i7-12700T (12 núcleos/20 hilos), 15,7 GB RAM, SSD NVMe y RTX 3050 Ti Laptop GPU con 4 GB de VRAM (3,38 GB libres observados el 17 de septiembre de 2026).
+
+Se ejecutará un solo modelo local. `qwen2.5:3b` y `qwen2.5-coder:3b` están instalados y son los candidatos de baja latencia que se probarán primero; por su menor tamaño pueden permitir descarga completa a GPU. `qwen2.5:7b` y `qwen2.5-coder:7b` se conservan como comparadores de mayor calidad; por superar la VRAM libre, se espera una descarga parcial a GPU y apoyo de CPU. Se mantiene `num_ctx: 2048` y se mide la latencia real. No se instala ningún modelo mayor de 7B ni se habilita concurrencia local sin una decisión posterior basada en resultados.
+
 ## 2. Componentes previstos
 
 | Componente | Responsabilidad |

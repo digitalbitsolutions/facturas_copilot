@@ -13,7 +13,7 @@ Este repositorio contiene el núcleo TypeScript y la documentación de una soluc
 - Arquitectura operativa: Azure Functions, Microsoft Graph, Document Intelligence y SharePoint Lists, sin conectores de automatización externos.
 - Pruebas: 74 superadas.
 - Ollama: `0.33.3`, API disponible en `http://127.0.0.1:11434`.
-- Equipo: Intel i5-10210U, 4 núcleos/8 hilos, 7,78 GB RAM, sin GPU dedicada.
+- Perfil local activo: **casa** — Intel Core i7-12700T (12 núcleos/20 hilos), 15,7 GB de RAM y NVIDIA GeForce RTX 3050 Ti Laptop GPU (4 GB VRAM). Inventario comprobado el 17 de septiembre de 2026.
 - Restricción operativa: un único modelo local cargado y contexto corto.
 - PRD funcional vigente: [PRD_Automatizacion_Facturas_M365_Copilot_v4.md](./PRD_Automatizacion_Facturas_M365_Copilot_v4.md).
 
@@ -21,13 +21,14 @@ Este repositorio contiene el núcleo TypeScript y la documentación de una soluc
 
 | Modelo | Parámetros | Cuantización | Capacidades | Papel inicial |
 |---|---:|---|---|---|
-| `qwen2.5-coder:3b-instruct` | 3,1B | Q4_K_M | completion, tools, insert | Código y revisión mecánica |
-| `qwen3:1.7b` | 2,0B | Q4_K_M | completion, tools, thinking | Router, extracción y JSON |
-| `deepseek-r1:1.5b` | 1,8B | Q4_K_M | completion, tools, thinking | Hipótesis puntuales |
-| `gemma3:4b` | 4,3B | Q4_K_M | completion, vision | Capturas y documentos visuales |
-| `ministral-3:3b` | 3,8B | Q4_K_M | completion, vision, tools | Alternativa agentic/visual |
-| `qwen2.5:3b-instruct` | 3,1B | Q4_K_M | completion, tools | Generalista de respaldo |
-| `phi3.5:latest` | 3,8B | Q4_0 | completion | Resumen de respaldo |
+| `qwen2.5-coder:3b` | 3B | instalada | Código | Modelo principal para tareas de código acotadas y verificables |
+| `qwen2.5:3b` | 3B | instalada | Texto y JSON | Modelo principal para clasificación y resúmenes breves |
+| `qwen2.5-coder:7b` | 7B | instalada | Código | Comparador de mayor calidad; GPU + CPU |
+| `qwen2.5:7b` | 7B | instalada | Texto y JSON | Comparador de mayor calidad; GPU + CPU |
+| `deepseek-coder:6.7b` | 6,7B | instalada | Código | Comparador experimental |
+| `llama3.1:8b` | 8B | instalada | Generalista | Comparador; no ruta habitual |
+| `gemma3:1b` | 1B | instalada | Generalista | Tareas muy breves; no visión de producción |
+| `gemma:2b`, `llama3.2:latest`, `mistral:7b` | variados | instalados | Generalistas | No priorizados hasta tener evidencia específica |
 
 El contexto declarado por el modelo no es el contexto operativo. En este hardware se comenzará con 2.048 tokens y se permitirá un máximo ordinario de 4.096.
 
@@ -45,14 +46,17 @@ El contexto declarado por el modelo no es el contexto operativo. En este hardwar
 
 Este protocolo se ejecuta al inicio y al cierre de cada sesión de Codex. El objetivo es reducir consumo cloud sin trasladar riesgo, datos sensibles ni retrabajo al equipo.
 
-1. **Situar el trabajo.** Leer `README.md`, `CONTEXT.md` y el apartado relevante de `TODO.md`; comprobar `git status --short` y los últimos commits. No cargar el repositorio completo ni documentación no relacionada.
-2. **Clasificar antes de delegar.** Ejecutar directamente tareas deterministas (búsquedas, compilación, pruebas, formato y cambios mecánicos). Reservar Codex para arquitectura, seguridad, integraciones Microsoft 365/Azure, cambios transversales y toda ambigüedad.
-3. **Delegación local opcional.** Solo enviar a Ollama texto mínimo, ya seleccionado y sin secretos ni datos fiscales personales. Exigir salida JSON breve y validar el resultado con pruebas, tipos o reglas. Una sola tarea y un solo modelo local simultáneos.
-4. **Escalado inmediato.** Si el formato es inválido, la respuesta es ambigua, se detecta un dato sensible, falla una validación o aparece un segundo intento, detener la ruta local y resolver con Codex. No perseverar para justificar el uso del modelo local.
-5. **Medir ahorro neto.** Por cada ensayo local registrar: tarea, modelo, tamaño aproximado de entrada/salida, latencia, aceptación directa, correcciones y motivo de escalado. La fórmula es `tokens_cloud_base - tokens_cloud_orquestados - equivalente_del_retrabajo`.
-6. **Cerrar con evidencia.** Ejecutar las comprobaciones pertinentes, actualizar solo la documentación afectada y dejar el siguiente paso y bloqueos en `CONTEXT.md` o `TODO.md`. Si no hay evidencia de ahorro o la calidad baja, la ruta local queda desactivada.
+1. **Identificar el equipo.** Antes de empezar trabajo, Codex preguntará en qué ordenador se trabaja, salvo que el usuario ya lo haya indicado en la sesión. Se registrará el perfil activo y se ajustarán modelo, contexto y expectativas de latencia; nunca se asumirá que dos equipos tienen la misma capacidad.
+2. **Situar el trabajo.** Leer `README.md`, `CONTEXT.md` y el apartado relevante de `TODO.md`; comprobar `git status --short` y los últimos commits. No cargar el repositorio completo ni documentación no relacionada.
+3. **Clasificar antes de delegar.** Ejecutar directamente tareas deterministas (búsquedas, compilación, pruebas, formato y cambios mecánicos). Reservar Codex para arquitectura, seguridad, integraciones Microsoft 365/Azure, cambios transversales y toda ambigüedad.
+4. **Delegación local opcional.** Solo enviar a Ollama texto mínimo, ya seleccionado y sin secretos ni datos fiscales personales. Exigir salida JSON breve y validar el resultado con pruebas, tipos o reglas. Una sola tarea y un solo modelo local simultáneos.
+5. **Escalado inmediato.** Si el formato es inválido, la respuesta es ambigua, se detecta un dato sensible, falla una validación o aparece un segundo intento, detener la ruta local y resolver con Codex. No perseverar para justificar el uso del modelo local.
+6. **Medir ahorro neto.** Por cada ensayo local registrar: tarea, modelo, tamaño aproximado de entrada/salida, latencia, aceptación directa, correcciones y motivo de escalado. La fórmula es `tokens_cloud_base - tokens_cloud_orquestados - equivalente_del_retrabajo`.
+7. **Cerrar con evidencia.** Ejecutar las comprobaciones pertinentes, actualizar solo la documentación afectada y dejar el siguiente paso y bloqueos en `CONTEXT.md` o `TODO.md`. Si no hay evidencia de ahorro o la calidad baja, la ruta local queda desactivada.
 
-Perfil inicial: `qwen3:1.7b` para clasificación y JSON breve; `qwen2.5-coder:3b-instruct` para propuestas mecánicas de tests o parches pequeños; `deepseek-r1:1.5b` solo para hipótesis puntuales; `ministral-3:3b` o Gemma para evaluación visual. No se descarga ningún modelo adicional hasta completar el benchmark de P2 con diez tareas de clasificación y diez de código, comparadas contra una línea base de Codex.
+### Perfil activo: casa
+
+La RTX 3050 Ti dispone de 4 GB de VRAM, de los que se observaron 3,38 GB libres. Los modelos de 3B instalados son la ruta de baja latencia y se probarán primero: `qwen2.5:3b` para JSON/resúmenes y `qwen2.5-coder:3b` para código. Los modelos de 7B no cabrán por completo en GPU y combinarán GPU y CPU; se reservan como comparadores de calidad. Se usará un único proceso, `num_ctx: 2048` y `num_predict` limitado; cada salida se valida de forma determinista. No se utilizará ningún modelo cloud local ni se descargará un modelo superior a 7B sin una decisión expresa y evidencia de ahorro neto.
 
 ## Enrutamiento inicial
 

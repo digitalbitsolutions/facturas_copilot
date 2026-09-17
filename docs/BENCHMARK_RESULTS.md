@@ -35,3 +35,16 @@ La velocidad usa `eval_count / eval_duration` de Ollama y excluye la carga. La l
 - Ministral fue el más lento en esta máquina para esta tarea y no conviene como ruta textual habitual.
 
 Los datos completos y legibles por máquina están en `.local-ai/benchmark-latest.json` y no se versionan.
+
+## Perfil casa — prueba técnica inicial, 17 de septiembre de 2026
+
+Equipo: Intel Core i7-12700T, 15,7 GB RAM y RTX 3050 Ti Laptop GPU con 4 GB VRAM. Se ejecutó un único modelo cada vez, mediante Ollama local, con `num_ctx: 2048`, `num_predict: 64`, temperatura `0`, semilla `42`, `keep_alive: 0` y el mismo encargo JSON. El validador comprobó las claves y tipos esperados, no solo que el texto fuese JSON sintácticamente válido.
+
+| Modelo | Latencia | Carga | Velocidad | Salida válida |
+|---|---:|---:|---:|---|
+| `qwen2.5:3b` | 3,21 s | 2,52 s | 54,69 tok/s | Sí |
+| `qwen2.5-coder:3b` | 5,11 s | 3,55 s | 54,44 tok/s | Sí |
+| `qwen2.5:7b` | 12,39 s | 7,25 s | 13,13 tok/s | Sí |
+| `qwen2.5-coder:7b` | 10,93 s | 7,14 s | 11,85 tok/s | Sí |
+
+Conclusión provisional: los dos Qwen 3B son la ruta preferida para tareas locales breves y verificables. El 3B general se descargó íntegramente a GPU durante la prueba; los 7B muestran una penalización clara de carga y generación compatible con descarga parcial GPU/CPU. Esta prueba técnica no demuestra todavía ahorro neto: falta la P2 con tareas representativas, control de Codex, aceptación y retrabajo.
