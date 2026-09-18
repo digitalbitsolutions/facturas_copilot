@@ -50,6 +50,10 @@
 - [x] Validar asignación y resolución auditada de `EX-03`, `EX-06` y `EX-07`, sincronizando sus procesos terminales y vaciando `Pendientes de revisión`.
 - [x] Implementar propuestas y decisiones auditables de conciliación en SharePoint Lists, sin aceptación automática.
 - [x] Aprovisionar `Conciliaciones` en el sitio de pruebas y validar CA-17 a CA-19 con identidad Entra.
+- [x] Crear y validar `ConsultaPagosCopilot` como proyección SharePoint para consultas de pagos, sin depender de Excel.
+- [x] Validar tres facturas digitales simuladas por correo (EMAS, ENDESA y SATINFO), incluido reintento seguro tras límite temporal de Document Intelligence F0.
+- [ ] Cargar previsiones de pago para las tres facturas de prueba directamente en `PrevisionesPagos` y comprobar sus estados `Programado`.
+- [ ] Configurar y validar un agente de Copilot Studio conectado directamente a `ConsultaPagosCopilot` antes de ejecutar consultas de negocio.
 - [ ] Ejecutar pruebas de aceptación CA-01 a CA-21 sobre Azure Functions, Graph y SharePoint.
 
 ## Núcleo de facturas

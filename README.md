@@ -11,7 +11,7 @@ Este repositorio contiene el núcleo TypeScript y la documentación de una soluc
 - Azure Functions: endpoints de salud, validación, importación y conciliación compilables sobre Runtime 4 / Node.js 24.
 - Infraestructura: Bicep para Flex Consumption, Storage, Application Insights, Log Analytics y Key Vault con identidades administradas.
 - Arquitectura operativa: Azure Functions, Microsoft Graph, Document Intelligence y SharePoint Lists, sin conectores de automatización externos.
-- Pruebas: 74 superadas.
+- Pruebas: 72 superadas.
 - Política de desarrollo vigente: **solo Codex** para desarrollo, revisión y generación de código. Las pruebas previas con modelos locales no demostraron ahorro neto y quedan descartadas.
 - PRD funcional vigente: [PRD_Automatizacion_Facturas_M365_Copilot_v4.md](./PRD_Automatizacion_Facturas_M365_Copilot_v4.md).
 
@@ -63,3 +63,9 @@ Correcciones necesarias antes de aceptarlo como muestra de importación:
 Además, la librería actual del proyecto (`xlsx-populate`) no puede abrir este XLSX por la estructura de su hoja de estilos, aunque el contenido sea legible por Excel. Antes de implementar el importador se debe guardar de nuevo con Microsoft Excel o generar un archivo mínimo compatible y añadir una prueba de regresión que lo lea con el parser elegido.
 
 El contrato `payment-forecast-v1` y el importador separado ya están implementados. Lee exclusivamente `PrevisionPagos`, exige sus 17 columnas, conserva nombre y hash de origen, valida fechas, importes, moneda, estado y revisión, e identifica duplicados de forma idempotente. Rechaza explícitamente `Pagado` o `Pagada`: una previsión nunca cambia a pagada sin una decisión humana respaldada por conciliación bancaria. El siguiente paso es persistir los lotes y previsiones validados en listas SharePoint y activar su importación programada de forma controlada.
+
+## Consultas operativas de pagos
+
+`ConsultaPagosCopilot` es una lista SharePoint derivada, actualizada cada diez minutos, que reúne facturas, previsiones y conciliaciones en una fila consultable por documento. Es la fuente operativa de las preguntas de pagos; no se consulta Excel para este fin. Una factura solo pasa a `Pagada` tras una conciliación humana confirmada. La marca `RegistroFacturas.ExcluirDePagos` mantiene documentos fiscales que no son cuentas a pagar fuera de esta lista, sin eliminarlos del registro.
+
+Para comprobar consultas en lenguaje natural se usará un agente de Copilot Studio conectado directamente a esta lista. El Copilot general de Microsoft 365 no se considera una fuente fiable para estas consultas hasta que se configure y valide dicha conexión.

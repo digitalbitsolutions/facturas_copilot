@@ -16,7 +16,7 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - Integración M365 validada en el tenant: la Function lee el buzón restringido mediante Graph y archiva adjuntos PDF en SharePoint.
 - Importación bancaria y conciliación local terminadas: lotes, validación, normalización, duplicidad, puntuación explicable y ambigüedad.
 - Azure Functions v4 preparada con endpoints HTTP; infraestructura Flex Consumption y CI/CD preparadas.
-- Pruebas actuales: 70 superadas.
+- Pruebas actuales: 72 superadas.
 - Tenant de pruebas verificado: `INTEGRAMENTE SL`, dominio `integramente.onmicrosoft.com` (`a1a2b397-4ac5-4f94-9004-67f158ea14e0`).
 - Administrador comunicado: `demo@integramente.onmicrosoft.com`; la contraseña no se almacena.
 - Licencias verificadas el 9 de septiembre de 2026: 25 `O365_BUSINESS_PREMIUM` y 25 `MICROSOFT_365_COPILOT_FOR_BUSINESS`, ambas habilitadas y sin asignar.
@@ -58,6 +58,10 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - El commit `6f83b03` introduce perfiles versionados de extractos. `bankinter-simulated-csv-v1` mapea el CSV de pruebas de cabeceras minúsculas y conserva signo de cargos/abonos; `standard-es-v1` queda disponible para rollback. Simulación local: 46 movimientos, 16 positivos y 30 negativos; SATINFO `high`, Endesa `probable` por comisión de 0,02 EUR y EMAS sin match por cobros parciales.
 - Propuesta comercial inicial para España documentada en `docs/COMMERCIAL_SPAIN.md`: implantación + cuota mensual + consumo cloud transparente; sin dependencia inicial de API bancaria. Pendiente definir formato del Excel de previsión de pagos e importador correspondiente.
 - El 18 de septiembre se validaron CA-17 a CA-19 contra la Function desplegada y las listas reales `Conciliaciones` y `MovimientosBancarios`, con identidad Entra. Una propuesta ambigua quedó en `PendienteRevision`/`EnRevision`; una confirmación dejó la conciliación y el movimiento en `Conciliada`/`Conciliado`; y un rechazo quedó en `Rechazada`/`EnRevision`. Evidencia: `docs/ACCEPTANCE_2026-09-18.md`.
+- El 18 de septiembre se creó `ConsultaPagosCopilot`, proyección SharePoint de `RegistroFacturas`, `PrevisionesPagos`, `Conciliaciones` y `MovimientosBancarios`. El temporizador actualiza una fila por documento; `Pagada` requiere una conciliación confirmada por una persona. La marca `ExcluirDePagos` conserva el documento fiscal en `RegistroFacturas` pero lo retira de la proyección; se aplicó a la factura histórica emitida `F26/1334`.
+- Se validó el circuito completo con tres PDF digitales simulados enviados en un único correo: EMAS `EMAS-2026-3001` (79,86 EUR), ENDESA `ENDESA-2026-4001` (145,20 EUR) y SATINFO `SATINFO-2026-5001` (200,86 EUR). Los tres quedaron `completed`, archivados y registrados; aparecen como `Pendiente` en `ConsultaPagosCopilot` hasta cargar su previsión. Evidencia: `docs/ACCEPTANCE_2026-09-18.md`.
+- Durante ese envío, Document Intelligence F0 devolvió HTTP 429 para el tercer adjunto. El commit `9da76c4` permite reintentar en el siguiente sondeo solamente los procesos `review_required` con excepción técnica marcada como reintentable; los resultados funcionales terminales siguen siendo idempotentes. El reintento completó EMAS sin reenvío ni duplicar ENDESA o SATINFO.
+- La prueba de consultas Copilot queda pendiente: el Copilot general de Microsoft 365 no recuperó con fiabilidad las listas. La siguiente fase es un agente de Copilot Studio con `ConsultaPagosCopilot` como fuente directa, tras cargar las previsiones de pago y confirmar la capacidad/licencia necesaria.
 - No existe aún ningún recurso productivo ni credencial almacenada.
 
 ## Evidencia y diagnóstico del piloto de correo
