@@ -1,6 +1,6 @@
 # Automatización de facturas con Microsoft 365 y Copilot
 
-Este repositorio contiene el núcleo TypeScript y la documentación de una solución para clasificar, extraer, validar, archivar y consultar facturas recibidas en Microsoft 365, además de importar extractos y conciliar movimientos bancarios. La orquestación local con Ollama es una línea experimental separada y no forma parte inicialmente del circuito productivo.
+Este repositorio contiene el núcleo TypeScript y la documentación de una solución para clasificar, extraer, validar, archivar y consultar facturas recibidas en Microsoft 365, además de importar extractos y conciliar movimientos bancarios. El desarrollo asistido se realiza exclusivamente con Codex.
 
 ## Estado
 
@@ -12,95 +12,26 @@ Este repositorio contiene el núcleo TypeScript y la documentación de una soluc
 - Infraestructura: Bicep para Flex Consumption, Storage, Application Insights, Log Analytics y Key Vault con identidades administradas.
 - Arquitectura operativa: Azure Functions, Microsoft Graph, Document Intelligence y SharePoint Lists, sin conectores de automatización externos.
 - Pruebas: 74 superadas.
-- Ollama: `0.33.3`, API disponible en `http://127.0.0.1:11434`.
-- Perfil local activo: **casa** — Intel Core i7-12700T (12 núcleos/20 hilos), 15,7 GB de RAM y NVIDIA GeForce RTX 3050 Ti Laptop GPU (4 GB VRAM). Inventario comprobado el 17 de septiembre de 2026.
-- Restricción operativa: un único modelo local cargado y contexto corto.
-- Política de desarrollo vigente: **solo Codex GPT-5.6 Terra con razonamiento Medium**. Ollama y sus modelos locales no participan en desarrollo, revisión ni generación de código; solo podrán volver a evaluarse con autorización expresa del usuario y una nueva evidencia de ahorro neto.
+- Política de desarrollo vigente: **solo Codex** para desarrollo, revisión y generación de código. Las pruebas previas con modelos locales no demostraron ahorro neto y quedan descartadas.
 - PRD funcional vigente: [PRD_Automatizacion_Facturas_M365_Copilot_v4.md](./PRD_Automatizacion_Facturas_M365_Copilot_v4.md).
-
-## Modelos instalados
-
-| Modelo | Parámetros | Cuantización | Capacidades | Papel inicial |
-|---|---:|---|---|---|
-| `qwen2.5-coder:3b` | 3B | instalada | Código | Modelo principal para tareas de código acotadas y verificables |
-| `qwen2.5:3b` | 3B | instalada | Texto y JSON | Modelo principal para clasificación y resúmenes breves |
-| `qwen2.5-coder:7b` | 7B | instalada | Código | Comparador de mayor calidad; GPU + CPU |
-| `qwen2.5:7b` | 7B | instalada | Texto y JSON | Comparador de mayor calidad; GPU + CPU |
-| `deepseek-coder:6.7b` | 6,7B | instalada | Código | Comparador experimental |
-| `llama3.1:8b` | 8B | instalada | Generalista | Comparador; no ruta habitual |
-| `gemma3:1b` | 1B | instalada | Generalista | Tareas muy breves; no visión de producción |
-| `gemma:2b`, `llama3.2:latest`, `mistral:7b` | variados | instalados | Generalistas | No priorizados hasta tener evidencia específica |
-
-El contexto declarado por el modelo no es el contexto operativo. En este hardware se comenzará con 2.048 tokens y se permitirá un máximo ordinario de 4.096.
 
 ## Principios
 
 1. Codex conserva la planificación, las decisiones arquitectónicas y la responsabilidad final.
-2. Los modelos locales reciben fragmentos mínimos, nunca el repositorio completo.
-3. La salida local debe ser estructurada, limitada y verificable.
-4. Tests, analizadores y compiladores tienen prioridad sobre la opinión de otro modelo.
-5. Una tarea local se escala a Codex al primer indicio de ambigüedad, riesgo o repetición fallida.
-6. No se ejecutan modelos locales en paralelo en este equipo.
-7. Toda delegación registra tokens estimados evitados, latencia, resultado y retrabajo.
+2. Tests, analizadores y compiladores validan los cambios antes de integrarlos.
+3. Las decisiones de arquitectura, seguridad, despliegue e integraciones Microsoft 365/Azure se revisan explícitamente.
+4. No se emplean modelos locales para desarrollar, revisar o generar código.
 
-## Plan de orquestación por sesión
+## Protocolo de trabajo por sesión
 
-Este protocolo se ejecuta al inicio y al cierre de cada sesión de Codex. El objetivo es reducir consumo cloud sin trasladar riesgo, datos sensibles ni retrabajo al equipo.
+Este protocolo se ejecuta al inicio y al cierre de cada sesión de Codex.
 
-La política vigente suspende la delegación local: todo desarrollo se realiza con Codex GPT-5.6 Terra, razonamiento Medium. Los pasos relativos a Ollama se conservan como historial de evaluación y no se ejecutan salvo instrucción expresa del usuario.
-
-1. **Identificar el equipo.** Antes de empezar trabajo, Codex preguntará en qué ordenador se trabaja, salvo que el usuario ya lo haya indicado en la sesión. Se registrará el perfil activo y se ajustarán modelo, contexto y expectativas de latencia; nunca se asumirá que dos equipos tienen la misma capacidad.
-2. **Situar el trabajo.** Leer `README.md`, `CONTEXT.md` y el apartado relevante de `TODO.md`; comprobar `git status --short` y los últimos commits. No cargar el repositorio completo ni documentación no relacionada.
-3. **Clasificar antes de delegar.** Ejecutar directamente tareas deterministas (búsquedas, compilación, pruebas, formato y cambios mecánicos). Reservar Codex para arquitectura, seguridad, integraciones Microsoft 365/Azure, cambios transversales y toda ambigüedad.
-4. **Delegación local opcional.** Solo enviar a Ollama texto mínimo, ya seleccionado y sin secretos ni datos fiscales personales. Exigir salida JSON breve y validar el resultado con pruebas, tipos o reglas. Una sola tarea y un solo modelo local simultáneos.
-5. **Escalado inmediato.** Si el formato es inválido, la respuesta es ambigua, se detecta un dato sensible, falla una validación o aparece un segundo intento, detener la ruta local y resolver con Codex. No perseverar para justificar el uso del modelo local.
-6. **Medir ahorro neto.** Por cada ensayo local registrar: tarea, modelo, tamaño aproximado de entrada/salida, latencia, aceptación directa, correcciones y motivo de escalado. La fórmula es `tokens_cloud_base - tokens_cloud_orquestados - equivalente_del_retrabajo`.
-7. **Cerrar con evidencia.** Ejecutar las comprobaciones pertinentes, actualizar solo la documentación afectada y dejar el siguiente paso y bloqueos en `CONTEXT.md` o `TODO.md`. Si no hay evidencia de ahorro o la calidad baja, la ruta local queda desactivada.
-
-### Perfil activo: casa
-
-La RTX 3050 Ti dispone de 4 GB de VRAM, de los que se observaron 3,38 GB libres. Los modelos de 3B instalados son la ruta de baja latencia y se probarán primero: `qwen2.5:3b` para JSON/resúmenes y `qwen2.5-coder:3b` para código. Los modelos de 7B no cabrán por completo en GPU y combinarán GPU y CPU; se reservan como comparadores de calidad. Se usará un único proceso, `num_ctx: 2048` y `num_predict` limitado; cada salida se valida de forma determinista. No se utilizará ningún modelo cloud local ni se descargará un modelo superior a 7B sin una decisión expresa y evidencia de ahorro neto.
-
-## Enrutamiento inicial
-
-```text
-Solicitud
-   ↓
-Reglas deterministas: alcance, riesgo y tamaño
-   ├─ alto riesgo/ambigua → Codex
-   └─ acotada/verificable → modelo local
-                              ↓
-                    validación determinista
-                       ├─ válida → resultado
-                       └─ falla una vez → Codex
-```
-
-| Trabajo | Destino |
-|---|---|
-| Clasificar solicitud, extraer campos, producir JSON | Qwen 3 1.7B |
-| Generar tests simples, explicar error corto, proponer parche pequeño | Qwen Coder 3B |
-| Analizar una captura o layout | Gemma 3 4B; Ministral como candidato A/B |
-| Resumir texto ya seleccionado | Qwen 3 o Qwen 2.5 |
-| Arquitectura, seguridad, migraciones, cambios transversales | Codex |
-| Revisión final de cambios sensibles | Codex + pruebas deterministas |
-
-## Qué significa ahorro real
-
-```text
-ahorro_neto = tokens_cloud_base
-             - tokens_cloud_orquestados
-             - equivalente_del_retrabajo
-```
-
-También se medirán latencia total, tasa de aceptación directa, fallos de formato, escalados y defectos encontrados después. Un flujo local se desactiva si ahorra tokens pero empeora de forma material el tiempo o la calidad.
+1. **Situar el trabajo.** Leer `README.md`, `CONTEXT.md` y el apartado relevante de `TODO.md`; comprobar `git status --short` y los últimos commits. No cargar el repositorio completo ni documentación no relacionada.
+2. **Ejecutar y verificar.** Aplicar directamente las tareas deterministas y validar los cambios con pruebas, tipos, compilación o formato según corresponda.
+3. **Cerrar con evidencia.** Actualizar únicamente la documentación afectada y dejar el siguiente paso o bloqueo en `CONTEXT.md` o `TODO.md`.
 
 ## Documentación
 
-- [Arquitectura y política de enrutamiento](./docs/ORCHESTRATION_PLAN.md)
-- [Protocolo de evaluación](./docs/EVALUATION.md)
-- [Política de datos](./docs/DATA_POLICY.md)
-- [Resultados del benchmark local](./docs/BENCHMARK_RESULTS.md)
-- [Batería P2 de evaluación local](./docs/LOCAL_AI_P2_TASKS.md)
 - [Preparación de Microsoft 365](./docs/M365_SETUP.md)
 - [Ejecución y diagnóstico del piloto de correo](./docs/MAILBOX_PILOT_RUNBOOK.md)
 - [Contratos de la API](./docs/API.md)
