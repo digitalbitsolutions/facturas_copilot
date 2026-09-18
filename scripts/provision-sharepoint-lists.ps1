@@ -106,6 +106,7 @@ $definitions = @(
             @{ name = 'DocumentoUrl'; text = @{ allowMultipleLines = $true } }
             @{ name = 'Remitente'; text = @{} }
             @{ name = 'Recibido'; dateTime = @{ format = 'dateTime' } }
+            @{ name = 'ExcluirDePagos'; boolean = @{} }
         )
     },
     @{

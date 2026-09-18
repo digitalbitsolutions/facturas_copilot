@@ -7,6 +7,7 @@ type PaymentState = "Pendiente" | "Programado" | "Parcial" | "Pagada" | "EnRevis
 
 const text = (value: unknown) => typeof value === "string" ? value.trim() : "";
 const number = (value: unknown) => typeof value === "number" && Number.isFinite(value) ? value : 0;
+const flag = (value: unknown) => value === true || text(value).toLowerCase() === "true" || text(value).toLowerCase() === "si" || text(value).toLowerCase() === "sí";
 const key = (value: string) => value.normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/[^\p{L}\p{N}]/gu, "").toLowerCase();
 const path = (value: string) => encodeURIComponent(value);
 const sitePath = (value: string) => value.split(",").map(path).join(",");
@@ -39,6 +40,10 @@ export class SharePointPaymentQueryProjector {
     if (item) await this.graph.request(`/sites/${sitePath(this.config.siteId)}/lists/${path(id)}/items/${path(item.id)}/fields`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(sanitized) });
     else await this.graph.request(`/sites/${sitePath(this.config.siteId)}/lists/${path(id)}/items`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ fields: sanitized }) });
   }
+  private async remove(item: Item): Promise<void> {
+    const id = await this.listId(this.config.queryList);
+    await this.graph.request(`/sites/${sitePath(this.config.siteId)}/lists/${path(id)}/items/${path(item.id)}`, { method: "DELETE" });
+  }
 
   async run(): Promise<{ projected: number }> {
     const [invoices, forecasts, reconciliations, movements, existing] = await Promise.all([
@@ -50,6 +55,7 @@ export class SharePointPaymentQueryProjector {
     const invoiceKeys = new Set<string>();
     for (const invoice of invoices) {
       const f = invoice.fields ?? {}; const processId = text(f.ProcessId); if (!processId) continue;
+      if (flag(f.ExcluirDePagos)) continue;
       const supplier = text(f.Proveedor); const invoiceNumber = text(f.NumeroFactura); const matchKey = `${key(supplier)}|${key(invoiceNumber)}`; invoiceKeys.add(matchKey);
       const forecast = forecasts.find((candidate) => `${key(text(candidate.fields?.Proveedor))}|${key(text(candidate.fields?.NumeroFactura))}` === matchKey);
       const confirmed = reconciliations.filter((record) => text(record.fields?.FacturaIdPropuesta) === processId && text(record.fields?.Estado) === "Conciliada");
@@ -65,6 +71,7 @@ export class SharePointPaymentQueryProjector {
       const consultaId = `forecast:${text(f.PrevisionId)}`; if (!text(f.PrevisionId)) continue; projected.add(consultaId);
       await this.save(existingByKey.get(consultaId), { Title: `${text(f.Proveedor)} ${text(f.NumeroFactura)}`.trim(), ConsultaId: consultaId, PrevisionId: text(f.PrevisionId), Proveedor: text(f.Proveedor), NumeroFactura: text(f.NumeroFactura), FechaFactura: text(f.FechaFactura), FechaVencimiento: text(f.FechaVencimiento), ImporteFacturaMenor: number(f.ImporteFacturaMenor), FechaPagoPrevista: text(f.FechaPagoPrevista), ImportePagoPrevistoMenor: number(f.ImportePagoPrevistoMenor), ImportePagadoMenor: 0, ImportePendienteMenor: number(f.ImportePagoPrevistoMenor), Moneda: text(f.Moneda), EstadoPago: text(f.Estado) === "Cancelado" ? "Cancelada" : text(f.Estado) === "Parcial" ? "Parcial" : "Programado", ActualizadoEn: new Date().toISOString() });
     }
+    for (const item of existing) if (text(item.fields?.ConsultaId) && !projected.has(text(item.fields?.ConsultaId))) await this.remove(item);
     return { projected: projected.size };
   }
 }
