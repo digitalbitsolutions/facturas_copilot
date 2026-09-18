@@ -57,6 +57,7 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - EMAS se validó contra XML Factur-X y se archivó correctamente; Endesa se validó tras aprobar su perfil acotado en `MaestroProveedores.AceptaConfianzaReducida`, siempre condicionado a NIF exacto, proveedor activo y coherencia fiscal. Evidencia en `docs/ACCEPTANCE_2026-09-15.md`.
 - El commit `6f83b03` introduce perfiles versionados de extractos. `bankinter-simulated-csv-v1` mapea el CSV de pruebas de cabeceras minúsculas y conserva signo de cargos/abonos; `standard-es-v1` queda disponible para rollback. Simulación local: 46 movimientos, 16 positivos y 30 negativos; SATINFO `high`, Endesa `probable` por comisión de 0,02 EUR y EMAS sin match por cobros parciales.
 - Propuesta comercial inicial para España documentada en `docs/COMMERCIAL_SPAIN.md`: implantación + cuota mensual + consumo cloud transparente; sin dependencia inicial de API bancaria. Pendiente definir formato del Excel de previsión de pagos e importador correspondiente.
+- El 18 de septiembre se validaron CA-17 a CA-19 contra la Function desplegada y las listas reales `Conciliaciones` y `MovimientosBancarios`, con identidad Entra. Una propuesta ambigua quedó en `PendienteRevision`/`EnRevision`; una confirmación dejó la conciliación y el movimiento en `Conciliada`/`Conciliado`; y un rechazo quedó en `Rechazada`/`EnRevision`. Evidencia: `docs/ACCEPTANCE_2026-09-18.md`.
 - No existe aún ningún recurso productivo ni credencial almacenada.
 
 ## Evidencia y diagnóstico del piloto de correo
