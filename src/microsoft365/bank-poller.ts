@@ -108,8 +108,11 @@ export class SharePointBankPoller {
 
   private async items(listName: string, field: string, value: string): Promise<ListItems["value"]> {
     const listId = await this.listId(listName);
-    const filter = encodeURIComponent(`fields/${field} eq '${value.replace(/'/g, "''")}'`);
-    return (await this.graph.request<ListItems>(`/sites/${graphPath(this.config.siteId)}/lists/${graphPath(listId)}/items?$expand=fields($select=${field})&$filter=${filter}`)).value;
+    const response = await this.graph.request<ListItems>(
+      `/sites/${graphPath(this.config.siteId)}/lists/${graphPath(listId)}/items?%24expand=fields`,
+      { headers: { Prefer: "HonorNonIndexedQueriesWarningMayFailRandomly" } },
+    );
+    return response.value.filter((item) => String(item.fields?.[field] ?? "") === value);
   }
 
   private async move(item: DriveItem, targetFolder: string): Promise<void> {
