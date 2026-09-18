@@ -3,7 +3,7 @@ import { assignExceptionRequest, decideReconciliationRequest, importBankRequest,
 import { DocumentIntelligenceDocumentClassifier } from "../classification/index.ts";
 import { DocumentIntelligenceInvoiceExtractor } from "../extraction/index.ts";
 import { resolveSupplierIdentity, validateInvoice, validationConfigForSupplier } from "../invoices/index.ts";
-import { bankImportConfigForProfile, GraphClient, ManagedIdentityTokenProvider, SharePointBankPoller, SharePointDocumentRepository, SharePointExceptionResolutionStore, SharePointInvoiceMailboxPoller, SharePointInvoiceRegistry, SharePointPaymentForecastPoller, SharePointProcessStore, SharePointReconciliationStore, SharePointSupplierDirectory } from "../microsoft365/index.ts";
+import { bankImportConfigForProfile, GraphClient, ManagedIdentityTokenProvider, SharePointBankPoller, SharePointDocumentRepository, SharePointExceptionResolutionStore, SharePointInvoiceMailboxPoller, SharePointInvoiceRegistry, SharePointPaymentForecastPoller, SharePointPaymentQueryProjector, SharePointProcessStore, SharePointReconciliationStore, SharePointSupplierDirectory } from "../microsoft365/index.ts";
 import { AttachmentProcessor } from "../processing/index.ts";
 
 function json(status: number, body: unknown): HttpResponseInit {
@@ -199,6 +199,17 @@ app.timer("pollPaymentForecasts", {
       importsList: process.env.M365_PAYMENT_FORECAST_IMPORTS_LIST ?? "ImportacionesPrevisiones", forecastsList: process.env.M365_PAYMENT_FORECASTS_LIST ?? "PrevisionesPagos", exceptionsList: process.env.M365_EXCEPTIONS_LIST ?? "Excepciones",
     });
     const result = await poller.run(); context.log("Payment forecast polling completed", result);
+  },
+});
+
+app.timer("syncPaymentQueries", {
+  schedule: process.env.PAYMENT_QUERY_SYNC_SCHEDULE ?? "45 */10 * * * *",
+  handler: async (_timer, context) => {
+    const result = await new SharePointPaymentQueryProjector(new GraphClient(new ManagedIdentityTokenProvider()), {
+      siteId: requiredSetting("M365_SHAREPOINT_SITE_ID"), invoicesList: process.env.M365_INVOICE_REGISTRY_LIST ?? "RegistroFacturas", forecastsList: process.env.M365_PAYMENT_FORECASTS_LIST ?? "PrevisionesPagos",
+      reconciliationsList: process.env.M365_RECONCILIATIONS_LIST ?? "Conciliaciones", movementsList: process.env.M365_BANK_MOVEMENTS_LIST ?? "MovimientosBancarios", queryList: process.env.M365_PAYMENT_QUERY_LIST ?? "ConsultaPagosCopilot",
+    });
+    context.log("Payment query projection completed", await result.run());
   },
 });
 

@@ -194,6 +194,30 @@ $definitions = @(
         )
     }
     ,@{
+        displayName = 'ConsultaPagosCopilot'
+        columns = @(
+            @{ name = 'ConsultaId'; indexed = $true; enforceUniqueValues = $true; text = @{} }
+            @{ name = 'ProcessId'; indexed = $true; text = @{} }
+            @{ name = 'PrevisionId'; indexed = $true; text = @{} }
+            @{ name = 'Proveedor'; indexed = $true; text = @{} }
+            @{ name = 'NumeroFactura'; text = @{} }
+            @{ name = 'FechaFactura'; dateTime = @{ format = 'dateOnly' } }
+            @{ name = 'FechaVencimiento'; dateTime = @{ format = 'dateOnly' } }
+            @{ name = 'ImporteFacturaMenor'; number = @{ decimalPlaces = 'none' } }
+            @{ name = 'FechaPagoPrevista'; indexed = $true; dateTime = @{ format = 'dateOnly' } }
+            @{ name = 'ImportePagoPrevistoMenor'; number = @{ decimalPlaces = 'none' } }
+            @{ name = 'ImportePagadoMenor'; number = @{ decimalPlaces = 'none' } }
+            @{ name = 'ImportePendienteMenor'; number = @{ decimalPlaces = 'none' } }
+            @{ name = 'Moneda'; text = @{} }
+            @{ name = 'EstadoPago'; indexed = $true; choice = @{ choices = @('Pendiente','Programado','Parcial','Pagada','EnRevision','Cancelada') } }
+            @{ name = 'FechaUltimoPago'; dateTime = @{ format = 'dateTime' } }
+            @{ name = 'ReferenciasBancarias'; text = @{ allowMultipleLines = $true } }
+            @{ name = 'FacturaUrl'; text = @{ allowMultipleLines = $true } }
+            @{ name = 'Conciliaciones'; text = @{ allowMultipleLines = $true } }
+            @{ name = 'ActualizadoEn'; dateTime = @{ format = 'dateTime' } }
+        )
+    }
+    ,@{
         displayName = 'ImportacionesPrevisiones'
         columns = @(
             @{ name = 'LoteId'; text = @{} }

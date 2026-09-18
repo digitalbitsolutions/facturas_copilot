@@ -13,5 +13,7 @@ export { SharePointSupplierDirectory } from "./supplier-directory.ts";
 export { SharePointExceptionResolutionStore } from "./exception-resolution.ts";
 export { SharePointReconciliationStore } from "./reconciliation-resolution.ts";
 export type { ReconciliationDecision } from "./reconciliation-resolution.ts";
+export { SharePointPaymentQueryProjector } from "./payment-query-projector.ts";
+export type { PaymentQueryProjectorConfig } from "./payment-query-projector.ts";
 export type { Microsoft365Config } from "./config.ts";
 export type { AccessTokenProvider } from "./graph-client.ts";
