@@ -32,7 +32,7 @@ export class AttachmentProcessor {
   async process(input: AttachmentInput): Promise<ProcessResult> {
     const processId = buildProcessId(input.messageId, input.attachmentId);
     const previous = await this.dependencies.processStore.get(processId);
-    if (previous && ["completed", "diverted", "review_required"].includes(previous.state)) {
+    if (previous && (["completed", "diverted"].includes(previous.state) || (previous.state === "review_required" && !previous.exception?.retryable))) {
       return { ...previous, idempotentReplay: true };
     }
 

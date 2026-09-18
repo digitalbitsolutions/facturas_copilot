@@ -105,6 +105,17 @@ test("replays terminal processes without side effects", async () => {
   assert.equal(context.registry.entries.size, 1);
 });
 
+test("retries a review caused by a transient technical failure", async () => {
+  const context = setup({ extractionErrorFor: "retry" });
+  const first = await context.processor.process(input("retry"));
+  assert.equal(first.state, "review_required");
+  assert.equal(first.exception?.retryable, true);
+  const retry = await context.processor.process(input("retry"));
+  assert.equal(retry.state, "review_required");
+  assert.equal(retry.idempotentReplay, false);
+  assert.equal(context.extractionCalls(), 2);
+});
+
 test("isolates a failed attachment from the remaining message", async () => {
   const context = setup({ extractionErrorFor: "bad" });
   const results = await context.processor.processAll([input("bad"), input("good")]);
