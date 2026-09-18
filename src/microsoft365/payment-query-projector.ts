@@ -34,8 +34,10 @@ export class SharePointPaymentQueryProjector {
   }
   private async save(item: Item | undefined, fields: Record<string, unknown>): Promise<void> {
     const id = await this.listId(this.config.queryList);
-    if (item) await this.graph.request(`/sites/${sitePath(this.config.siteId)}/lists/${path(id)}/items/${path(item.id)}/fields`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(fields) });
-    else await this.graph.request(`/sites/${sitePath(this.config.siteId)}/lists/${path(id)}/items`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ fields }) });
+    const sanitized = { ...fields };
+    for (const dateField of ["FechaFactura", "FechaVencimiento", "FechaPagoPrevista", "FechaUltimoPago"]) if (!sanitized[dateField]) delete sanitized[dateField];
+    if (item) await this.graph.request(`/sites/${sitePath(this.config.siteId)}/lists/${path(id)}/items/${path(item.id)}/fields`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(sanitized) });
+    else await this.graph.request(`/sites/${sitePath(this.config.siteId)}/lists/${path(id)}/items`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ fields: sanitized }) });
   }
 
   async run(): Promise<{ projected: number }> {
