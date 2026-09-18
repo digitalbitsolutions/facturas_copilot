@@ -5,6 +5,7 @@ import type { GraphClient } from "./graph-client.ts";
 
 type DriveItem = { id: string; name: string; file?: { mimeType?: string } };
 type ListLookup = { value: Array<{ id: string; displayName: string }> };
+type ListItems = { value: Array<{ id: string; fields?: Record<string, unknown> }> };
 
 export type BankPollingConfig = {
   siteId: string; driveId: string; incomingFolder: string; processedFolder: string; errorFolder: string;
@@ -105,6 +106,12 @@ export class SharePointBankPoller {
     });
   }
 
+  private async items(listName: string, field: string, value: string): Promise<ListItems["value"]> {
+    const listId = await this.listId(listName);
+    const filter = encodeURIComponent(`fields/${field} eq '${value.replace(/'/g, "''")}'`);
+    return (await this.graph.request<ListItems>(`/sites/${graphPath(this.config.siteId)}/lists/${graphPath(listId)}/items?$expand=fields($select=${field})&$filter=${filter}`)).value;
+  }
+
   private async move(item: DriveItem, targetFolder: string): Promise<void> {
     await this.graph.request(`/drives/${graphPath(this.config.driveId)}/items/${graphPath(item.id)}`, {
       method: "PATCH", headers: { "content-type": "application/json" },
@@ -126,8 +133,23 @@ export class SharePointBankPoller {
       const content = await this.graph.requestResponse(`/drives/${graphPath(this.config.driveId)}/items/${graphPath(item.id)}/content`);
       const bytes = await content.arrayBuffer();
       const sourceHash = createHash("sha256").update(Buffer.from(bytes)).digest("hex");
-      const result = importBankRows({ sourceFilename: item.name, sourceHash, rows: await parseBankFile(item.name, bytes), config: this.config.importConfig });
+      if ((await this.items(this.config.importsList, "HashOrigen", sourceHash)).length) {
+        await this.move(item, this.config.processedFolder);
+        return "processed";
+      }
+      const rows = await parseBankFile(item.name, bytes);
+      const initial = importBankRows({ sourceFilename: item.name, sourceHash, rows, config: this.config.importConfig });
+      if (!initial.accepted) throw new Error(initial.issues.map((issue) => issue.message).join("; "));
+      const knownFingerprints = new Set<string>();
+      for (const movement of initial.batch.movements) {
+        if ((await this.items(this.config.movementsList, "Huella", movement.fingerprint)).length) knownFingerprints.add(movement.fingerprint);
+      }
+      const result = importBankRows({ sourceFilename: item.name, sourceHash, rows, config: this.config.importConfig, knownFingerprints });
       if (!result.accepted) throw new Error(result.issues.map((issue) => issue.message).join("; "));
+      if (result.batch.movements.length === 0) {
+        await this.move(item, this.config.processedFolder);
+        return "processed";
+      }
       await this.addListItem(this.config.importsList, {
         Title: result.batch.batchId, LoteId: result.batch.batchId, ArchivoOrigen: item.name, HashOrigen: sourceHash,
         Estado: "Importado", FilasLeidas: result.batch.rowCount, MovimientosImportados: result.batch.movements.length,

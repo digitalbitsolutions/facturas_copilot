@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import XlsxPopulate from "xlsx-populate";
-import { bankImportConfigForProfile, parseBankFile } from "./bank-poller.ts";
+import { bankImportConfigForProfile, parseBankFile, SharePointBankPoller } from "./bank-poller.ts";
+import { GraphClient } from "./graph-client.ts";
 
 test("parseBankFile reads the first worksheet and its headings", async () => {
   const book = await XlsxPopulate.fromBlankAsync();
@@ -28,4 +29,27 @@ test("selects the versioned signed CSV profile and rejects unknown versions", ()
   assert.equal(profile.debitSign, "preserve");
   assert.equal(profile.columns.bookingDate, "fecha_operacion");
   assert.throws(() => bankImportConfigForProfile("unknown-v1"), /Unsupported BANK_IMPORT_PROFILE/);
+});
+
+test("does not create a second bank batch when its source hash was already persisted", async () => {
+  const calls: Array<{ url: string; method: string }> = [];
+  const fetchImpl = (async (input: string | URL | Request, init?: RequestInit) => {
+    const url = String(input); const method = init?.method ?? "GET";
+    calls.push({ url, method });
+    if (url.includes("root:/ExtractosBancarios:/children")) return Response.json({ value: [{ id: "file-1", name: "extract.csv", file: { mimeType: "text/csv" } }] });
+    if (url.endsWith("/content")) return new Response("fecha_operacion,concepto,importe\n2026-09-12,ADEUDO,-100.00\n");
+    if (url.includes("/lists?$select=id,displayName")) return Response.json({ value: [{ id: "imports", displayName: "ImportacionesBancarias" }, { id: "movements", displayName: "MovimientosBancarios" }] });
+    if (url.includes("HashOrigen")) return Response.json({ value: [{ id: "existing-batch" }] });
+    if (method === "PATCH") return Response.json({});
+    throw new Error(`Unexpected Graph request: ${method} ${url}`);
+  }) as typeof fetch;
+  const graph = new GraphClient({ getAccessToken: async () => "token" }, fetchImpl, "https://graph.test/v1.0");
+  const poller = new SharePointBankPoller(graph, {
+    siteId: "site", driveId: "drive", incomingFolder: "ExtractosBancarios", processedFolder: "Procesados", errorFolder: "Errores",
+    importsList: "ImportacionesBancarias", movementsList: "MovimientosBancarios", exceptionsList: "Excepciones", importConfig: bankImportConfigForProfile("bankinter-simulated-csv-v1"),
+  });
+
+  assert.deepEqual(await poller.run(), { found: 1, processed: 1, errors: 0 });
+  assert.equal(calls.filter((call) => call.method === "POST" && call.url.includes("/items")).length, 0);
+  assert.equal(calls.filter((call) => call.method === "PATCH").length, 1);
 });
