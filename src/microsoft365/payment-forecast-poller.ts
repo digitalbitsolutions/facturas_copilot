@@ -29,8 +29,14 @@ export class SharePointPaymentForecastPoller {
   }
   private async items(list: string, field: string, value: string): Promise<ListItems["value"]> {
     const id = await this.listId(list);
-    const filter = encodeURIComponent(`fields/${field} eq '${value.replace(/'/g, "''")}'`);
-    return (await this.graph.request<ListItems>(`/sites/${path(this.config.siteId)}/lists/${path(id)}/items?$expand=fields($select=${field})&$filter=${filter}`)).value;
+    // SharePoint rejects some OData filters on custom list columns with HTTP 400,
+    // even when the column is indexed. Read the small operational lists and compare
+    // locally, as we do for bank-import idempotency checks.
+    const response = await this.graph.request<ListItems>(
+      `/sites/${path(this.config.siteId)}/lists/${path(id)}/items?%24expand=fields`,
+      { headers: { Prefer: "HonorNonIndexedQueriesWarningMayFailRandomly" } },
+    );
+    return response.value.filter((item) => String(item.fields?.[field] ?? "") === value);
   }
   private async add(list: string, fields: Record<string, unknown>): Promise<void> {
     const id = await this.listId(list);
