@@ -1,4 +1,5 @@
 import { importPaymentForecastRows, parsePaymentForecastFile, paymentForecastSourceHash, type PaymentForecast } from "../payment-forecasts/index.ts";
+import { normalizeDate } from "../reconciliation/normalization.ts";
 import { GraphError, type GraphClient } from "./graph-client.ts";
 
 type DriveItem = { id: string; name: string; file?: { mimeType?: string } };
@@ -66,7 +67,8 @@ export class SharePointPaymentForecastPoller {
   private equal(existing: Record<string, unknown>, fields: Record<string, unknown>): boolean {
     // The import batch and source filename change for every upload; they are audit
     // metadata, not a business change to the forecast itself.
-    return Object.entries(fields).filter(([key]) => key !== "LoteId" && key !== "ArchivoOrigen").every(([key, value]) => String(existing[key] ?? "") === String(value ?? ""));
+    const dateFields = new Set(["FechaFactura", "FechaVencimiento", "FechaPagoPrevista"]);
+    return Object.entries(fields).filter(([key]) => key !== "LoteId" && key !== "ArchivoOrigen").every(([key, value]) => dateFields.has(key) ? normalizeDate(existing[key]) === normalizeDate(value) : String(existing[key] ?? "") === String(value ?? ""));
   }
   private async audit(forecast: PaymentForecast, action: "Creada" | "Actualizada", filename: string, previous?: Record<string, unknown>): Promise<void> {
     await this.add(this.config.historyList, { Title: `${action} ${forecast.previsionId}`, PrevisionId: forecast.previsionId, LoteId: forecast.batchId, ArchivoOrigen: filename, Accion: action, Antes: previous ? JSON.stringify(previous) : "", Despues: JSON.stringify(this.fields(forecast, filename)), Fecha: new Date().toISOString() });

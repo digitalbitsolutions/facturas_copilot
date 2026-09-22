@@ -42,4 +42,5 @@ test("does not treat batch metadata as a forecast update", () => {
   const uploaded = { ...existing, LoteId: "new-batch", ArchivoOrigen: "new.xlsx" };
   assert.equal((poller as any).equal(existing, uploaded), true);
   assert.equal((poller as any).equal(existing, { ...uploaded, Estado: "Pendiente" }), false);
+  assert.equal((poller as any).equal({ ...existing, FechaPagoPrevista: "2026-10-01T07:00:00Z" }, uploaded), true);
 });
