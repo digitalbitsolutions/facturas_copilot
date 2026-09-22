@@ -64,7 +64,9 @@ export class SharePointPaymentForecastPoller {
     return fields;
   }
   private equal(existing: Record<string, unknown>, fields: Record<string, unknown>): boolean {
-    return Object.entries(fields).every(([key, value]) => String(existing[key] ?? "") === String(value ?? ""));
+    // The import batch and source filename change for every upload; they are audit
+    // metadata, not a business change to the forecast itself.
+    return Object.entries(fields).filter(([key]) => key !== "LoteId" && key !== "ArchivoOrigen").every(([key, value]) => String(existing[key] ?? "") === String(value ?? ""));
   }
   private async audit(forecast: PaymentForecast, action: "Creada" | "Actualizada", filename: string, previous?: Record<string, unknown>): Promise<void> {
     await this.add(this.config.historyList, { Title: `${action} ${forecast.previsionId}`, PrevisionId: forecast.previsionId, LoteId: forecast.batchId, ArchivoOrigen: filename, Accion: action, Antes: previous ? JSON.stringify(previous) : "", Despues: JSON.stringify(this.fields(forecast, filename)), Fecha: new Date().toISOString() });

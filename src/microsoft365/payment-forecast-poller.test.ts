@@ -34,3 +34,12 @@ test("imports forecasts without Graph OData filters on custom columns", async ()
   assert.ok(calls.every((call) => !call.url.includes("%24filter") && !call.url.includes("$filter")));
   assert.equal(moveAttempts, 2);
 });
+
+test("does not treat batch metadata as a forecast update", () => {
+  const graph = new GraphClient({ getAccessToken: async () => "token" }, fetch);
+  const poller = new SharePointPaymentForecastPoller(graph, { siteId: "site", driveId: "drive", incomingFolder: "in", processedFolder: "done", errorFolder: "error", importsList: "imports", forecastsList: "forecasts", historyList: "history", exceptionsList: "exceptions" });
+  const existing = { Title: "PREV-1", PrevisionId: "PREV-1", LoteId: "old-batch", ArchivoOrigen: "old.xlsx", Estado: "Programado", FechaPagoPrevista: "2026-10-01" };
+  const uploaded = { ...existing, LoteId: "new-batch", ArchivoOrigen: "new.xlsx" };
+  assert.equal((poller as any).equal(existing, uploaded), true);
+  assert.equal((poller as any).equal(existing, { ...uploaded, Estado: "Pendiente" }), false);
+});
