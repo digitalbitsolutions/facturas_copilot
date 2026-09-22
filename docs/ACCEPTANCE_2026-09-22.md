@@ -31,11 +31,19 @@ La fecha de vencimiento de la proyección procede de `RegistroFacturas` (la fuen
 
 Tras persistir los datos, el archivo terminó en `ErroresPrevisiones` por HTTP 409 al intentar moverlo a `ProcesadosPrevisiones`: ya existía un archivo con el mismo nombre de una prueba anterior. Es un fallo de archivado posterior a la persistencia, no de validación ni de consulta.
 
-## Pendientes
+## Correcciones y aceptación final
 
-1. Desplegar la corrección local de archivado: ante una colisión de nombre, usar un nombre alternativo estable y no declarar fallido un lote ya persistido.
-2. Desplegar la corrección local de fechas: `FechaPagoPrevista` vacía se omite al crear y se limpia con `null` al actualizar. Un Excel con la fecha vacía es válido si `EstadoPrevision` es `Pendiente`.
-3. Desplegar la validación local: `Programado` exige `FechaPagoPrevista`; si Gerencia/Cliente aún no la ha fijado, el estado debe ser `Pendiente`.
-4. Aprovisionar la nueva lista `HistorialPrevisiones` y registrar el resultado de la prueba de actualización y replay en el tenant.
-5. Mejorar la presentación del agente: mostrar importes en EUR, no solo el valor interno en céntimos.
-6. Alinear las fechas de factura y vencimiento del Excel con los documentos fiscales cuando difieran; `RegistroFacturas` es la fuente de vencimiento para la consulta operativa.
+Se aprovisionó `HistorialPrevisiones` y se desplegaron `a1da85e`, `a63f6a8` y `8d1863c`.
+
+- Una previsión con el mismo `PrevisionId` se actualiza de forma auditable.
+- `Programado` sin fecha prevista se rechaza; `Pendiente` admite fecha vacía y limpia el campo de SharePoint.
+- La colisión de nombre al archivar se resuelve con un sufijo estable.
+- Un replay con el mismo contenido no genera un segundo lote efectivo ni duplica previsiones.
+- La comparación ignora metadatos de lote/archivo y normaliza las fechas ISO que devuelve Graph.
+
+Prueba final: `Prevision_Pagos_iso_final.xlsx` terminó en `ProcesadosPrevisiones`; su lote registró `PrevisionesImportadas = 1` y `HistorialPrevisiones` registró únicamente `PREV-2026-0001` como `Actualizada`. Quedan validadas las actualizaciones selectivas sin falsos cambios.
+
+## Pendientes operativos
+
+1. Mejorar la presentación del agente: mostrar importes en EUR, no solo el valor interno en céntimos.
+2. Alinear las fechas de factura y vencimiento del Excel con los documentos fiscales cuando difieran; `RegistroFacturas` es la fuente de vencimiento para la consulta operativa.

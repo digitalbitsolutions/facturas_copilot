@@ -16,7 +16,7 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - Integración M365 validada en el tenant: la Function lee el buzón restringido mediante Graph y archiva adjuntos PDF en SharePoint.
 - Importación bancaria y conciliación local terminadas: lotes, validación, normalización, duplicidad, puntuación explicable y ambigüedad.
 - Azure Functions v4 preparada con endpoints HTTP; infraestructura Flex Consumption y CI/CD preparadas.
-- Pruebas actuales: 74 superadas.
+- Pruebas actuales: 75 superadas.
 - Tenant de pruebas verificado: `INTEGRAMENTE SL`, dominio `integramente.onmicrosoft.com` (`a1a2b397-4ac5-4f94-9004-67f158ea14e0`).
 - Administrador comunicado: `demo@integramente.onmicrosoft.com`; la contraseña no se almacena.
 - Licencias verificadas el 9 de septiembre de 2026: 25 `O365_BUSINESS_PREMIUM` y 25 `MICROSOFT_365_COPILOT_FOR_BUSINESS`, ambas habilitadas y sin asignar.
@@ -65,6 +65,7 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - El 21 de septiembre se creó el agente ligero de Microsoft 365 Copilot `Asistente de pagos`, conectado a `ConsultaPagosCopilot`, y se verificó que recupera las tres facturas pendientes. La primera carga de previsiones llegó a `ErroresPrevisiones` por un HTTP 400 de Graph al filtrar `PrevisionId`; el commit `3efc147` sustituye ese filtro por una comparación local, añade regresión y se desplegó correctamente mediante GitHub Actions. La importación de previsiones sigue habilitada; falta devolver `Prevision_Pagos_piloto.xlsx` desde `ErroresPrevisiones` a `PrevisionesPagos` para reintentarla.
 - El 22 de septiembre se cargó `Prevision_Pagos_piloto.xlsx` con tres fechas previstas de pago. Las tres previsiones se persistieron y la proyección las mostró como `Programado`; el agente `Asistente de pagos` distinguió correctamente el vencimiento fiscal de la fecha prevista de pago para EMAS. Tras persistir, Graph devolvió HTTP 409 al mover el archivo a `ProcesadosPrevisiones` porque ya existía un homónimo, por lo que el archivo terminó en `ErroresPrevisiones` pese al éxito funcional. Pendiente corregir ese archivado, omitir fechas opcionales vacías al escribir en SharePoint y exigir fecha prevista cuando el estado sea `Programado`. Evidencia: `docs/ACCEPTANCE_2026-09-22.md`.
 - El 22 de septiembre se implementó localmente la evolución de previsiones: actualización por `PrevisionId` con historial `HistorialPrevisiones`, fechas vacías omitidas al crear y limpiadas con `null` al actualizar, `Programado` sin fecha rechazada y renombrado estable ante colisión HTTP 409 al archivar. Falta aprovisionar la lista, desplegar y repetir la aceptación en el tenant.
+- El 22 de septiembre se aprovisionó `HistorialPrevisiones` y se desplegaron `a1da85e`, `a63f6a8` y `8d1863c`. La aceptación real validó actualización por `PrevisionId`, auditoría, `Pendiente` sin fecha, replay idempotente y archivado. La prueba final `Prevision_Pagos_iso_final.xlsx` creó exactamente una actualización para EMAS; la normalización de fechas ISO de Graph elimina falsos cambios en las demás previsiones. Evidencia: `docs/ACCEPTANCE_2026-09-22.md`.
 - No existe aún ningún recurso productivo ni credencial almacenada.
 
 ## Evidencia y diagnóstico del piloto de correo

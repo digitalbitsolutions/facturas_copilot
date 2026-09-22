@@ -56,8 +56,8 @@
 - [x] Validar el agente `Asistente de pagos` contra `ConsultaPagosCopilot`: distingue vencimiento y fecha prevista de pago para `EMAS-2026-3001`.
 - [x] Implementar localmente el archivado de previsiones con nombre alternativo ante colisión HTTP 409, sin convertir una persistencia correcta en error.
 - [x] Implementar localmente fechas opcionales vacías y actualización por `PrevisionId`: `Programado` exige `FechaPagoPrevista`; `Pendiente` la borra de SharePoint.
-- [ ] Aprovisionar `HistorialPrevisiones`, desplegar la actualización y repetir la aceptación en el tenant.
-- [ ] Repetir el mismo libro sin cambios tras la corrección y confirmar idempotencia sin previsiones ni lotes efectivos duplicados.
+- [x] Aprovisionar `HistorialPrevisiones`, desplegar la actualización y validar en tenant altas, cambios, fechas vacías y archivado sin colisión.
+- [x] Repetir el mismo libro sin cambios y confirmar idempotencia sin previsiones ni lotes efectivos duplicados.
 - [ ] Mejorar las respuestas del agente para mostrar importes en EUR en vez de céntimos internos.
 - [ ] Ejecutar pruebas de aceptación CA-01 a CA-21 sobre Azure Functions, Graph y SharePoint.
 
