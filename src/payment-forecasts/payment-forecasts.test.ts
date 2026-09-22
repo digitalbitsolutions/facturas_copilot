@@ -51,3 +51,11 @@ test("uses a logical source hash so workbook serialization does not create anoth
   const rows = await parsePaymentForecastFile("prevision.xlsx", await compatibleWorkbook());
   assert.equal(paymentForecastSourceHash(rows), paymentForecastSourceHash(structuredClone(rows)));
 });
+
+test("requires a planned payment date when a forecast is programmed", async () => {
+  const rows = await parsePaymentForecastFile("prevision.xlsx", await compatibleWorkbook());
+  const invalid = rows.map((row) => row.PrevisionId === "PREV-0001" ? { ...row, EstadoPrevision: "Programado", FechaPagoPrevista: "" } : row);
+  const result = importPaymentForecastRows({ sourceFilename: "prevision.xlsx", sourceHash: "missing-payment-date", rows: invalid });
+  assert.equal(result.accepted, false);
+  assert.ok(result.issues.some((issue) => issue.column === "FechaPagoPrevista" && issue.code === "missing_value"));
+});

@@ -255,6 +255,18 @@ $definitions = @(
             @{ name = 'ConfianzaExtraccion'; choice = @{ choices = @('Alta','Media','Baja') } }
         )
     }
+    ,@{
+        displayName = 'HistorialPrevisiones'
+        columns = @(
+            @{ name = 'PrevisionId'; indexed = $true; text = @{} }
+            @{ name = 'LoteId'; indexed = $true; text = @{} }
+            @{ name = 'ArchivoOrigen'; text = @{} }
+            @{ name = 'Accion'; choice = @{ choices = @('Creada','Actualizada') } }
+            @{ name = 'Antes'; text = @{ allowMultipleLines = $true } }
+            @{ name = 'Despues'; text = @{ allowMultipleLines = $true } }
+            @{ name = 'Fecha'; dateTime = @{ format = 'dateTime' } }
+        )
+    }
 )
 
 $created = @()

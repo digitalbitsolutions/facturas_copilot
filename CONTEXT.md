@@ -1,6 +1,6 @@
 # Contexto de reanudación
 
-Actualizado: 15 de septiembre de 2026, tras validar facturas, simular conciliación bancaria y documentar la propuesta comercial España.
+Actualizado: 22 de septiembre de 2026, tras validar previsiones de pago y consultas con el agente de Copilot.
 
 ## Objetivo
 
@@ -16,7 +16,7 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - Integración M365 validada en el tenant: la Function lee el buzón restringido mediante Graph y archiva adjuntos PDF en SharePoint.
 - Importación bancaria y conciliación local terminadas: lotes, validación, normalización, duplicidad, puntuación explicable y ambigüedad.
 - Azure Functions v4 preparada con endpoints HTTP; infraestructura Flex Consumption y CI/CD preparadas.
-- Pruebas actuales: 72 superadas.
+- Pruebas actuales: 74 superadas.
 - Tenant de pruebas verificado: `INTEGRAMENTE SL`, dominio `integramente.onmicrosoft.com` (`a1a2b397-4ac5-4f94-9004-67f158ea14e0`).
 - Administrador comunicado: `demo@integramente.onmicrosoft.com`; la contraseña no se almacena.
 - Licencias verificadas el 9 de septiembre de 2026: 25 `O365_BUSINESS_PREMIUM` y 25 `MICROSOFT_365_COPILOT_FOR_BUSINESS`, ambas habilitadas y sin asignar.
@@ -63,6 +63,8 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - Durante ese envío, Document Intelligence F0 devolvió HTTP 429 para el tercer adjunto. El commit `9da76c4` permite reintentar en el siguiente sondeo solamente los procesos `review_required` con excepción técnica marcada como reintentable; los resultados funcionales terminales siguen siendo idempotentes. El reintento completó EMAS sin reenvío ni duplicar ENDESA o SATINFO.
 - La prueba de consultas Copilot queda pendiente: el Copilot general de Microsoft 365 no recuperó con fiabilidad las listas. La siguiente fase es un agente de Copilot Studio con `ConsultaPagosCopilot` como fuente directa, tras cargar las previsiones de pago y confirmar la capacidad/licencia necesaria.
 - El 21 de septiembre se creó el agente ligero de Microsoft 365 Copilot `Asistente de pagos`, conectado a `ConsultaPagosCopilot`, y se verificó que recupera las tres facturas pendientes. La primera carga de previsiones llegó a `ErroresPrevisiones` por un HTTP 400 de Graph al filtrar `PrevisionId`; el commit `3efc147` sustituye ese filtro por una comparación local, añade regresión y se desplegó correctamente mediante GitHub Actions. La importación de previsiones sigue habilitada; falta devolver `Prevision_Pagos_piloto.xlsx` desde `ErroresPrevisiones` a `PrevisionesPagos` para reintentarla.
+- El 22 de septiembre se cargó `Prevision_Pagos_piloto.xlsx` con tres fechas previstas de pago. Las tres previsiones se persistieron y la proyección las mostró como `Programado`; el agente `Asistente de pagos` distinguió correctamente el vencimiento fiscal de la fecha prevista de pago para EMAS. Tras persistir, Graph devolvió HTTP 409 al mover el archivo a `ProcesadosPrevisiones` porque ya existía un homónimo, por lo que el archivo terminó en `ErroresPrevisiones` pese al éxito funcional. Pendiente corregir ese archivado, omitir fechas opcionales vacías al escribir en SharePoint y exigir fecha prevista cuando el estado sea `Programado`. Evidencia: `docs/ACCEPTANCE_2026-09-22.md`.
+- El 22 de septiembre se implementó localmente la evolución de previsiones: actualización por `PrevisionId` con historial `HistorialPrevisiones`, fechas vacías omitidas al crear y limpiadas con `null` al actualizar, `Programado` sin fecha rechazada y renombrado estable ante colisión HTTP 409 al archivar. Falta aprovisionar la lista, desplegar y repetir la aceptación en el tenant.
 - No existe aún ningún recurso productivo ni credencial almacenada.
 
 ## Evidencia y diagnóstico del piloto de correo

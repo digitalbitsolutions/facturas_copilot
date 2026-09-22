@@ -52,8 +52,13 @@
 - [x] Aprovisionar `Conciliaciones` en el sitio de pruebas y validar CA-17 a CA-19 con identidad Entra.
 - [x] Crear y validar `ConsultaPagosCopilot` como proyección SharePoint para consultas de pagos, sin depender de Excel.
 - [x] Validar tres facturas digitales simuladas por correo (EMAS, ENDESA y SATINFO), incluido reintento seguro tras límite temporal de Document Intelligence F0.
-- [ ] Cargar previsiones de pago para las tres facturas de prueba directamente en `PrevisionesPagos` y comprobar sus estados `Programado`.
-- [ ] Configurar y validar un agente de Copilot Studio conectado directamente a `ConsultaPagosCopilot` antes de ejecutar consultas de negocio.
+- [x] Cargar previsiones de pago para las tres facturas de prueba directamente en `PrevisionesPagos` y comprobar sus estados `Programado`.
+- [x] Validar el agente `Asistente de pagos` contra `ConsultaPagosCopilot`: distingue vencimiento y fecha prevista de pago para `EMAS-2026-3001`.
+- [x] Implementar localmente el archivado de previsiones con nombre alternativo ante colisión HTTP 409, sin convertir una persistencia correcta en error.
+- [x] Implementar localmente fechas opcionales vacías y actualización por `PrevisionId`: `Programado` exige `FechaPagoPrevista`; `Pendiente` la borra de SharePoint.
+- [ ] Aprovisionar `HistorialPrevisiones`, desplegar la actualización y repetir la aceptación en el tenant.
+- [ ] Repetir el mismo libro sin cambios tras la corrección y confirmar idempotencia sin previsiones ni lotes efectivos duplicados.
+- [ ] Mejorar las respuestas del agente para mostrar importes en EUR en vez de céntimos internos.
 - [ ] Ejecutar pruebas de aceptación CA-01 a CA-21 sobre Azure Functions, Graph y SharePoint.
 
 ## Núcleo de facturas

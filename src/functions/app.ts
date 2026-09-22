@@ -196,7 +196,7 @@ app.timer("pollPaymentForecasts", {
     const poller = new SharePointPaymentForecastPoller(new GraphClient(new ManagedIdentityTokenProvider()), {
       siteId: requiredSetting("M365_SHAREPOINT_SITE_ID"), driveId: requiredSetting("M365_SHAREPOINT_DRIVE_ID"),
       incomingFolder: process.env.M365_PAYMENT_FORECAST_FOLDER ?? "PrevisionesPagos", processedFolder: process.env.M365_PAYMENT_FORECAST_PROCESSED_FOLDER ?? "ProcesadosPrevisiones", errorFolder: process.env.M365_PAYMENT_FORECAST_ERROR_FOLDER ?? "ErroresPrevisiones",
-      importsList: process.env.M365_PAYMENT_FORECAST_IMPORTS_LIST ?? "ImportacionesPrevisiones", forecastsList: process.env.M365_PAYMENT_FORECASTS_LIST ?? "PrevisionesPagos", exceptionsList: process.env.M365_EXCEPTIONS_LIST ?? "Excepciones",
+      importsList: process.env.M365_PAYMENT_FORECAST_IMPORTS_LIST ?? "ImportacionesPrevisiones", forecastsList: process.env.M365_PAYMENT_FORECASTS_LIST ?? "PrevisionesPagos", historyList: process.env.M365_PAYMENT_FORECAST_HISTORY_LIST ?? "HistorialPrevisiones", exceptionsList: process.env.M365_EXCEPTIONS_LIST ?? "Excepciones",
     });
     const result = await poller.run(); context.log("Payment forecast polling completed", result);
   },

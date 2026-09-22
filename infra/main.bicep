@@ -189,6 +189,7 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
         { name: 'M365_PAYMENT_FORECAST_ERROR_FOLDER', value: 'ErroresPrevisiones' }
         { name: 'M365_PAYMENT_FORECAST_IMPORTS_LIST', value: 'ImportacionesPrevisiones' }
         { name: 'M365_PAYMENT_FORECASTS_LIST', value: 'PrevisionesPagos' }
+        { name: 'M365_PAYMENT_FORECAST_HISTORY_LIST', value: 'HistorialPrevisiones' }
         { name: 'M365_EXCEPTIONS_LIST', value: 'Excepciones' }
         { name: 'M365_SUPPLIERS_LIST', value: 'MaestroProveedores' }
         { name: 'M365_INVOICE_PROCESSES_LIST', value: 'ProcesosFacturas' }

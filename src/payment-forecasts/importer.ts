@@ -43,6 +43,7 @@ export function importPaymentForecastRows(input: {
 
   const forecasts: PaymentForecast[] = [];
   const seen = new Set<string>();
+  const seenPrevisionIds = new Set<string>();
   input.rows.forEach((row, index) => {
     const sourceRow = index + 2;
     const previsionId = text(row.PrevisionId);
@@ -66,17 +67,19 @@ export function importPaymentForecastRows(input: {
     if (!currency) issues.push({ code: "invalid_currency", row: sourceRow, column: "Moneda", message: "Moneda must be an ISO currency" });
     if (statusText === "Pagado" || statusText === "Pagada") issues.push({ code: "paid_status_forbidden", row: sourceRow, column: "EstadoPrevision", message: "A forecast cannot be imported as paid; payment requires bank reconciliation and human confirmation" });
     else if (!statusText || !STATUSES.has(statusText as PaymentForecastStatus)) issues.push({ code: "invalid_status", row: sourceRow, column: "EstadoPrevision", message: "EstadoPrevision must be Pendiente, Programado, Parcial, or Cancelado" });
+    if (statusText === "Programado" && !normalizeDate(row.FechaPagoPrevista)) issues.push({ code: "missing_value", row: sourceRow, column: "FechaPagoPrevista", message: "FechaPagoPrevista is required when EstadoPrevision is Programado" });
     if (reviewText !== "Sí" && reviewText !== "No") issues.push({ code: "invalid_review_flag", row: sourceRow, column: "RequiereRevision", message: "RequiereRevision must be Sí or No" });
     const confidence = text(row.ConfianzaExtraccion);
     if (confidence && !CONFIDENCES.has(confidence as ForecastConfidence)) issues.push({ code: "missing_value", row: sourceRow, column: "ConfianzaExtraccion", message: "ConfianzaExtraccion must be Alta, Media, or Baja when supplied" });
     if (!previsionId || !invoiceNumber || !supplierName || !invoiceDate || invoiceAmountMinor === undefined || invoiceAmountMinor <= 0 || !currency || plannedPaymentAmountMinor === undefined || plannedPaymentAmountMinor <= 0 || !statusText || !STATUSES.has(statusText as PaymentForecastStatus) || (reviewText !== "Sí" && reviewText !== "No")) return;
 
     const forecastKey = stableHash(previsionId, normalizeText(invoiceNumber), normalizeText(supplierName), normalizeText(text(row.NIFProveedor) ?? ""), invoiceDate, String(plannedPaymentAmountMinor), currency);
-    if (seen.has(forecastKey) || input.knownForecastKeys?.has(forecastKey) || input.knownPrevisionIds?.has(previsionId)) {
+    if (seen.has(forecastKey) || seenPrevisionIds.has(previsionId) || input.knownForecastKeys?.has(forecastKey) || input.knownPrevisionIds?.has(previsionId)) {
       issues.push({ code: "duplicate_forecast", row: sourceRow, message: "Forecast identity was already present in this or a previous import" });
       return;
     }
     seen.add(forecastKey);
+    seenPrevisionIds.add(previsionId);
     forecasts.push({
       forecastId: stableHash(batchId, forecastKey), forecastKey, batchId, sourceRow, previsionId, invoiceNumber, supplierName,
       supplierTaxId: text(row.NIFProveedor), invoiceDate, dueDate: normalizeDate(row.FechaVencimiento), invoiceAmountMinor, currency,
