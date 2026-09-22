@@ -68,7 +68,8 @@ export class SharePointPaymentForecastPoller {
     // The import batch and source filename change for every upload; they are audit
     // metadata, not a business change to the forecast itself.
     const dateFields = new Set(["FechaFactura", "FechaVencimiento", "FechaPagoPrevista"]);
-    return Object.entries(fields).filter(([key]) => key !== "LoteId" && key !== "ArchivoOrigen").every(([key, value]) => dateFields.has(key) ? normalizeDate(existing[key]) === normalizeDate(value) : String(existing[key] ?? "") === String(value ?? ""));
+    const date = (value: unknown) => normalizeDate(value) ?? (typeof value === "string" && /^\d{4}-\d{2}-\d{2}T/.test(value) ? value.slice(0, 10) : undefined);
+    return Object.entries(fields).filter(([key]) => key !== "LoteId" && key !== "ArchivoOrigen").every(([key, value]) => dateFields.has(key) ? date(existing[key]) === date(value) : String(existing[key] ?? "") === String(value ?? ""));
   }
   private async audit(forecast: PaymentForecast, action: "Creada" | "Actualizada", filename: string, previous?: Record<string, unknown>): Promise<void> {
     await this.add(this.config.historyList, { Title: `${action} ${forecast.previsionId}`, PrevisionId: forecast.previsionId, LoteId: forecast.batchId, ArchivoOrigen: filename, Accion: action, Antes: previous ? JSON.stringify(previous) : "", Despues: JSON.stringify(this.fields(forecast, filename)), Fecha: new Date().toISOString() });
