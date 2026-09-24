@@ -50,3 +50,7 @@ Prueba final: `Prevision_Pagos_iso_final.xlsx` terminó en `ProcesadosPrevisione
 ## Aceptación de presentación de importes
 
 El 24 de septiembre se añadieron a `ConsultaPagosCopilot` los campos de presentación de importe, se desplegó la Function y se incorporaron como instrucciones persistentes del agente. En una conversación nueva, la consulta «¿Cuál es el importe pendiente de la factura EMAS-2026-3001?» recuperó una única factura y respondió `79,86 EUR`, con estado `Programado` y vencimiento `2026-10-20`. No mostró ni convirtió el valor interno `7986` en céntimos.
+
+## Corrección de previsión sin fecha
+
+En la prueba de agregación por periodo se detectó que la proyección mantenía una `FechaPagoPrevista` histórica cuando una previsión pasaba a `Pendiente` sin fecha. El commit `4fc7eaf` limpia explícitamente ese campo al actualizar una fila existente. Tras el despliegue, una sincronización real dejó ENDESA como `Pendiente` sin fecha, EMAS con fecha `01/10/2026` y SATINFO como único pago previsto entre el 28 y el 30 de septiembre, por `200,86 EUR`. Falta repetir la consulta en el agente para aceptar CA-10.
