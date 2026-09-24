@@ -59,6 +59,8 @@
 - [x] Aprovisionar `HistorialPrevisiones`, desplegar la actualización y validar en tenant altas, cambios, fechas vacías y archivado sin colisión.
 - [x] Repetir el mismo libro sin cambios y confirmar idempotencia sin previsiones ni lotes efectivos duplicados.
 - [x] Mejorar las respuestas del agente para mostrar importes en EUR en vez de céntimos internos.
+- [x] Documentar el modelo de despliegue vigente (GitHub Actions + OIDC), alternativas y la restricción de Flex Consumption.
+- [ ] Ejecutar la primera prueba de la nueva campaña limpia: un PDF nuevo, proceso, registro, archivo y proyección del agente.
 - [ ] Ejecutar pruebas de aceptación CA-01 a CA-21 sobre Azure Functions, Graph y SharePoint.
 
 ## Núcleo de facturas

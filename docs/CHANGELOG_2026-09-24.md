@@ -24,3 +24,9 @@
 ## Operación posterior
 
 Para limpiar únicamente los datos de la campaña de pruebas y conservar los proveedores y la configuración, seguir [DATA_RESET_RUNBOOK.md](./DATA_RESET_RUNBOOK.md).
+
+## Despliegue
+
+- Se documentó el canal vigente GitHub Actions + OIDC, el recorrido hasta Azure y las alternativas posibles.
+- GitHub es el mecanismo configurado, no un requisito de Azure Functions. Por usar Flex Consumption, el despliegue debe ser por paquete; Azure DevOps Pipelines o herramientas locales pueden publicar ese paquete con la configuración y controles adecuados.
+- Referencia operativa: [DEPLOYMENT_MODEL.md](./DEPLOYMENT_MODEL.md).

@@ -39,6 +39,7 @@ Este protocolo se ejecuta al inicio y al cierre de cada sesión de Codex.
 - [Cambios del 24 de septiembre de 2026](./docs/CHANGELOG_2026-09-24.md)
 - [Reinicio seguro de datos de prueba](./docs/DATA_RESET_RUNBOOK.md)
 - [Despliegue GitHub OIDC](./docs/GITHUB_OIDC.md)
+- [Modelo de despliegue y alternativas](./docs/DEPLOYMENT_MODEL.md)
 - [Contexto de reanudación](./CONTEXT.md)
 - [Roadmap](./ROADMAP.md)
 - [Trabajo inmediato](./TODO.md)

@@ -1,4 +1,6 @@
-# Despliegue desde GitHub con OIDC
+# Despliegue vigente desde GitHub con OIDC
+
+Este es el canal CI/CD configurado para desarrollo; no es una dependencia intrínseca de Azure Functions. Para el modelo completo, alternativas y limitaciones de Flex Consumption, consultar [DEPLOYMENT_MODEL.md](./DEPLOYMENT_MODEL.md).
 
 El workflow `.github/workflows/deploy-azure.yml` usa OpenID Connect: no se crea ni almacena ningún secreto de cliente de Azure.
 
@@ -23,4 +25,4 @@ En el repositorio, abrir **Settings → Secrets and variables → Actions** y cr
 
 Crear además la *repository variable* `ENTRA_API_CLIENT_ID` con valor `66e78b9f-fbbe-4e80-beda-83469b6fee8c`.
 
-Después, en **Actions**, ejecutar manualmente **Deploy Azure Function** con `environment=dev` y `location=spaincentral`. El workflow ejecuta pruebas, aplica Bicep y publica la Function App.
+Después, en **Actions**, ejecutar manualmente **Deploy Azure Function** con `environment=dev` y `location=spaincentral`. El workflow ejecuta pruebas, aplica Bicep y publica el paquete de la Function App.
