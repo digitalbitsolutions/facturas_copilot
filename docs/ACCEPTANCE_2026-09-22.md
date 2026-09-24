@@ -45,5 +45,8 @@ Prueba final: `Prevision_Pagos_iso_final.xlsx` terminó en `ProcesadosPrevisione
 
 ## Pendientes operativos
 
-1. Mejorar la presentación del agente: mostrar importes en EUR, no solo el valor interno en céntimos.
-2. Alinear las fechas de factura y vencimiento del Excel con los documentos fiscales cuando difieran; `RegistroFacturas` es la fuente de vencimiento para la consulta operativa.
+1. Alinear las fechas de factura y vencimiento del Excel con los documentos fiscales cuando difieran; `RegistroFacturas` es la fuente de vencimiento para la consulta operativa.
+
+## Aceptación de presentación de importes
+
+El 24 de septiembre se añadieron a `ConsultaPagosCopilot` los campos de presentación de importe, se desplegó la Function y se incorporaron como instrucciones persistentes del agente. En una conversación nueva, la consulta «¿Cuál es el importe pendiente de la factura EMAS-2026-3001?» recuperó una única factura y respondió `79,86 EUR`, con estado `Programado` y vencimiento `2026-10-20`. No mostró ni convirtió el valor interno `7986` en céntimos.
