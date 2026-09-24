@@ -54,3 +54,5 @@ El 24 de septiembre se añadieron a `ConsultaPagosCopilot` los campos de present
 ## Corrección de previsión sin fecha
 
 En la prueba de agregación por periodo se detectó que la proyección mantenía una `FechaPagoPrevista` histórica cuando una previsión pasaba a `Pendiente` sin fecha. El commit `4fc7eaf` limpia explícitamente ese campo al actualizar una fila existente. Tras el despliegue, una sincronización real dejó ENDESA como `Pendiente` sin fecha, EMAS con fecha `01/10/2026` y SATINFO como único pago previsto entre el 28 y el 30 de septiembre, por `200,86 EUR`. Falta repetir la consulta en el agente para aceptar CA-10.
+
+La repetición en una conversación nueva con el agente confirmó CA-10: para el intervalo inclusivo del 28/09/2026 al 30/09/2026 recuperó solo `SATINFO-2026-5001`, con fecha prevista 30/09/2026, estado `Programado` y total `200,86 EUR`.

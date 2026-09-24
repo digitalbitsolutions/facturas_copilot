@@ -12,7 +12,7 @@ Estados: `Automatizado local`, `Validado en tenant`, `Preparado`, `Requiere tena
 | CA-07 Reintento sin duplicidad | Automatizado local | Simular fallos en conexiones reales |
 | CA-08 Trazabilidad hasta PDF | Preparado | Requiere sitio y libro/listas |
 | CA-09 Consulta de factura con fuente | Validado en tenant | Evidencia: `docs/ACCEPTANCE_2026-09-22.md` |
-| CA-10 Agregación de periodo | Preparado | Requiere Copilot y conjunto esperado |
+| CA-10 Agregación de periodo | Validado en tenant | Una factura SATINFO prevista entre 28/09 y 30/09; total 200,86 EUR. Evidencia: `docs/ACCEPTANCE_2026-09-22.md` |
 | CA-11 Distinguir previsión/propuesta/pago | Validado en tenant | Vencimiento y fecha prevista de pago distinguidos; evidencia: `docs/ACCEPTANCE_2026-09-22.md` |
 | CA-12 Permisos de usuario | Preparado | Requiere dos usuarios del tenant |
 | CA-13 Importación válida | Automatizado local | Repetir con Excel representativo |
