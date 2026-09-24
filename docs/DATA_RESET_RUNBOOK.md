@@ -13,6 +13,7 @@ Este procedimiento elimina **solo datos operativos de prueba** para comenzar una
 - 24 de septiembre de 2026: se vació la lista `Conciliaciones`, incluidos los casos sintéticos CA-17 a CA-21.
 - 24 de septiembre de 2026: se vaciaron `MovimientosBancarios` e `ImportacionesBancarias`.
 - 24 de septiembre de 2026: se vaciaron `HistorialPrevisiones`, `PrevisionesPagos` e `ImportacionesPrevisiones`.
+- 24 de septiembre de 2026: se vaciaron `Excepciones`, `RegistroFacturas` y `ProcesosFacturas`. La comprobación posterior confirmó las diez listas operativas a cero, la Function App en estado `Stopped` y los tres elementos de `MaestroProveedores` conservados.
 
 ## Elementos que se conservan
 
