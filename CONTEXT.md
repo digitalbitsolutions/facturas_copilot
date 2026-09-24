@@ -16,7 +16,7 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - Integración M365 validada en el tenant: la Function lee el buzón restringido mediante Graph y archiva adjuntos PDF en SharePoint.
 - Importación bancaria y conciliación local terminadas: lotes, validación, normalización, duplicidad, puntuación explicable y ambigüedad.
 - Azure Functions v4 preparada con endpoints HTTP; infraestructura Flex Consumption y CI/CD preparadas.
-- Pruebas actuales: 76 superadas.
+- Pruebas actuales: 77 superadas.
 - Tenant de pruebas verificado: `INTEGRAMENTE SL`, dominio `integramente.onmicrosoft.com` (`a1a2b397-4ac5-4f94-9004-67f158ea14e0`).
 - Administrador comunicado: `demo@integramente.onmicrosoft.com`; la contraseña no se almacena.
 - Licencias verificadas el 9 de septiembre de 2026: 25 `O365_BUSINESS_PREMIUM` y 25 `MICROSOFT_365_COPILOT_FOR_BUSINESS`, ambas habilitadas y sin asignar.

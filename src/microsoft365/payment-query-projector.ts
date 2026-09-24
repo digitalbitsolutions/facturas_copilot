@@ -44,7 +44,13 @@ export class SharePointPaymentQueryProjector {
   private async save(item: Item | undefined, fields: Record<string, unknown>): Promise<void> {
     const id = await this.listId(this.config.queryList);
     const sanitized = { ...fields };
-    for (const dateField of ["FechaFactura", "FechaVencimiento", "FechaPagoPrevista", "FechaUltimoPago"]) if (!sanitized[dateField]) delete sanitized[dateField];
+    for (const dateField of ["FechaFactura", "FechaVencimiento", "FechaPagoPrevista", "FechaUltimoPago"]) {
+      if (sanitized[dateField]) continue;
+      // A POST must omit optional empty dates, while a PATCH must explicitly
+      // clear a date that was previously projected from a changed forecast.
+      if (item) sanitized[dateField] = null;
+      else delete sanitized[dateField];
+    }
     if (item) await this.graph.request(`/sites/${sitePath(this.config.siteId)}/lists/${path(id)}/items/${path(item.id)}/fields`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(sanitized) });
     else await this.graph.request(`/sites/${sitePath(this.config.siteId)}/lists/${path(id)}/items`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ fields: sanitized }) });
   }

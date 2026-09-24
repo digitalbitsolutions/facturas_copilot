@@ -38,3 +38,21 @@ test("projects presentation amounts in euros alongside minor-unit storage", asyn
   assert.equal(writes[0].ImportePagoPrevistoPresentacion, "79,86 EUR");
   assert.equal(writes[0].ImportePendientePresentacion, "79,86 EUR");
 });
+
+test("clears a stale planned payment date when its forecast becomes pending", async () => {
+  let update: Record<string, unknown> | undefined;
+  const client = new GraphClient({ getAccessToken: async () => "token" }, async (url, init) => {
+    const path = new URL(url).pathname + new URL(url).search;
+    if (path.includes("/lists?$select")) return Response.json({ value: ["RegistroFacturas", "PrevisionesPagos", "Conciliaciones", "MovimientosBancarios", "ConsultaPagosCopilot"].map((displayName) => ({ id: displayName, displayName })) });
+    if (path.includes("RegistroFacturas/items?%24expand")) return Response.json({ value: [{ id: "invoice", fields: { ProcessId: "invoice-1", Proveedor: "ENDESA", NumeroFactura: "ENDESA-2026-4001", Total: 145.2, Moneda: "EUR" } }] });
+    if (path.includes("PrevisionesPagos/items?%24expand")) return Response.json({ value: [{ id: "forecast", fields: { PrevisionId: "PREV-2", Proveedor: "ENDESA", NumeroFactura: "ENDESA-2026-4001", ImportePagoPrevistoMenor: 14520, Estado: "Pendiente" } }] });
+    if (path.includes("Conciliaciones/items?%24expand") || path.includes("MovimientosBancarios/items?%24expand")) return Response.json({ value: [] });
+    if (path.includes("ConsultaPagosCopilot/items?%24expand")) return Response.json({ value: [{ id: "query", fields: { ConsultaId: "invoice:invoice-1", FechaPagoPrevista: "2026-09-29T07:00:00Z" } }] });
+    if (path.endsWith("ConsultaPagosCopilot/items/query/fields") && init?.method === "PATCH") { update = JSON.parse(String(init.body)) as Record<string, unknown>; return new Response(null, { status: 204 }); }
+    throw new Error(`Unexpected ${path}`);
+  });
+  await new SharePointPaymentQueryProjector(client, { siteId: "site", invoicesList: "RegistroFacturas", forecastsList: "PrevisionesPagos", reconciliationsList: "Conciliaciones", movementsList: "MovimientosBancarios", queryList: "ConsultaPagosCopilot" }).run();
+  assert.equal(update?.FechaPagoPrevista, null);
+  assert.equal(update?.EstadoPago, "Pendiente");
+  assert.equal(update?.ImportePagoPrevistoPresentacion, "145,20 EUR");
+});
