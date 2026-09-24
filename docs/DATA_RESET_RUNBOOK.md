@@ -9,6 +9,7 @@ Este procedimiento elimina **solo datos operativos de prueba** para comenzar una
 - 24 de septiembre de 2026: paso 1 completado. La Function App de desarrollo `func-facturas-copilot-dev-jbhyjbgfzr3iy` quedó detenida (`The site is stopped`). No se debe reactivar hasta terminar los pasos de limpieza y verificación.
 - 24 de septiembre de 2026: se eliminaron los PDFs de prueba de las carpetas de proveedor bajo `Facturas`; las carpetas de proveedor se conservaron.
 - 24 de septiembre de 2026: se eliminaron los archivos de prueba de `Procesados`, `Errores`, `ProcesadosPrevisiones` y `ErroresPrevisiones`; se conservaron todas las carpetas.
+- 24 de septiembre de 2026: se vació la proyección derivada `ConsultaPagosCopilot`.
 
 ## Elementos que se conservan
 
