@@ -12,6 +12,7 @@ Este procedimiento elimina **solo datos operativos de prueba** para comenzar una
 - 24 de septiembre de 2026: se vació la proyección derivada `ConsultaPagosCopilot`.
 - 24 de septiembre de 2026: se vació la lista `Conciliaciones`, incluidos los casos sintéticos CA-17 a CA-21.
 - 24 de septiembre de 2026: se vaciaron `MovimientosBancarios` e `ImportacionesBancarias`.
+- 24 de septiembre de 2026: se vaciaron `HistorialPrevisiones`, `PrevisionesPagos` e `ImportacionesPrevisiones`.
 
 ## Elementos que se conservan
 
