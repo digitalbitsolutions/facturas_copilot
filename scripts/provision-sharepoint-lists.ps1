@@ -205,10 +205,14 @@ $definitions = @(
             @{ name = 'FechaFactura'; dateTime = @{ format = 'dateOnly' } }
             @{ name = 'FechaVencimiento'; dateTime = @{ format = 'dateOnly' } }
             @{ name = 'ImporteFacturaMenor'; number = @{ decimalPlaces = 'none' } }
+            @{ name = 'ImporteFacturaPresentacion'; text = @{} }
             @{ name = 'FechaPagoPrevista'; indexed = $true; dateTime = @{ format = 'dateOnly' } }
             @{ name = 'ImportePagoPrevistoMenor'; number = @{ decimalPlaces = 'none' } }
+            @{ name = 'ImportePagoPrevistoPresentacion'; text = @{} }
             @{ name = 'ImportePagadoMenor'; number = @{ decimalPlaces = 'none' } }
+            @{ name = 'ImportePagadoPresentacion'; text = @{} }
             @{ name = 'ImportePendienteMenor'; number = @{ decimalPlaces = 'none' } }
+            @{ name = 'ImportePendientePresentacion'; text = @{} }
             @{ name = 'Moneda'; text = @{} }
             @{ name = 'EstadoPago'; indexed = $true; choice = @{ choices = @('Pendiente','Programado','Parcial','Pagada','EnRevision','Cancelada') } }
             @{ name = 'FechaUltimoPago'; dateTime = @{ format = 'dateTime' } }

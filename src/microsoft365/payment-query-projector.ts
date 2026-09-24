@@ -12,6 +12,14 @@ const key = (value: string) => value.normalize("NFD").replace(/\p{Diacritic}/gu,
 const path = (value: string) => encodeURIComponent(value);
 const sitePath = (value: string) => value.split(",").map(path).join(",");
 
+/** Converts the storage representation (minor units) into a Spanish, agent-ready amount. */
+function displayAmount(amountMinor: number, currency: string): string {
+  const amount = Math.abs(Math.round(amountMinor));
+  const sign = amountMinor < 0 ? "-" : "";
+  const euros = Math.floor(amount / 100).toLocaleString("es-ES");
+  return `${sign}${euros},${String(amount % 100).padStart(2, "0")} ${currency || "EUR"}`;
+}
+
 export type PaymentQueryProjectorConfig = {
   siteId: string; invoicesList: string; forecastsList: string; reconciliationsList: string; movementsList: string; queryList: string;
 };
@@ -64,12 +72,15 @@ export class SharePointPaymentQueryProjector {
       const total = Math.round(number(f.Total) * 100); const forecastFields = forecast?.fields ?? {};
       const forecastStatus = text(forecastFields.Estado); const state: PaymentState = paid >= total && total > 0 ? "Pagada" : paid > 0 ? "Parcial" : pendingReview ? "EnRevision" : forecastStatus === "Cancelado" ? "Cancelada" : forecastStatus === "Programado" || text(forecastFields.FechaPagoPrevista) ? "Programado" : "Pendiente";
       const consultaId = `invoice:${processId}`; projected.add(consultaId);
-      await this.save(existingByKey.get(consultaId), { Title: `${supplier} ${invoiceNumber}`.trim(), ConsultaId: consultaId, ProcessId: processId, PrevisionId: text(forecastFields.PrevisionId), Proveedor: supplier, NumeroFactura: invoiceNumber, FechaFactura: text(f.FechaFactura), FechaVencimiento: text(f.FechaVencimiento), ImporteFacturaMenor: total, FechaPagoPrevista: text(forecastFields.FechaPagoPrevista), ImportePagoPrevistoMenor: number(forecastFields.ImportePagoPrevistoMenor), ImportePagadoMenor: paid, ImportePendienteMenor: Math.max(0, total - paid), Moneda: text(f.Moneda) || text(forecastFields.Moneda), EstadoPago: state, FechaUltimoPago: confirmed.map((record) => text(record.fields?.FechaDecision)).sort().at(-1) ?? "", ReferenciasBancarias: confirmed.map((record) => text(movementById.get(text(record.fields?.MovimientoId))?.fields?.Referencia)).filter(Boolean).join(", "), FacturaUrl: text(f.DocumentoUrl), Conciliaciones: confirmed.map((record) => record.id).join(","), ActualizadoEn: new Date().toISOString() });
+      const currency = text(f.Moneda) || text(forecastFields.Moneda) || "EUR";
+      const planned = number(forecastFields.ImportePagoPrevistoMenor); const pending = Math.max(0, total - paid);
+      await this.save(existingByKey.get(consultaId), { Title: `${supplier} ${invoiceNumber}`.trim(), ConsultaId: consultaId, ProcessId: processId, PrevisionId: text(forecastFields.PrevisionId), Proveedor: supplier, NumeroFactura: invoiceNumber, FechaFactura: text(f.FechaFactura), FechaVencimiento: text(f.FechaVencimiento), ImporteFacturaMenor: total, ImporteFacturaPresentacion: displayAmount(total, currency), FechaPagoPrevista: text(forecastFields.FechaPagoPrevista), ImportePagoPrevistoMenor: planned, ImportePagoPrevistoPresentacion: displayAmount(planned, currency), ImportePagadoMenor: paid, ImportePagadoPresentacion: displayAmount(paid, currency), ImportePendienteMenor: pending, ImportePendientePresentacion: displayAmount(pending, currency), Moneda: currency, EstadoPago: state, FechaUltimoPago: confirmed.map((record) => text(record.fields?.FechaDecision)).sort().at(-1) ?? "", ReferenciasBancarias: confirmed.map((record) => text(movementById.get(text(record.fields?.MovimientoId))?.fields?.Referencia)).filter(Boolean).join(", "), FacturaUrl: text(f.DocumentoUrl), Conciliaciones: confirmed.map((record) => record.id).join(","), ActualizadoEn: new Date().toISOString() });
     }
     for (const forecast of forecasts) {
       const f = forecast.fields ?? {}; const matchKey = `${key(text(f.Proveedor))}|${key(text(f.NumeroFactura))}`; if (invoiceKeys.has(matchKey)) continue;
       const consultaId = `forecast:${text(f.PrevisionId)}`; if (!text(f.PrevisionId)) continue; projected.add(consultaId);
-      await this.save(existingByKey.get(consultaId), { Title: `${text(f.Proveedor)} ${text(f.NumeroFactura)}`.trim(), ConsultaId: consultaId, PrevisionId: text(f.PrevisionId), Proveedor: text(f.Proveedor), NumeroFactura: text(f.NumeroFactura), FechaFactura: text(f.FechaFactura), FechaVencimiento: text(f.FechaVencimiento), ImporteFacturaMenor: number(f.ImporteFacturaMenor), FechaPagoPrevista: text(f.FechaPagoPrevista), ImportePagoPrevistoMenor: number(f.ImportePagoPrevistoMenor), ImportePagadoMenor: 0, ImportePendienteMenor: number(f.ImportePagoPrevistoMenor), Moneda: text(f.Moneda), EstadoPago: text(f.Estado) === "Cancelado" ? "Cancelada" : text(f.Estado) === "Parcial" ? "Parcial" : "Programado", ActualizadoEn: new Date().toISOString() });
+      const currency = text(f.Moneda) || "EUR"; const invoiceAmount = number(f.ImporteFacturaMenor); const planned = number(f.ImportePagoPrevistoMenor);
+      await this.save(existingByKey.get(consultaId), { Title: `${text(f.Proveedor)} ${text(f.NumeroFactura)}`.trim(), ConsultaId: consultaId, PrevisionId: text(f.PrevisionId), Proveedor: text(f.Proveedor), NumeroFactura: text(f.NumeroFactura), FechaFactura: text(f.FechaFactura), FechaVencimiento: text(f.FechaVencimiento), ImporteFacturaMenor: invoiceAmount, ImporteFacturaPresentacion: displayAmount(invoiceAmount, currency), FechaPagoPrevista: text(f.FechaPagoPrevista), ImportePagoPrevistoMenor: planned, ImportePagoPrevistoPresentacion: displayAmount(planned, currency), ImportePagadoMenor: 0, ImportePagadoPresentacion: displayAmount(0, currency), ImportePendienteMenor: planned, ImportePendientePresentacion: displayAmount(planned, currency), Moneda: currency, EstadoPago: text(f.Estado) === "Cancelado" ? "Cancelada" : text(f.Estado) === "Parcial" ? "Parcial" : "Programado", ActualizadoEn: new Date().toISOString() });
     }
     for (const item of existing) if (text(item.fields?.ConsultaId) && !projected.has(text(item.fields?.ConsultaId))) await this.remove(item);
     return { projected: projected.size };

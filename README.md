@@ -11,7 +11,7 @@ Este repositorio contiene el núcleo TypeScript y la documentación de una soluc
 - Azure Functions: endpoints de salud, validación, importación y conciliación compilables sobre Runtime 4 / Node.js 24.
 - Infraestructura: Bicep para Flex Consumption, Storage, Application Insights, Log Analytics y Key Vault con identidades administradas.
 - Arquitectura operativa: Azure Functions, Microsoft Graph, Document Intelligence y SharePoint Lists, sin conectores de automatización externos.
-- Pruebas: 72 superadas.
+- Pruebas: 76 superadas.
 - Política de desarrollo vigente: **solo Codex** para desarrollo, revisión y generación de código. Las pruebas previas con modelos locales no demostraron ahorro neto y quedan descartadas.
 - PRD funcional vigente: [PRD_Automatizacion_Facturas_M365_Copilot_v4.md](./PRD_Automatizacion_Facturas_M365_Copilot_v4.md).
 
