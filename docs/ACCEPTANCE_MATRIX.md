@@ -23,6 +23,6 @@ Estados: `Automatizado local`, `Validado en tenant`, `Preparado`, `Requiere tena
 | CA-18 Confirmación auditada | Validado en tenant | Evidencia: `docs/ACCEPTANCE_2026-09-18.md` |
 | CA-19 Rechazo auditado | Validado en tenant | Evidencia: `docs/ACCEPTANCE_2026-09-18.md` |
 | CA-20 Casos complejos de pago | Requiere muestra/decisión | Definir pagos parciales/agrupados/abonos |
-| CA-21 Consultas de conciliación | Preparado | Requiere Copilot y datos del tenant |
+| CA-21 Consultas de conciliación | Validado en tenant | Caso sintético `CA21-FACTURA-82316bb87a82`: `Pagada`, 100,00 EUR pagados, 0,00 EUR pendientes y referencia `CA21-PAGO-100`. Evidencia: `docs/ACCEPTANCE_2026-09-22.md` |
 
 La aceptación formal se realizará con documentos anonimizados o autorizados y conservará identificador de ejecución, fecha, resultado observado y evidencia enlazada.

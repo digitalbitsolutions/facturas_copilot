@@ -56,3 +56,7 @@ El 24 de septiembre se añadieron a `ConsultaPagosCopilot` los campos de present
 En la prueba de agregación por periodo se detectó que la proyección mantenía una `FechaPagoPrevista` histórica cuando una previsión pasaba a `Pendiente` sin fecha. El commit `4fc7eaf` limpia explícitamente ese campo al actualizar una fila existente. Tras el despliegue, una sincronización real dejó ENDESA como `Pendiente` sin fecha, EMAS con fecha `01/10/2026` y SATINFO como único pago previsto entre el 28 y el 30 de septiembre, por `200,86 EUR`. Falta repetir la consulta en el agente para aceptar CA-10.
 
 La repetición en una conversación nueva con el agente confirmó CA-10: para el intervalo inclusivo del 28/09/2026 al 30/09/2026 recuperó solo `SATINFO-2026-5001`, con fecha prevista 30/09/2026, estado `Programado` y total `200,86 EUR`.
+
+## Aceptación de consultas de conciliación
+
+Para CA-21 se creó un caso aislado y claramente identificado como sintético: factura `CA21-FACTURA-82316bb87a82`, movimiento `CA21-MOVEMENT-82316bb87a82` por `-100,00 EUR` y conciliación `15`, confirmada por una persona. La proyección mostró `Pagada`, `100,00 EUR` pagados, `0,00 EUR` pendientes y referencia `CA21-PAGO-100`. En una conversación nueva, el agente recuperó exactamente esos valores al solicitar el estado de conciliación por número de factura.
