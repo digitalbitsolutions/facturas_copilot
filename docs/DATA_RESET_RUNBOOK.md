@@ -4,6 +4,10 @@ Este procedimiento elimina **solo datos operativos de prueba** para comenzar una
 
 > No ejecutar contra producción. Antes de empezar, exportar o conservar la evidencia de aceptación que se quiera mantener.
 
+## Registro de ejecución actual
+
+- 24 de septiembre de 2026: paso 1 completado. La Function App de desarrollo `func-facturas-copilot-dev-jbhyjbgfzr3iy` quedó detenida (`The site is stopped`). No se debe reactivar hasta terminar los pasos de limpieza y verificación.
+
 ## Elementos que se conservan
 
 - La biblioteca, las carpetas raíz y las subcarpetas de proveedor de [Facturas](https://integramente.sharepoint.com/sites/facturas/Shared%20Documents/Facturas).
