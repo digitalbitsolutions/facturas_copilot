@@ -14,6 +14,7 @@ Este procedimiento elimina **solo datos operativos de prueba** para comenzar una
 - 24 de septiembre de 2026: se vaciaron `MovimientosBancarios` e `ImportacionesBancarias`.
 - 24 de septiembre de 2026: se vaciaron `HistorialPrevisiones`, `PrevisionesPagos` e `ImportacionesPrevisiones`.
 - 24 de septiembre de 2026: se vaciaron `Excepciones`, `RegistroFacturas` y `ProcesosFacturas`. La comprobación posterior confirmó las diez listas operativas a cero, la Function App en estado `Stopped` y los tres elementos de `MaestroProveedores` conservados.
+- 24 de septiembre de 2026: se limpió el buzón de pruebas. Se preparó la nueva campaña con `INVOICE_PROCESSING_NOT_BEFORE=2026-09-24T08:41:07Z`, `INVOICE_PROCESSING_ENABLED=true` y `PAYMENT_FORECAST_IMPORT_ENABLED=true`; la Function App permanece detenida a la espera de iniciar la campaña.
 
 ## Elementos que se conservan
 
