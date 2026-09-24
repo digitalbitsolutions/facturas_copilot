@@ -12,9 +12,17 @@ Este procedimiento elimina **solo datos operativos de prueba** para comenzar una
 - La carpeta [Configuracion](https://integramente.sharepoint.com/sites/facturas/Shared%20Documents/Configuracion), incluidos sus libros de referencia.
 - La infraestructura Azure, ajustes no secretos, permisos y la definición del agente de Copilot.
 
-## 1. Detener temporalmente la entrada automática
+## 1. Detener temporalmente los sondeos
 
-Antes de borrar estados, detener estos dos procesos en la Function App:
+Antes de borrar estados, detener la **Function App completa**. Es la única forma actual de detener a la vez los sondeos de facturas, extractos bancarios, previsiones y la sincronización de consultas.
+
+En Azure Portal:
+
+1. Abrir la [Function App de desarrollo](https://portal.azure.com/#@integramente.onmicrosoft.com/resource/subscriptions/e7e239ec-59fb-4128-b9e1-b7854f426f4d/resourceGroups/rg-facturas-copilot-dev/providers/Microsoft.Web/sites/func-facturas-copilot-dev-jbhyjbgfzr3iy/overview).
+2. Seleccionar **Stop** y esperar a que el estado sea `Stopped`.
+3. Realizar la limpieza de los pasos siguientes.
+
+Como protección adicional antes de reanudar, establecer estos dos ajustes en `false`:
 
 | Ajuste | Valor temporal |
 |---|---|
@@ -23,7 +31,7 @@ Antes de borrar estados, detener estos dos procesos en la Function App:
 
 Al reactivar facturas, establecer también `INVOICE_PROCESSING_NOT_BEFORE` con una fecha UTC posterior al último correo de prueba que se quiera ignorar. De lo contrario, al borrar `ProcesosFacturas` el sondeo puede volver a procesar correos históricos que aún estén en el buzón.
 
-No dejar archivos de prueba en las carpetas de entrada mientras los sondeos estén activos.
+No dejar archivos de prueba en las carpetas de entrada mientras los sondeos estén activos. Al final del procedimiento, seleccionar **Start** en la misma página de Azure Portal.
 
 ## 2. Borrar archivos de prueba, sin borrar carpetas
 
