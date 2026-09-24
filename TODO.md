@@ -58,7 +58,7 @@
 - [x] Implementar localmente fechas opcionales vacías y actualización por `PrevisionId`: `Programado` exige `FechaPagoPrevista`; `Pendiente` la borra de SharePoint.
 - [x] Aprovisionar `HistorialPrevisiones`, desplegar la actualización y validar en tenant altas, cambios, fechas vacías y archivado sin colisión.
 - [x] Repetir el mismo libro sin cambios y confirmar idempotencia sin previsiones ni lotes efectivos duplicados.
-- [ ] Mejorar las respuestas del agente para mostrar importes en EUR en vez de céntimos internos.
+- [x] Mejorar las respuestas del agente para mostrar importes en EUR en vez de céntimos internos.
 - [ ] Ejecutar pruebas de aceptación CA-01 a CA-21 sobre Azure Functions, Graph y SharePoint.
 
 ## Núcleo de facturas
