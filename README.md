@@ -36,6 +36,8 @@ Este protocolo se ejecuta al inicio y al cierre de cada sesión de Codex.
 - [Ejecución y diagnóstico del piloto de correo](./docs/MAILBOX_PILOT_RUNBOOK.md)
 - [Contratos de la API](./docs/API.md)
 - [Matriz de aceptación v3](./docs/ACCEPTANCE_MATRIX.md)
+- [Cambios del 24 de septiembre de 2026](./docs/CHANGELOG_2026-09-24.md)
+- [Reinicio seguro de datos de prueba](./docs/DATA_RESET_RUNBOOK.md)
 - [Despliegue GitHub OIDC](./docs/GITHUB_OIDC.md)
 - [Contexto de reanudación](./CONTEXT.md)
 - [Roadmap](./ROADMAP.md)
