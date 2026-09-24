@@ -55,9 +55,9 @@ test("creates a safe supplier-organized PDF path", () => {
   assert.equal(result.valid, true);
   if (result.valid) {
     const filename = buildInvoiceFilename(result.invoice, 80);
-    assert.equal(filename, "F-2026-0042_2026-0709_121.00_EUR.pdf");
+    assert.equal(filename, "F-2026-0042_2026-09-07_121.00_EUR.pdf");
     assert.ok(filename.length <= 80);
-    assert.equal(buildInvoicePath(result.invoice), "Proveedor Norte, S.L/F-2026-0042_2026-0709_121.00_EUR.pdf");
+    assert.equal(buildInvoicePath(result.invoice), "Proveedor Norte, S.L/F-2026-0042_2026-09-07_121.00_EUR.pdf");
   }
   assert.equal(sanitizeFilenamePart("CON"), "_CON");
 });

@@ -11,9 +11,8 @@ export function sanitizeFilenamePart(value: string): string {
 }
 
 export function buildInvoiceFilename(invoice: ValidatedInvoice, maxLength = 180): string {
-  const [year, month, day] = invoice.invoiceDate.split("-");
   const amount = Number(invoice.totalAmount).toFixed(2);
-  const parts = [invoice.invoiceNumber, `${year}-${day}${month}`, amount, invoice.currency ?? "XXX"]
+  const parts = [invoice.invoiceNumber, invoice.invoiceDate, amount, invoice.currency ?? "XXX"]
     .map(sanitizeFilenamePart);
   const filename = `${parts.join("_")}.pdf`;
   if (filename.length <= maxLength) return filename;

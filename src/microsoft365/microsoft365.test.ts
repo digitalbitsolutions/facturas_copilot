@@ -78,11 +78,11 @@ test("creates a supplier folder before uploading an invoice", async () => {
     return Response.json({ webUrl: "https://company.sharepoint.com/SATINFO/invoice.pdf" }, { status: 201 });
   });
   const repository = new SharePointDocumentRepository(graph, "drive", "Facturas");
-  await repository.putOnce({ processId: "process", filename: "SATINFO/SF-198033_2026-2307_200.86_EUR.pdf", contentType: "application/pdf", content: new Uint8Array([1]) });
+  await repository.putOnce({ processId: "process", filename: "SATINFO/SF-198033_2026-07-23_200.86_EUR.pdf", contentType: "application/pdf", content: new Uint8Array([1]) });
 
   assert.deepEqual(requests.map(({ method }) => method), ["GET", "POST", "GET", "PUT"]);
   assert.match(requests[1].url, /root:\/Facturas:\/children$/);
-  assert.match(requests[3].url, /root:\/Facturas\/SATINFO\/SF-198033_2026-2307_200\.86_EUR\.pdf:\/content$/);
+  assert.match(requests[3].url, /root:\/Facturas\/SATINFO\/SF-198033_2026-07-23_200\.86_EUR\.pdf:\/content$/);
 });
 
 test("loads active supplier master records from SharePoint", async () => {
