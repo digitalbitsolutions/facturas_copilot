@@ -1,5 +1,27 @@
 # Trabajo inmediato
 
+## Implantación DENTAL CATALUNYA — acceso Entra verificado
+
+- [x] Confirmar tenant destino: `DENTAL CATALUNYA` (`06b60b9d-d7da-4f92-8722-79edd60d162a`).
+- [x] Confirmar la Azure Plan CSP y el acceso de `direccionfinanciera@grupmedicdental.com`: `Azure subscription 1` (`aa3bc57d-1cef-486f-af7b-05caa3266f1f`) está asociada a DENTAL CATALUNYA.
+- [x] Confirmar `Spain Central` y crear `rg-facturas-copilot-prod`.
+- [x] Invitar a `miguel.yesan@emas.es`; la invitación fue aceptada.
+- [x] Asignar `Contributor` a Miguel exclusivamente en `rg-facturas-copilot-prod`.
+- [x] Asignar `User Access Administrator` a Miguel exclusivamente en `rg-facturas-copilot-prod`; verificado el 10 de noviembre junto con `Contributor`.
+- [x] Verificar el 7 de noviembre en Microsoft Graph que Miguel tiene activos `Application Administrator`, `SharePoint Administrator` y `Exchange Administrator`.
+- [ ] Diagnosticar el error de Azure CLI por código de dispositivo `service_not_available` de Miguel si se necesita ese flujo; el acceso interactivo al portal Azure funciona.
+- [x] Verificar que `direccionfinanciera@grupmedicdental.com` no tiene roles directos de Entra; su propiedad Azure no sustituye los permisos de directorio de Miguel.
+- [ ] Acordar con el administrador que los tres roles de Entra para el invitado B2B de EMAS sean temporales o elegibles mediante PIM, y retirarlos tras configurar la aplicación y los permisos restringidos.
+- [x] Crear el registro Entra `facturas-copilot-api-prod` desde el portal: una sola organización, sin URI de redirección ni secreto. Client ID: `c1ab74c4-2f44-4641-80f9-be83c5724b4d`.
+- [x] Configurar en `facturas-copilot-api-prod` el Application ID URI `api://c1ab74c4-2f44-4641-80f9-be83c5724b4d` y el ámbito delegado habilitado `access_as_user`.
+- [x] Asignar a la identidad OIDC de producción `facturas-copilot-github-deploy-prod` los roles `Contributor` y `Role Based Access Control Administrator`, exclusivamente en `rg-facturas-copilot-prod`; este último excluye `Owner`, `User Access Administrator` y `Role Based Access Control Administrator`.
+- [x] Configurar en el entorno GitHub `prod` los secretos Azure y la variable `ENTRA_API_CLIENT_ID`; el entorno está restringido a `main` y no permite bypass administrativo.
+- [x] Crear y verificar el sitio SharePoint privado y aislado de producción `https://grupmedicdental.sharepoint.com/sites/facturas`. No usar la carpeta `DATOS/01.FACTURAS` del sitio `finances`: el acceso técnico previsto es por sitio y ese sitio contiene documentación financiera ajena al proceso.
+- [x] Confirmar el buzón de entrada de facturas de producción: `direccionfinanciera@grupmedicdental.com`; crear la carpeta raíz vacía `Facturas Copilot`.
+- [ ] Publicar el cambio que limita la lectura a `M365_MAIL_FOLDER=Facturas Copilot`; ejecutar el primer despliegue con los procesamientos desactivados.
+- [ ] Autorizar a la Function exclusivamente sobre `/sites/facturas` y sobre `direccionfinanciera@grupmedicdental.com`; definir la regla o procedimiento para mover únicamente facturas a `Facturas Copilot` antes de activar el procesamiento.
+- [ ] Acordar y configurar el revisor obligatorio de despliegues de producción en el entorno GitHub `prod` antes de la activación operativa.
+
 ## Integración Microsoft 365 — en espera del cliente
 
 - [x] Recibir y verificar Tenant ID, dominio y cuenta de desarrollo/servicio.

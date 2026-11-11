@@ -235,6 +235,7 @@ app.timer("pollInvoiceMailbox", {
       const poller = new SharePointInvoiceMailboxPoller(
         graph,
         requiredSetting("M365_MAILBOX_ADDRESS"),
+        requiredSetting("M365_MAIL_FOLDER"),
         processor,
         requiredSetting("INVOICE_PROCESSING_NOT_BEFORE"),
       );

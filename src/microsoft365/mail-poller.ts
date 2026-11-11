@@ -4,6 +4,7 @@ import type { GraphClient } from "./graph-client.ts";
 
 type Message = { id: string; receivedDateTime?: string; hasAttachments?: boolean; from?: { emailAddress?: { address?: string } } };
 type FileAttachment = { id: string; name?: string; contentType?: string; contentBytes?: string; isInline?: boolean };
+type MailFolder = { id: string; displayName?: string };
 
 export type MailboxPollingResult = {
   messages: number; pdfAttachments: number; completed: number; diverted: number;
@@ -14,18 +15,27 @@ export type MailboxPollingResult = {
 export class SharePointInvoiceMailboxPoller {
   private readonly graph: GraphClient;
   private readonly mailbox: string;
+  private readonly mailFolder: string;
   private readonly processor: Pick<AttachmentProcessor, "process">;
   private readonly notBefore: number;
 
-  constructor(graph: GraphClient, mailbox: string, processor: Pick<AttachmentProcessor, "process">, notBefore: string) {
-    this.graph = graph; this.mailbox = mailbox; this.processor = processor;
+  constructor(graph: GraphClient, mailbox: string, mailFolder: string, processor: Pick<AttachmentProcessor, "process">, notBefore: string) {
+    this.graph = graph; this.mailbox = mailbox; this.mailFolder = mailFolder.trim(); this.processor = processor;
+    if (!this.mailFolder) throw new Error("M365_MAIL_FOLDER must not be empty");
     this.notBefore = Date.parse(notBefore);
     if (!Number.isFinite(this.notBefore)) throw new Error("INVOICE_PROCESSING_NOT_BEFORE must be an ISO date-time");
   }
 
   async run(): Promise<MailboxPollingResult> {
+    const encodedMailbox = encodeURIComponent(this.mailbox);
+    const escapedFolderName = this.mailFolder.replace(/'/g, "''");
+    const folders = await this.graph.request<{ value: MailFolder[] }>(
+      `/users/${encodedMailbox}/mailFolders?$select=id,displayName&$filter=displayName%20eq%20'${encodeURIComponent(escapedFolderName)}'`,
+    );
+    const folder = folders.value.find(({ displayName }) => displayName === this.mailFolder);
+    if (!folder) throw new Error(`Configured mailbox folder was not found: ${this.mailFolder}`);
     const response = await this.graph.request<{ value: Message[] }>(
-      `/users/${encodeURIComponent(this.mailbox)}/mailFolders/inbox/messages?$select=id,receivedDateTime,hasAttachments,from&$top=25`,
+      `/users/${encodedMailbox}/mailFolders/${encodeURIComponent(folder.id)}/messages?$select=id,receivedDateTime,hasAttachments,from&$top=25`,
     );
     const results: ProcessResult[] = [];
     let pdfAttachments = 0;

@@ -15,6 +15,23 @@ on:
         description: Azure Document Intelligence region
         required: true
         default: northeurope
+      m365_mailbox_address:
+        description: SMTP address of the mailbox dedicated to invoice intake in this environment
+        required: true
+        type: string
+      m365_mail_folder:
+        description: Root-level mailbox folder that contains invoices approved for automated processing
+        required: true
+        type: string
+        default: Facturas Copilot
+      m365_sharepoint_site_id:
+        description: Microsoft Graph composite ID of the private SharePoint site
+        required: true
+        type: string
+      m365_sharepoint_drive_id:
+        description: Microsoft Graph ID of the document library (starts with b!)
+        required: true
+        type: string
       invoice_processing_enabled:
         description: Enable automatic processing only after SharePoint state lists are ready
         required: true
@@ -64,7 +81,7 @@ jobs:
           output=$(az deployment group create \
             --resource-group "rg-facturas-copilot-${{ inputs.environment }}" \
             --template-file infra/main.bicep \
-            --parameters environmentName="${{ inputs.environment }}" location="${{ inputs.location }}" documentIntelligenceLocation="${{ inputs.document_intelligence_location }}" entraApiClientId="${{ vars.ENTRA_API_CLIENT_ID }}" invoiceProcessingEnabled="${{ inputs.invoice_processing_enabled }}" invoiceProcessingNotBefore="${{ inputs.invoice_processing_not_before }}" bankImportProfile="${{ inputs.bank_import_profile }}" paymentForecastImportEnabled="${{ inputs.payment_forecast_import_enabled }}" \
+            --parameters environmentName="${{ inputs.environment }}" location="${{ inputs.location }}" documentIntelligenceLocation="${{ inputs.document_intelligence_location }}" entraApiClientId="${{ vars.ENTRA_API_CLIENT_ID }}" m365MailboxAddress="${{ inputs.m365_mailbox_address }}" m365MailFolder="${{ inputs.m365_mail_folder }}" m365SharePointSiteId="${{ inputs.m365_sharepoint_site_id }}" m365SharePointDriveId="${{ inputs.m365_sharepoint_drive_id }}" invoiceProcessingEnabled="${{ inputs.invoice_processing_enabled }}" invoiceProcessingNotBefore="${{ inputs.invoice_processing_not_before }}" bankImportProfile="${{ inputs.bank_import_profile }}" paymentForecastImportEnabled="${{ inputs.payment_forecast_import_enabled }}" \
             --query properties.outputs.functionAppName.value -o tsv)
           echo "function_name=$output" >> "$GITHUB_OUTPUT"
       - name: Prepare deployment package

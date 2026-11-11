@@ -3,8 +3,13 @@ param(
     [ValidatePattern('^[0-9a-fA-F-]{36}$')]
     [string]$TenantId,
 
-    [string]$HostName = 'integramente.sharepoint.com',
-    [string]$SitePath = '/sites/facturas',
+    [Parameter(Mandatory = $true)]
+    [ValidatePattern('^[a-z0-9-]+\.sharepoint\.com$')]
+    [string]$HostName,
+
+    [Parameter(Mandatory = $true)]
+    [ValidatePattern('^/sites/[^/?#]+$')]
+    [string]$SitePath,
 
     [switch]$UseAzureCliToken
 )
@@ -72,6 +77,7 @@ foreach ($folderName in @('Facturas', 'ExtractosBancarios', 'PrevisionesPagos', 
 
 [pscustomobject]@{
     siteUrl = $site.webUrl
+    siteId = $site.id
     driveId = $drive.id
     created = $created
     alreadyPresent = $alreadyPresent

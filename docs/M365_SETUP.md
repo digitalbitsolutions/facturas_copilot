@@ -12,9 +12,11 @@
 Ejecutar una sola vez, autenticándose como propietario del sitio:
 
 ```powershell
-.\scripts\provision-sharepoint-folders.ps1 -TenantId '<tenant-id>'
-.\scripts\provision-sharepoint-lists.ps1 -TenantId '<tenant-id>'
+.\scripts\provision-sharepoint-folders.ps1 -TenantId '<tenant-id>' -HostName '<tenant>.sharepoint.com' -SitePath '/sites/facturas'
+.\scripts\provision-sharepoint-lists.ps1 -TenantId '<tenant-id>' -HostName '<tenant>.sharepoint.com' -SitePath '/sites/facturas'
 ```
+
+Los dos parámetros del sitio son obligatorios. Nunca se reutilizan los valores del tenant de pruebas.
 
 El script crea también `MaestroProveedores`, `ProcesosFacturas` y `RegistroFacturas`, y añade de forma no destructiva las columnas nuevas a listas ya existentes. Antes de probar la aceptación automática, añade una fila por proveedor con `CodigoProveedor`, `RazonSocial`, `NIF`, `Aliases` (uno por línea o separados por `;`) y `Activo = Sí`. El NIF debe ser único entre proveedores activos. Si Document Intelligence entrega NIF, la Function exige una coincidencia exacta; solo cuando el NIF no está disponible compara la razón social y los alias normalizados. Una ausencia, contradicción o coincidencia múltiple obliga a revisión.
 
@@ -22,7 +24,7 @@ El script crea también `MaestroProveedores`, `ProcesosFacturas` y `RegistroFact
 
 `ProcesosFacturas.ProcessId`, `RegistroFacturas.ProcessId` y `RegistroFacturas.DuplicateKey` son únicos. El estado sobrevive a reinicios y permite que un ciclo posterior reconozca un adjunto terminal sin repetir clasificación, extracción ni archivo. El despliegue mantiene `INVOICE_PROCESSING_ENABLED=false` e `INVOICE_PROCESSING_NOT_BEFORE=9999-12-31T23:59:59Z` por defecto; las listas deben existir y la fecha de corte debe fijarse antes de activarlo.
 
-Los ajustes operativos `M365_MAILBOX_ADDRESS`, `M365_SHAREPOINT_SITE_ID` y `M365_SHAREPOINT_DRIVE_ID` están declarados como parámetros en Bicep. El despliegue los aplica junto con los nombres de carpetas, listas y horarios; para otro tenant se deben sobrescribir los parámetros sin modificar el código.
+Los ajustes operativos `M365_MAILBOX_ADDRESS`, `M365_MAIL_FOLDER`, `M365_SHAREPOINT_SITE_ID` y `M365_SHAREPOINT_DRIVE_ID` están declarados como parámetros en Bicep. El despliegue los aplica junto con los nombres de carpetas, listas y horarios; para otro tenant se deben sobrescribir los parámetros sin modificar el código. `M365_MAIL_FOLDER` identifica una carpeta raíz del buzón; no se procesa la bandeja de entrada completa.
 
 ## Acceso al buzón de pruebas
 
@@ -53,7 +55,7 @@ Copiar `.env.example` como `.env` y completar solo identificadores y nombres. `.
 | `M365_TENANT_ID` | Centro de administración de Microsoft Entra, información general |
 | `M365_CLIENT_ID` | Registro de aplicación creado para el proyecto |
 | `M365_SHAREPOINT_SITE_URL` | URL de la portada del sitio privado |
-| `M365_SHAREPOINT_SITE_ID` | Graph Explorer: `GET /sites/integramente.sharepoint.com:/sites/facturas?$select=id` |
+| `M365_SHAREPOINT_SITE_ID` | Graph Explorer: `GET /sites/<tenant>.sharepoint.com:/sites/facturas?$select=id` |
 | `M365_SHAREPOINT_DRIVE_ID` | Se resolverá por Graph al conectar el sitio |
 | `M365_INVOICE_FOLDER` | Carpeta de PDF, inicialmente `Facturas` |
 | `M365_BANK_FOLDER` | Carpeta restringida de extractos, inicialmente `ExtractosBancarios` |
