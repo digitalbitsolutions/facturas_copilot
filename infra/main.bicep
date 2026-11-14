@@ -59,6 +59,7 @@ var workspaceName = 'log-facturas-copilot-${environmentName}'
 var vaultName = take('kv-fact-${environmentName}-${token}', 24)
 var deploymentContainerName = 'app-package-${take(token, 12)}'
 var documentIntelligenceName = take('di-fact-${environmentName}-${token}', 64)
+var documentIntelligenceSku = environmentName == 'prod' ? 'S0' : 'F0'
 
 resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   name: storageName
@@ -127,7 +128,7 @@ resource documentIntelligence 'Microsoft.CognitiveServices/accounts@2024-10-01' 
   location: documentIntelligenceLocation
   tags: tags
   kind: 'FormRecognizer'
-  sku: { name: 'F0' }
+  sku: { name: documentIntelligenceSku }
   properties: {
     customSubDomainName: documentIntelligenceName
     disableLocalAuth: true

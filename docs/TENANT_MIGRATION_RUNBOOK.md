@@ -42,7 +42,7 @@ No copiar valores de `integramente.onmicrosoft.com`, IDs Graph, IDs de identidad
 
 ## Controles obligatorios
 
-- Producción debe usar Document Intelligence S0; F0 queda reservado a prueba y está limitado por cuota.
+- Producción usa Document Intelligence S0; la infraestructura selecciona este SKU automáticamente cuando `environmentName` es `prod`. F0 queda reservado a prueba y está limitado por cuota.
 - No habilitar `INVOICE_PROCESSING_ENABLED` hasta que existan las listas, el maestro y el corte temporal.
 - Cada ejecución de despliegue debe llevar los tres identificadores M365 del entorno. Bicep no contiene valores por defecto del tenant de desarrollo.
 - Repetir CA-01 a CA-21 según corresponda. La matriz actual identifica qué pruebas están automatizadas, validadas en desarrollo o pendientes de muestra/decisión.
