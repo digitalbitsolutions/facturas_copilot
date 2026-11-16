@@ -153,6 +153,7 @@ export class SharePointInvoiceRegistry extends SharePointLists implements Invoic
       const fields: Record<string, unknown> = {
         Title: input.invoice.invoiceNumber, ProcessId: input.processId, DuplicateKey: input.duplicateKey,
         Proveedor: input.invoice.supplierName, NIFProveedor: input.invoice.supplierTaxId ?? "",
+        Receptor: input.invoice.recipientName ?? "", NIFReceptor: input.invoice.recipientTaxId ?? "",
         NumeroFactura: input.invoice.invoiceNumber, FechaFactura: input.invoice.invoiceDate,
         BaseImponible: Number(input.invoice.taxableBase), IVA: Number(input.invoice.vatAmount), Total: Number(input.invoice.totalAmount),
         Moneda: input.invoice.currency ?? "",

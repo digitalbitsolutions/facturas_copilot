@@ -3,7 +3,7 @@ import { assignExceptionRequest, decideReconciliationRequest, importBankRequest,
 import { DocumentIntelligenceDocumentClassifier } from "../classification/index.ts";
 import { DocumentIntelligenceInvoiceExtractor } from "../extraction/index.ts";
 import { resolveSupplierIdentity, validateInvoice, validationConfigForSupplier } from "../invoices/index.ts";
-import { bankImportConfigForProfile, GraphClient, ManagedIdentityTokenProvider, SharePointBankPoller, SharePointDocumentRepository, SharePointExceptionResolutionStore, SharePointInvoiceMailboxPoller, SharePointInvoiceRegistry, SharePointPaymentForecastPoller, SharePointPaymentQueryProjector, SharePointProcessStore, SharePointReconciliationStore, SharePointSupplierDirectory } from "../microsoft365/index.ts";
+import { bankImportConfigForProfile, GraphClient, ManagedIdentityTokenProvider, SharePointBankPoller, SharePointDocumentRepository, SharePointExceptionResolutionStore, SharePointInvoiceMailboxPoller, SharePointInvoiceRegistry, SharePointPaymentForecastPoller, SharePointPaymentQueryProjector, SharePointProcessStore, SharePointRecipientDirectory, SharePointReconciliationStore, SharePointSupplierDirectory } from "../microsoft365/index.ts";
 import { AttachmentProcessor } from "../processing/index.ts";
 
 function json(status: number, body: unknown): HttpResponseInit {
@@ -223,6 +223,7 @@ app.timer("pollInvoiceMailbox", {
       }
       const graph = new GraphClient(new ManagedIdentityTokenProvider());
       const siteId = requiredSetting("M365_SHAREPOINT_SITE_ID");
+      const recipientRoutingEnabled = process.env.INVOICE_RECIPIENT_ROUTING_ENABLED?.toLowerCase() === "true";
       const cognitiveTokenProvider = new ManagedIdentityTokenProvider("https://cognitiveservices.azure.com/");
       const processor = new AttachmentProcessor({
         classifier: new DocumentIntelligenceDocumentClassifier(requiredSetting("DOCUMENT_INTELLIGENCE_ENDPOINT"), cognitiveTokenProvider),
@@ -231,6 +232,10 @@ app.timer("pollInvoiceMailbox", {
         documents: new SharePointDocumentRepository(graph, requiredSetting("M365_SHAREPOINT_DRIVE_ID"), process.env.M365_INVOICE_FOLDER ?? "Facturas"),
         registry: new SharePointInvoiceRegistry(graph, siteId, process.env.M365_INVOICE_REGISTRY_LIST ?? "RegistroFacturas"),
         supplierDirectory: new SharePointSupplierDirectory(graph, siteId, process.env.M365_SUPPLIERS_LIST ?? "MaestroProveedores"),
+        ...(recipientRoutingEnabled ? {
+          recipientDirectory: new SharePointRecipientDirectory(graph, siteId, process.env.M365_RECIPIENTS_LIST ?? "MaestroReceptores"),
+          requireRecipientMatch: true,
+        } : {}),
       });
       const poller = new SharePointInvoiceMailboxPoller(
         graph,

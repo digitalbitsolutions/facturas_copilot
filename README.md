@@ -53,6 +53,19 @@ Cada diez minutos, la Function revisa `ExtractosBancarios`. Un archivo válido s
 
 El alta se hace una vez con `scripts/provision-sharepoint-folders.ps1` y `scripts/provision-sharepoint-lists.ps1`; después se configuran los identificadores del sitio y de la biblioteca como ajustes de la Function.
 
+## Archivo de facturas por receptor y proveedor
+
+Por solicitud operativa del cliente, el archivo debe reflejar tanto la entidad receptora de la factura como su proveedor. Una factura de EMAS dirigida a entidades distintas no comparte carpeta ni clave de duplicidad con otra factura del mismo proveedor dirigida a otra entidad. La estructura objetivo es:
+
+```text
+Facturas/
+  <Receptor validado>/
+    <Proveedor validado>/
+      <Numero>_<Fecha>_<Importe>_<Moneda>.pdf
+```
+
+El proceso extrae el destinatario, lo contrasta con `MaestroReceptores` por NIF, razón social o alias aprobados y, solo tras una coincidencia única, crea de forma idempotente las carpetas necesarias y archiva el PDF. Si el receptor falta, no está autorizado o es ambiguo, la factura queda en revisión (`EX-10`) sin archivo ni registro definitivo. La ruta sigue desactivada hasta cargar y validar el maestro real de receptores; no se procesarán facturas de producción antes de esa validación.
+
 ## Previsión de pagos — estado y siguiente paso
 
 La previsión de pagos es un insumo operativo independiente de las facturas recibidas: parte de las facturas pendientes y añade la fecha e importe de pago previstos, estado, referencia y observaciones. No acredita que una factura haya sido pagada; la confirmación procede exclusivamente de la conciliación con el extracto bancario.

@@ -71,6 +71,8 @@ export function mapInvoiceResult(payload: AnalyzeResponse): { invoice: Extracted
   return {
     invoice: {
       supplierName: text(supplier), ...(text(fields.VendorTaxId) ? { supplierTaxId: text(fields.VendorTaxId) } : {}), invoiceNumber: text(fields.InvoiceId), invoiceDate: text(fields.InvoiceDate),
+      ...(text(fields.CustomerName) ? { recipientName: text(fields.CustomerName) } : {}),
+      ...(text(fields.CustomerTaxId) ? { recipientTaxId: text(fields.CustomerTaxId) } : {}),
       dueDate: text(fields.DueDate), taxableBase, vatAmount: amount(fields.TotalTax),
       totalAmount: amount(fields.InvoiceTotal), currency: currency?.toUpperCase(),
     },
@@ -78,6 +80,7 @@ export function mapInvoiceResult(payload: AnalyzeResponse): { invoice: Extracted
       ...confidence(fields, {
         supplierName: text(fields.VendorAddressRecipient) ? "VendorAddressRecipient" : "VendorName",
         supplierTaxId: "VendorTaxId",
+        recipientName: "CustomerName", recipientTaxId: "CustomerTaxId",
         invoiceNumber: "InvoiceId", invoiceDate: "InvoiceDate", dueDate: "DueDate", taxableBase: "SubTotal",
         vatAmount: "TotalTax", totalAmount: "InvoiceTotal", currency: "InvoiceTotal",
       }),

@@ -50,7 +50,7 @@ test("uses the global confidence threshold for fields without an override", () =
   if (!result.valid) assert.match(result.issues.at(-1)?.message ?? "", /0\.8/);
 });
 
-test("creates a safe supplier-organized PDF path", () => {
+test("creates a safe recipient- and supplier-organized PDF path", () => {
   const result = validateInvoice(validInvoice);
   assert.equal(result.valid, true);
   if (result.valid) {
@@ -58,6 +58,7 @@ test("creates a safe supplier-organized PDF path", () => {
     assert.equal(filename, "F-2026-0042_2026-09-07_121.00_EUR.pdf");
     assert.ok(filename.length <= 80);
     assert.equal(buildInvoicePath(result.invoice), "Proveedor Norte, S.L/F-2026-0042_2026-09-07_121.00_EUR.pdf");
+    assert.equal(buildInvoicePath({ ...result.invoice, recipientName: "DC Molins" }), "DC Molins/Proveedor Norte, S.L/F-2026-0042_2026-09-07_121.00_EUR.pdf");
   }
   assert.equal(sanitizeFilenamePart("CON"), "_CON");
 });
@@ -67,4 +68,11 @@ test("builds a stable duplicate key from normalized values", () => {
   const second = validateInvoice({ ...validInvoice, supplierName: "  proveedor norte, s.l. " });
   assert.equal(first.valid, true); assert.equal(second.valid, true);
   if (first.valid && second.valid) assert.equal(buildDuplicateKey(first.invoice), buildDuplicateKey(second.invoice));
+});
+
+test("keeps invoices for distinct recipients out of the same duplicate key", () => {
+  const first = validateInvoice({ ...validInvoice, recipientName: "DC Molins" });
+  const second = validateInvoice({ ...validInvoice, recipientName: "DC Ripoll" });
+  assert.equal(first.valid, true); assert.equal(second.valid, true);
+  if (first.valid && second.valid) assert.notEqual(buildDuplicateKey(first.invoice), buildDuplicateKey(second.invoice));
 });

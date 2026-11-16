@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { AttachmentProcessor, MemoryDocumentRepository, MemoryInvoiceRegistry, MemoryProcessStore, MemorySupplierDirectory } from "./index.ts";
+import { AttachmentProcessor, MemoryDocumentRepository, MemoryInvoiceRegistry, MemoryProcessStore, MemoryRecipientDirectory, MemorySupplierDirectory } from "./index.ts";
 import type { AttachmentInput, DocumentKind } from "./types.ts";
 
 const input = (attachmentId = "a-1"): AttachmentInput => ({
@@ -61,6 +61,36 @@ test("requires a unique active supplier master match before archiving", async ()
   const result = await context.processor.process(input());
   assert.equal(result.state, "review_required");
   assert.equal(result.exception?.issues?.[0]?.code, "supplier_not_found");
+  assert.equal(context.documents.documents.size, 0);
+});
+
+test("archives a matched recipient beneath its canonical supplier folder", async () => {
+  const documents = new MemoryDocumentRepository();
+  const processor = new AttachmentProcessor({
+    classifier: { classify: async () => ({ kind: "invoice", confidence: 0.99, reasons: ["test"] }) },
+    extractor: { extract: async () => ({ invoice: { ...invoice, recipientName: "Dental Catalunya Molins" }, confidence: { totalAmount: 0.99 } }) },
+    processStore: new MemoryProcessStore(), documents, registry: new MemoryInvoiceRegistry(),
+    supplierDirectory: new MemorySupplierDirectory([{ supplierId: "SUP-1", legalName: "ACME", active: true }]),
+    recipientDirectory: new MemoryRecipientDirectory([{ recipientId: "MOLINS", legalName: "DC Molins", aliases: ["Dental Catalunya Molins"], active: true }]),
+    requireRecipientMatch: true,
+  });
+  assert.equal((await processor.process(input())).state, "completed");
+  assert.equal([...documents.documents.values()][0]?.filename, "DC Molins/ACME/F-42_2026-09-01_121.00_EUR.pdf");
+});
+
+test("does not archive an invoice when recipient routing cannot match an authorised entity", async () => {
+  const context = setup({ extracted: { ...invoice, recipientName: "Entidad desconocida" } });
+  const guarded = new AttachmentProcessor({
+    classifier: { classify: async () => ({ kind: "invoice", confidence: 0.99, reasons: ["test"] }) },
+    extractor: { extract: async () => ({ invoice: { ...invoice, recipientName: "Entidad desconocida" }, confidence: { totalAmount: 0.99 } }) },
+    processStore: context.processStore, documents: context.documents, registry: context.registry,
+    supplierDirectory: new MemorySupplierDirectory([{ supplierId: "SUP-1", legalName: "ACME", active: true }]),
+    recipientDirectory: new MemoryRecipientDirectory([{ recipientId: "MOLINS", legalName: "DC Molins", active: true }]),
+    requireRecipientMatch: true,
+  });
+  const result = await guarded.process(input());
+  assert.equal(result.state, "review_required");
+  assert.equal(result.exception?.code, "EX-10");
   assert.equal(context.documents.documents.size, 0);
 });
 

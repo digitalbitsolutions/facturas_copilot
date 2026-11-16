@@ -1,10 +1,16 @@
-import type { SupplierMasterRecord } from "../invoices/index.ts";
-import type { DocumentRepository, InvoiceRegistry, ProcessRecord, ProcessStore, SupplierDirectory } from "./types.ts";
+import type { RecipientMasterRecord, SupplierMasterRecord } from "../invoices/index.ts";
+import type { DocumentRepository, InvoiceRegistry, ProcessRecord, ProcessStore, RecipientDirectory, SupplierDirectory } from "./types.ts";
 
 export class MemorySupplierDirectory implements SupplierDirectory {
   readonly suppliers: SupplierMasterRecord[];
   constructor(suppliers: SupplierMasterRecord[] = []) { this.suppliers = suppliers; }
   async listActive(): Promise<SupplierMasterRecord[]> { return structuredClone(this.suppliers.filter(({ active }) => active)); }
+}
+
+export class MemoryRecipientDirectory implements RecipientDirectory {
+  readonly recipients: RecipientMasterRecord[];
+  constructor(recipients: RecipientMasterRecord[] = []) { this.recipients = recipients; }
+  async listActive(): Promise<RecipientMasterRecord[]> { return structuredClone(this.recipients.filter(({ active }) => active)); }
 }
 
 export class MemoryProcessStore implements ProcessStore {
