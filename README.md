@@ -66,6 +66,8 @@ Facturas/
 
 El proceso extrae el destinatario, lo contrasta con `MaestroReceptores` por NIF, razón social o alias aprobados y, solo tras una coincidencia única, crea de forma idempotente las carpetas necesarias y archiva el PDF. Si el receptor falta, no está autorizado o es ambiguo, la factura queda en revisión (`EX-10`) sin archivo ni registro definitivo. La ruta sigue desactivada hasta cargar y validar el maestro real de receptores; no se procesarán facturas de producción antes de esa validación.
 
+Cada factura incorpora además el campo `Área`, pensado para departamentos como Marketing y para consultas futuras. El campo empieza como `Pendiente de clasificar`: solo puede recibir un valor mediante una regla de negocio aprobada o una asignación humana, nunca por una inferencia basada únicamente en el proveedor o el texto del PDF. La proyección `ConsultaPagosCopilot` conserva Sociedad, NIF de sociedad y Área junto con el enlace al documento para que un agente autorizado pueda filtrar por esos criterios.
+
 ## Previsión de pagos — estado y siguiente paso
 
 La previsión de pagos es un insumo operativo independiente de las facturas recibidas: parte de las facturas pendientes y añade la fecha e importe de pago previstos, estado, referencia y observaciones. No acredita que una factura haya sido pagada; la confirmación procede exclusivamente de la conciliación con el extracto bancario.

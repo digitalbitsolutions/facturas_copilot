@@ -103,6 +103,7 @@ $definitions = @(
             @{ name = 'NIFProveedor'; text = @{} }
             @{ name = 'Receptor'; text = @{} }
             @{ name = 'NIFReceptor'; text = @{} }
+            @{ name = 'Area'; indexed = $true; text = @{} }
             @{ name = 'NumeroFactura'; text = @{} }
             @{ name = 'FechaFactura'; dateTime = @{ format = 'dateOnly' } }
             @{ name = 'FechaVencimiento'; dateTime = @{ format = 'dateOnly' } }
@@ -217,6 +218,9 @@ $definitions = @(
             @{ name = 'ConsultaId'; indexed = $true; enforceUniqueValues = $true; text = @{} }
             @{ name = 'ProcessId'; indexed = $true; text = @{} }
             @{ name = 'PrevisionId'; indexed = $true; text = @{} }
+            @{ name = 'Sociedad'; indexed = $true; text = @{} }
+            @{ name = 'NIFSociedad'; text = @{} }
+            @{ name = 'Area'; indexed = $true; text = @{} }
             @{ name = 'Proveedor'; indexed = $true; text = @{} }
             @{ name = 'NumeroFactura'; text = @{} }
             @{ name = 'FechaFactura'; dateTime = @{ format = 'dateOnly' } }

@@ -49,7 +49,7 @@ function derivedTaxableBase(total?: Field, tax?: Field): string | undefined {
   return (Math.round((totalValue - taxValue) * 100) / 100).toFixed(2);
 }
 
-function confidence(fields: Record<string, Field>, mapping: Record<keyof ExtractedInvoice, string>): ExtractionConfidence {
+function confidence(fields: Record<string, Field>, mapping: Partial<Record<keyof ExtractedInvoice, string>>): ExtractionConfidence {
   return Object.fromEntries(Object.entries(mapping).flatMap(([target, source]) => {
     const value = fields[source]?.confidence;
     return typeof value === "number" ? [[target, value]] : [];

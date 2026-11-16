@@ -25,7 +25,7 @@ test("projects presentation amounts in euros alongside minor-unit storage", asyn
   const client = new GraphClient({ getAccessToken: async () => "token" }, async (url, init) => {
     const path = new URL(url).pathname + new URL(url).search;
     if (path.includes("/lists?$select")) return Response.json({ value: ["RegistroFacturas", "PrevisionesPagos", "Conciliaciones", "MovimientosBancarios", "ConsultaPagosCopilot"].map((displayName) => ({ id: displayName, displayName })) });
-    if (path.includes("RegistroFacturas/items?%24expand")) return Response.json({ value: [{ id: "invoice", fields: { ProcessId: "invoice-1", Proveedor: "EMAS", NumeroFactura: "F26", Total: 79.86, Moneda: "EUR" } }] });
+    if (path.includes("RegistroFacturas/items?%24expand")) return Response.json({ value: [{ id: "invoice", fields: { ProcessId: "invoice-1", Receptor: "DC Ripoll", NIFReceptor: "B12345678", Area: "Marketing", Proveedor: "EMAS", NumeroFactura: "F26", Total: 79.86, Moneda: "EUR" } }] });
     if (path.includes("PrevisionesPagos/items?%24expand")) return Response.json({ value: [{ id: "forecast", fields: { PrevisionId: "PREV-1", Proveedor: "EMAS", NumeroFactura: "F26", ImportePagoPrevistoMenor: 7986, Estado: "Programado" } }] });
     if (path.includes("Conciliaciones/items?%24expand") || path.includes("MovimientosBancarios/items?%24expand") || path.includes("ConsultaPagosCopilot/items?%24expand")) return Response.json({ value: [] });
     if (path.endsWith("ConsultaPagosCopilot/items") && init?.method === "POST") { writes.push((JSON.parse(String(init.body)) as { fields: Record<string, unknown> }).fields); return Response.json({ id: "query" }, { status: 201 }); }
@@ -33,6 +33,8 @@ test("projects presentation amounts in euros alongside minor-unit storage", asyn
   });
   await new SharePointPaymentQueryProjector(client, { siteId: "site", invoicesList: "RegistroFacturas", forecastsList: "PrevisionesPagos", reconciliationsList: "Conciliaciones", movementsList: "MovimientosBancarios", queryList: "ConsultaPagosCopilot" }).run();
   assert.equal(writes[0].ImporteFacturaMenor, 7986);
+  assert.equal(writes[0].Sociedad, "DC Ripoll");
+  assert.equal(writes[0].Area, "Marketing");
   assert.equal(writes[0].ImporteFacturaPresentacion, "79,86 EUR");
   assert.equal(writes[0].ImportePagoPrevistoMenor, 7986);
   assert.equal(writes[0].ImportePagoPrevistoPresentacion, "79,86 EUR");

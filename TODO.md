@@ -19,6 +19,7 @@
 - [x] Crear y verificar el sitio SharePoint privado y aislado de producción `https://grupmedicdental.sharepoint.com/sites/facturas`. No usar la carpeta `DATOS/01.FACTURAS` del sitio `finances`: el acceso técnico previsto es por sitio y ese sitio contiene documentación financiera ajena al proceso.
 - [x] Confirmar el buzón de entrada de facturas de producción: `direccionfinanciera@grupmedicdental.com`; crear la carpeta raíz vacía `Facturas Copilot`.
 - [ ] Recibir y validar el maestro de receptores (código, razón social, NIF y alias); aprovisionar `MaestroReceptores` y habilitar el archivado `Facturas/<Receptor>/<Proveedor>` solo en una prueba controlada.
+- [ ] Acordar el catálogo de áreas/departamentos y el procedimiento para clasificar cada factura antes de habilitar consultas Copilot por `Área`.
 - [ ] Registrar en `Azure subscription 1` los proveedores `Microsoft.Storage`, `Microsoft.CognitiveServices`, `Microsoft.KeyVault`, `Microsoft.Web` y `Microsoft.OperationalInsights` con un Owner de suscripción; después relanzar el workflow de producción con los procesamientos desactivados.
 - [x] Publicar el cambio que limita la lectura a `M365_MAIL_FOLDER=Facturas Copilot`.
 - [ ] Autorizar a la Function exclusivamente sobre `/sites/facturas` y sobre `direccionfinanciera@grupmedicdental.com`; definir la regla o procedimiento para mover únicamente facturas a `Facturas Copilot` antes de activar el procesamiento.

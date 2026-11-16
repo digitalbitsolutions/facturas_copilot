@@ -5,6 +5,8 @@ export type ExtractedInvoice = {
   supplierTaxId?: string;
   recipientName?: string;
   recipientTaxId?: string;
+  /** Human-approved business area; never inferred from the supplier or PDF text alone. */
+  area?: string;
   invoiceNumber?: string;
   invoiceDate?: string;
   dueDate?: string;
@@ -30,7 +32,7 @@ export type ValidationIssue = {
 
 export type ValidatedInvoice = Required<Pick<ExtractedInvoice,
   "supplierName" | "invoiceNumber" | "invoiceDate" | "taxableBase" | "vatAmount" | "totalAmount"
->> & Pick<ExtractedInvoice, "dueDate" | "currency" | "supplierTaxId" | "recipientName" | "recipientTaxId">;
+>> & Pick<ExtractedInvoice, "dueDate" | "currency" | "supplierTaxId" | "recipientName" | "recipientTaxId" | "area">;
 
 export type InvoiceValidationResult =
   | { valid: true; invoice: ValidatedInvoice; issues: [] }
