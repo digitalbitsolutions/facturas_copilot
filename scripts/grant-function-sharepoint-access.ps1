@@ -22,6 +22,7 @@ $graphCliClientId = '14d82eec-204b-4c2f-b7e8-296a70dab67e' # Microsoft Graph Com
 $scope = @(
     'openid'
     'profile'
+    'https://graph.microsoft.com/Application.Read.All'
     'https://graph.microsoft.com/AppRoleAssignment.ReadWrite.All'
     'https://graph.microsoft.com/Sites.FullControl.All'
 ) -join ' '
