@@ -79,11 +79,18 @@ jobs:
         shell: bash
         run: |
           output=$(az deployment group create \
+            --name main \
             --resource-group "rg-facturas-copilot-${{ inputs.environment }}" \
             --template-file infra/main.bicep \
             --parameters environmentName="${{ inputs.environment }}" location="${{ inputs.location }}" documentIntelligenceLocation="${{ inputs.document_intelligence_location }}" entraApiClientId="${{ vars.ENTRA_API_CLIENT_ID }}" m365MailboxAddress="${{ inputs.m365_mailbox_address }}" m365MailFolder="${{ inputs.m365_mail_folder }}" m365SharePointSiteId="${{ inputs.m365_sharepoint_site_id }}" m365SharePointDriveId="${{ inputs.m365_sharepoint_drive_id }}" invoiceProcessingEnabled="${{ inputs.invoice_processing_enabled }}" invoiceProcessingNotBefore="${{ inputs.invoice_processing_not_before }}" bankImportProfile="${{ inputs.bank_import_profile }}" paymentForecastImportEnabled="${{ inputs.payment_forecast_import_enabled }}" \
             --query properties.outputs.functionAppName.value -o tsv)
+          principal=$(az deployment group show \
+            --name main \
+            --resource-group "rg-facturas-copilot-${{ inputs.environment }}" \
+            --query properties.outputs.functionPrincipalId.value -o tsv)
           echo "function_name=$output" >> "$GITHUB_OUTPUT"
+          echo "function_principal_id=$principal" >> "$GITHUB_OUTPUT"
+          echo "Function managed identity principal ID: $principal"
       - name: Prepare deployment package
         run: npm prune --omit=dev
       - uses: Azure/functions-action@v1

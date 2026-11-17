@@ -23,7 +23,7 @@ if (-not $SkipConnection) { Connect-ExchangeOnline -Device }
 $scopeName = "FacturasCopilot-$($MailboxAddress.Split('@')[0])-Only"
 $existingPointer = Get-ServicePrincipal -Identity $ManagedIdentityPrincipalId -ErrorAction SilentlyContinue
 if (-not $existingPointer) {
-    New-ServicePrincipal -AppId $ManagedIdentityClientId -ObjectId $ManagedIdentityPrincipalId -DisplayName 'Facturas Copilot Function - Dev' | Out-Null
+    New-ServicePrincipal -AppId $ManagedIdentityClientId -ObjectId $ManagedIdentityPrincipalId -DisplayName 'Facturas Copilot Function' | Out-Null
 }
 
 # The matching address is exact; no other mailbox can be in the resulting scope.
