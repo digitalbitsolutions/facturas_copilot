@@ -8,8 +8,8 @@
 - [x] Invitar a `miguel.yesan@emas.es`; la invitación fue aceptada.
 - [x] Asignar `Contributor` a Miguel exclusivamente en `rg-facturas-copilot-prod`.
 - [x] Asignar `User Access Administrator` a Miguel exclusivamente en `rg-facturas-copilot-prod`; verificado el 10 de noviembre junto con `Contributor`.
-- [x] Verificar el 7 de noviembre en Microsoft Graph que Miguel tiene activos `Application Administrator`, `SharePoint Administrator` y `Exchange Administrator`.
-- [ ] Diagnosticar el error de Azure CLI por código de dispositivo `service_not_available` de Miguel si se necesita ese flujo; el acceso interactivo al portal Azure funciona.
+- [x] Verificar que Miguel tiene los roles Entra necesarios; el 17 de noviembre se confirmó además su asignación como `Global Administrator`.
+- [x] Recuperar inicio de sesión Azure CLI de Miguel mediante código de dispositivo y usarlo para administración limitada de producción.
 - [x] Verificar que `direccionfinanciera@grupmedicdental.com` no tiene roles directos de Entra; su propiedad Azure no sustituye los permisos de directorio de Miguel.
 - [ ] Acordar con el administrador que los tres roles de Entra para el invitado B2B de EMAS sean temporales o elegibles mediante PIM, y retirarlos tras configurar la aplicación y los permisos restringidos.
 - [x] Crear el registro Entra `facturas-copilot-api-prod` desde el portal: una sola organización, sin URI de redirección ni secreto. Client ID: `c1ab74c4-2f44-4641-80f9-be83c5724b4d`.
@@ -20,7 +20,11 @@
 - [x] Confirmar el buzón de entrada de facturas de producción: `direccionfinanciera@grupmedicdental.com`; crear la carpeta raíz vacía `Facturas Copilot`.
 - [x] Registrar en `Azure subscription 1` los proveedores `Microsoft.Storage`, `Microsoft.CognitiveServices`, `Microsoft.KeyVault`, `Microsoft.Web`, `Microsoft.OperationalInsights` y `Microsoft.Insights` con un Owner de suscripción; el workflow de producción `44140874826` terminó correctamente con todos los procesamientos desactivados.
 - [x] Publicar el cambio que limita la lectura a `M365_MAIL_FOLDER=Facturas Copilot`.
-- [ ] Autorizar a la Function exclusivamente sobre `/sites/facturas` y sobre `direccionfinanciera@grupmedicdental.com`; definir la regla o procedimiento para mover únicamente facturas a `Facturas Copilot` antes de activar el procesamiento.
+- [x] Autorizar a la Function mediante `Sites.Selected` y `write` exclusivamente sobre `/sites/facturas` (identidad administrada `7a133f34-b993-407d-8a14-90b0097d5691`), verificado el 17 de noviembre.
+- [ ] Reintentar tras propagación de Exchange Online la creación de la referencia de identidad administrada y asignar `Application Mail.Read` exclusivamente a `direccionfinanciera@grupmedicdental.com`; verificar con `Test-ServicePrincipalAuthorization`.
+- [ ] Definir la regla o procedimiento para mover únicamente facturas autorizadas a `Facturas Copilot`; no activar procesamiento hasta entonces.
+- [ ] Integrar, revisar y desplegar `feature/archivo-por-receptor` (archivado por sociedad receptora y metadato `Área`) antes de la primera campaña operativa.
+- [ ] Ejecutar una prueba de producción controlada con un PDF nuevo solo después de verificar el acceso del buzón, maestros/listas y configuración de negocio.
 - [ ] Acordar y configurar el revisor obligatorio de despliegues de producción en el entorno GitHub `prod` antes de la activación operativa.
 
 ## Integración Microsoft 365 — en espera del cliente

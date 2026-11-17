@@ -1,6 +1,18 @@
 # Contexto de reanudación
 
-Actualizado: 11 de noviembre de 2026, identidad OIDC y entorno GitHub de producción preparados; SharePoint pendiente de sitio aislado.
+Actualizado: 17 de noviembre de 2026, pausa tras desplegar producción y autorizar SharePoint.
+
+## Punto exacto de reanudación — 17 de noviembre de 2026
+
+- Producción desplegada correctamente desde `main` mediante GitHub Actions/OIDC: ejecución `44140874826` y relanzamiento `44142537178`. Function App: `func-facturas-copilot-prod-x3vbp5xlyl4ua`.
+- Los proveedores de recursos requeridos ya están registrados: `Microsoft.Storage`, `Microsoft.CognitiveServices`, `Microsoft.KeyVault`, `Microsoft.Web`, `Microsoft.OperationalInsights` y `Microsoft.Insights`.
+- La identidad administrada de producción es `7a133f34-b993-407d-8a14-90b0097d5691` (client ID `838013ee-7821-4ade-9a1e-3f215a8ddd48`). Tiene `Sites.Selected` y permiso `write` exclusivamente sobre `https://grupmedicdental.sharepoint.com/sites/facturas`; no tiene acceso global a SharePoint.
+- Miguel Yesan figura asignado como `Global Administrator` en Entra. `direccionfinanciera@grupmedicdental.com` es Owner de Azure pero no tiene roles de Entra; no usar su contraseña ni su identidad para operaciones técnicas.
+- Pendiente inmediato: Exchange Online todavía no reconoce la identidad administrada al ejecutar `New-ServicePrincipal` para Application RBAC (`insufficient access rights` / replicación de directorio). Reintentar `scripts/grant-function-mailbox-rbac.ps1` con los IDs anteriores, conectado como Miguel, hasta que cree la referencia y valide `Application Mail.Read` **solo** sobre `direccionfinanciera@grupmedicdental.com`.
+- Las variables de seguridad permanecen cerradas: `INVOICE_PROCESSING_ENABLED=False`, `INVOICE_PROCESSING_NOT_BEFORE=9999-12-31T23:59:59Z` y `PAYMENT_FORECAST_IMPORT_ENABLED=False`. No realizar pruebas con correos/facturas reales hasta completar y verificar el acceso al buzón.
+- La API de producción responde con `401` sin token, comportamiento esperado. El consentimiento de Azure CLI para `api://c1ab74c4-2f44-4641-80f9-be83c5724b4d/.default` sigue pendiente si se quiere volver a verificar `/api/health` autenticado.
+- La funcionalidad solicitada por cliente para archivar por sociedad receptora y registrar `Área` sigue aislada en `feature/archivo-por-receptor`; no está integrada ni desplegada en `main`.
+- Antes de activar operación: completar el permiso de buzón, preparar/validar maestros y listas de producción, definir el procedimiento para mover solo facturas autorizadas a `Facturas Copilot`, integrar y revisar la rama de receptor/área, y ejecutar una prueba controlada con un PDF nuevo.
 
 ## Objetivo
 
