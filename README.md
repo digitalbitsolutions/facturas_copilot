@@ -4,7 +4,7 @@ Este repositorio contiene el núcleo TypeScript y la documentación de una soluc
 
 ## Estado
 
-- Fase actual: producción DENTAL CATALUNYA desplegada el 17 de noviembre de 2026. La Function tiene acceso de escritura restringido al sitio SharePoint de facturas; la autorización restringida del buzón aún espera la propagación de la identidad administrada en Exchange Online. El procesamiento automático permanece desactivado.
+- Fase actual: producción DENTAL CATALUNYA desplegada el 17 de noviembre de 2026. La Function tiene acceso de escritura restringido al sitio SharePoint de facturas y `Application Mail.Read` limitado exclusivamente al buzón de facturas. El procesamiento automático permanece desactivado.
 - Núcleo de facturas: validación, nomenclatura, duplicados, estados, excepciones e idempotencia.
 - Integración: lectura restringida del buzón y circuito clasificación → extracción → proveedor → validación → archivo conectado con estado persistente en SharePoint; las excepciones se resuelven de forma auditable y actualizan el estado terminal del proceso.
 - Conciliación: importación por lotes, normalización, duplicidad y puntuación explicable implementadas; aceptación automática deshabilitada.
@@ -12,7 +12,7 @@ Este repositorio contiene el núcleo TypeScript y la documentación de una soluc
 - Infraestructura: Bicep para Flex Consumption, Storage, Application Insights, Log Analytics y Key Vault con identidades administradas.
 - Arquitectura operativa: Azure Functions, Microsoft Graph, Document Intelligence y SharePoint Lists, sin conectores de automatización externos.
 - Pruebas: 81 superadas.
-- Pausa operativa: no mover ni enviar facturas a `Facturas Copilot` hasta completar `Application Mail.Read` sobre el buzón, verificarlo y ejecutar una prueba controlada de extremo a extremo.
+- Pausa operativa: no mover ni enviar facturas a `Facturas Copilot` hasta definir el procedimiento de entrada autorizada y ejecutar una prueba controlada de extremo a extremo.
 - Política de desarrollo vigente: **solo Codex** para desarrollo, revisión y generación de código. Las pruebas previas con modelos locales no demostraron ahorro neto y quedan descartadas.
 - PRD funcional vigente: [PRD_Automatizacion_Facturas_M365_Copilot_v4.md](./PRD_Automatizacion_Facturas_M365_Copilot_v4.md).
 
