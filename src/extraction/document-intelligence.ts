@@ -209,7 +209,7 @@ export class DocumentIntelligenceInvoiceExtractor implements InvoiceExtractor {
       if (payload.status === "succeeded") {
         const fields = payload.analyzeResult?.documents?.[0]?.fields;
         if (fields && !fields.SubTotal && !fields.TotalTax && !fields.TaxDetails) {
-          console.warn("Invoice analysis omitted consolidated fiscal fields", fiscalFieldShape(fields));
+          console.warn(`Invoice analysis omitted consolidated fiscal fields ${JSON.stringify(fiscalFieldShape(fields))}`);
         }
         return enrichWithFacturX(mapInvoiceResult(payload), input.content);
       }
