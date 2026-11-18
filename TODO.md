@@ -27,6 +27,7 @@
 - [x] Desplegar en producción el commit `84b298d` con receptor y líneas de factura, manteniendo todos los procesamientos desactivados (workflow `44357513227`, correcto).
 - [x] Aprovisionar `MaestroReceptores` y `LineasFactura` en producción y añadir los campos `RegistroFacturas.Receptor` y `RegistroFacturas.NIFReceptor` (18 de noviembre).
 - [x] Cargar y activar los cinco receptores autorizados en `MaestroReceptores`, con NIF, aliases y códigos estables (18 de noviembre).
+- [x] Preparar el workflow para habilitar explícitamente el enrutamiento por receptor solo durante una prueba controlada.
 - [ ] Ejecutar una prueba controlada de factura con varios ítems cuando el acceso restringido al buzón esté verificado. Acordar un catálogo de conceptos normalizados solo si las búsquedas por texto de descripción no son suficientes.
 - [ ] Ejecutar una prueba de producción controlada con un PDF nuevo solo después de verificar el acceso del buzón, maestros/listas y configuración de negocio.
 - [ ] Acordar y configurar el revisor obligatorio de despliegues de producción en el entorno GitHub `prod` antes de la activación operativa.

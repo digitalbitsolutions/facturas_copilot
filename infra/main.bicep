@@ -38,6 +38,9 @@ param invoiceProcessingEnabled bool = false
 @description('Only messages received at or after this ISO instant may enter automatic invoice processing.')
 param invoiceProcessingNotBefore string = '9999-12-31T23:59:59Z'
 
+@description('Require an active match in MaestroReceptores before archiving an invoice. Keep disabled until the controlled recipient-routing pilot.')
+param invoiceRecipientRoutingEnabled bool = false
+
 @description('Versioned bank-import profile. Keep standard-es-v1 to retain the previous mapping; use bankinter-simulated-csv-v1 only for the supplied signed CSV pilot.')
 param bankImportProfile string = 'standard-es-v1'
 
@@ -200,7 +203,7 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
         { name: 'M365_INVOICE_PROCESSES_LIST', value: 'ProcesosFacturas' }
         { name: 'M365_INVOICE_REGISTRY_LIST', value: 'RegistroFacturas' }
         { name: 'INVOICE_PROCESSING_ENABLED', value: string(invoiceProcessingEnabled) }
-        { name: 'INVOICE_RECIPIENT_ROUTING_ENABLED', value: 'false' }
+        { name: 'INVOICE_RECIPIENT_ROUTING_ENABLED', value: string(invoiceRecipientRoutingEnabled) }
         { name: 'INVOICE_PROCESSING_NOT_BEFORE', value: invoiceProcessingNotBefore }
         { name: 'INVOICE_MAIL_POLL_SCHEDULE', value: '30 */10 * * * *' }
         { name: 'M365_INVOICE_FOLDER', value: 'Facturas' }
