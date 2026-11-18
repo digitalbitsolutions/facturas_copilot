@@ -50,6 +50,36 @@ function derivedTaxableBase(total?: Field, tax?: Field): string | undefined {
   return (Math.round((totalValue - taxValue) * 100) / 100).toFixed(2);
 }
 
+function taxDetailAmounts(field?: Field): { taxableBase?: string; vatAmount?: string; confidence?: number } {
+  const details = field?.valueArray ?? [];
+  if (details.length === 0) return {};
+  let base = 0;
+  let tax = 0;
+  let hasBase = false;
+  let hasTax = false;
+  let minimumConfidence: number | undefined;
+  for (const { valueObject } of details) {
+    const detailBase = valueObject?.Amount?.valueCurrency?.amount ?? valueObject?.Amount?.valueNumber;
+    const detailTax = valueObject?.TaxAmount?.valueCurrency?.amount ?? valueObject?.TaxAmount?.valueNumber;
+    if (typeof detailBase === "number" && Number.isFinite(detailBase)) {
+      base += detailBase;
+      hasBase = true;
+    }
+    if (typeof detailTax === "number" && Number.isFinite(detailTax)) {
+      tax += detailTax;
+      hasTax = true;
+    }
+    for (const candidate of [valueObject?.Amount?.confidence, valueObject?.TaxAmount?.confidence]) {
+      if (typeof candidate === "number") minimumConfidence = minimumConfidence === undefined ? candidate : Math.min(minimumConfidence, candidate);
+    }
+  }
+  return {
+    ...(hasBase ? { taxableBase: base.toFixed(2) } : {}),
+    ...(hasTax ? { vatAmount: tax.toFixed(2) } : {}),
+    ...(minimumConfidence === undefined ? {} : { confidence: minimumConfidence }),
+  };
+}
+
 function lineItems(field?: Field): import("../invoices/types.ts").InvoiceLine[] | undefined {
   const lines = field?.valueArray?.flatMap(({ valueObject }) => {
     const description = text(valueObject?.Description);
@@ -73,11 +103,14 @@ export function mapInvoiceResult(payload: AnalyzeResponse): { invoice: Extracted
   const fields = payload.analyzeResult?.documents?.[0]?.fields;
   if (!fields) throw new Error("Document Intelligence did not detect an invoice");
   const supplier = text(fields.VendorAddressRecipient) ? fields.VendorAddressRecipient : fields.VendorName;
-  const taxableBase = amount(fields.SubTotal) ?? derivedTaxableBase(fields.InvoiceTotal, fields.TotalTax);
+  const taxDetails = taxDetailAmounts(fields.TaxDetails);
+  const vatAmount = amount(fields.TotalTax) ?? taxDetails.vatAmount;
+  const taxableBase = amount(fields.SubTotal) ?? derivedTaxableBase(fields.InvoiceTotal, fields.TotalTax) ?? taxDetails.taxableBase
+    ?? (vatAmount ? derivedTaxableBase(fields.InvoiceTotal, { valueNumber: Number(vatAmount) }) : undefined);
   const taxableBaseConfidence = fields.SubTotal?.confidence
     ?? (typeof fields.InvoiceTotal?.confidence === "number" && typeof fields.TotalTax?.confidence === "number"
       ? Math.min(fields.InvoiceTotal.confidence, fields.TotalTax.confidence)
-      : undefined);
+      : taxDetails.confidence);
   const currency = fields.InvoiceTotal?.valueCurrency?.currencyCode
     ?? fields.SubTotal?.valueCurrency?.currencyCode
     ?? fields.TotalTax?.valueCurrency?.currencyCode;
@@ -88,7 +121,7 @@ export function mapInvoiceResult(payload: AnalyzeResponse): { invoice: Extracted
       ...(text(fields.CustomerName) ? { recipientName: text(fields.CustomerName) } : {}),
       ...(text(fields.CustomerTaxId) ? { recipientTaxId: text(fields.CustomerTaxId) } : {}),
       ...(lines ? { lines } : {}),
-      dueDate: text(fields.DueDate), taxableBase, vatAmount: amount(fields.TotalTax),
+      dueDate: text(fields.DueDate), taxableBase, vatAmount,
       totalAmount: amount(fields.InvoiceTotal), currency: currency?.toUpperCase(),
     },
     confidence: {
@@ -99,6 +132,7 @@ export function mapInvoiceResult(payload: AnalyzeResponse): { invoice: Extracted
         vatAmount: "TotalTax", totalAmount: "InvoiceTotal", currency: "InvoiceTotal",
       }),
       ...(typeof taxableBaseConfidence === "number" ? { taxableBase: taxableBaseConfidence } : {}),
+      ...(fields.TotalTax?.confidence === undefined && typeof taxDetails.confidence === "number" ? { vatAmount: taxDetails.confidence } : {}),
     },
   };
 }

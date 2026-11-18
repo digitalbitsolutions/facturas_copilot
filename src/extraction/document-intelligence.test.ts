@@ -65,6 +65,22 @@ test("does not derive a zero base when the model mistakes tax for the invoice to
   assert.equal(extracted.confidence.taxableBase, 0.8);
 });
 
+test("uses the VAT breakdown when the model omits consolidated tax fields", () => {
+  const extracted = mapInvoiceResult({
+    status: "succeeded",
+    analyzeResult: { documents: [{ fields: {
+      InvoiceTotal: { valueCurrency: { amount: 121, currencyCode: "EUR" }, confidence: 0.95 },
+      TaxDetails: { valueArray: [
+        { valueObject: { Amount: { valueCurrency: { amount: 100 }, confidence: 0.88 }, TaxAmount: { valueCurrency: { amount: 21 }, confidence: 0.9 } } },
+      ] },
+    } }] },
+  });
+  assert.equal(extracted.invoice.taxableBase, "100.00");
+  assert.equal(extracted.invoice.vatAmount, "21.00");
+  assert.equal(extracted.confidence.taxableBase, 0.88);
+  assert.equal(extracted.confidence.vatAmount, 0.88);
+});
+
 test("retains every extracted invoice line for multi-concept invoices", () => {
   const extracted = mapInvoiceResult({
     status: "succeeded", analyzeResult: { documents: [{ fields: {
