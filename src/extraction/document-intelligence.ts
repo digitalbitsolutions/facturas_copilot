@@ -22,13 +22,6 @@ type AnalyzeResponse = {
   analyzeResult?: { documents?: Array<{ fields?: Record<string, Field> }> };
 };
 
-function fiscalFieldShape(fields: Record<string, Field>): Record<string, unknown> {
-  return Object.fromEntries(Object.entries(fields).map(([name, field]) => [name, {
-    currency: Boolean(field.valueCurrency), number: typeof field.valueNumber === "number", text: Boolean(field.valueString ?? field.valueDate),
-    items: field.valueArray?.map(({ valueObject }) => Object.keys(valueObject ?? {})) ?? [],
-  }]));
-}
-
 export type DocumentIntelligenceOptions = {
   fetch?: typeof fetch;
   pollIntervalMs?: number;
@@ -46,8 +39,22 @@ function text(field?: Field): string | undefined {
 }
 
 function amount(field?: Field): string | undefined {
-  const value = field?.valueCurrency?.amount ?? field?.valueNumber;
+  const value = numericAmount(field);
   return typeof value === "number" && Number.isFinite(value) ? value.toFixed(2) : undefined;
+}
+
+function numericAmount(field?: Field): number | undefined {
+  const typedValue = field?.valueCurrency?.amount ?? field?.valueNumber;
+  if (typeof typedValue === "number" && Number.isFinite(typedValue)) return typedValue;
+  const textValue = field?.valueString ?? field?.content;
+  if (!textValue) return undefined;
+  const value = textValue.trim().replace(/[\s\u00a0€]/g, "");
+  const normalized = /^\d{1,3}(?:\.\d{3})*,\d{1,2}$/.test(value)
+    ? value.replace(/\./g, "").replace(",", ".")
+    : /^\d+(?:[.,]\d{1,2})?$/.test(value) ? value.replace(",", ".") : undefined;
+  if (!normalized) return undefined;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : undefined;
 }
 
 function derivedTaxableBase(total?: Field, tax?: Field): string | undefined {
@@ -93,7 +100,7 @@ function lineItemAmounts(field?: Field): { taxableBase?: string; confidence?: nu
   let total = 0;
   let minimumConfidence: number | undefined;
   for (const { valueObject } of details) {
-    const value = valueObject?.Amount?.valueCurrency?.amount ?? valueObject?.Amount?.valueNumber;
+    const value = numericAmount(valueObject?.Amount);
     if (typeof value !== "number" || !Number.isFinite(value)) return {};
     total += value;
     const confidence = valueObject?.Amount?.confidence;
@@ -206,13 +213,7 @@ export class DocumentIntelligenceInvoiceExtractor implements InvoiceExtractor {
       const response = await this.fetchImpl(operationUrl, { headers: { authorization: `Bearer ${token}` } });
       if (!response.ok) throw await this.responseError("poll", response);
       const payload = await response.json() as AnalyzeResponse;
-      if (payload.status === "succeeded") {
-        const fields = payload.analyzeResult?.documents?.[0]?.fields;
-        if (fields && !fields.SubTotal && !fields.TotalTax && !fields.TaxDetails) {
-          console.warn(`Invoice analysis omitted consolidated fiscal fields ${JSON.stringify(fiscalFieldShape(fields))}`);
-        }
-        return enrichWithFacturX(mapInvoiceResult(payload), input.content);
-      }
+      if (payload.status === "succeeded") return enrichWithFacturX(mapInvoiceResult(payload), input.content);
       if (payload.status === "failed") throw new Error(`Document Intelligence analysis failed: ${payload.error?.message ?? payload.error?.code ?? "unknown error"}`);
     }
     throw new Error("Document Intelligence analysis timed out");
