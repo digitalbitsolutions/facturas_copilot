@@ -141,6 +141,14 @@ function uniformLineTaxRate(field?: Field): { percent?: number; confidence?: num
     : {};
 }
 
+function lineTaxShapes(field?: Field): Array<{ currency: boolean; number: boolean; text: boolean; percent: boolean }> {
+  return (field?.valueArray ?? []).map(({ valueObject }) => {
+    const tax = valueObject?.Tax;
+    const raw = tax?.valueString ?? tax?.content;
+    return { currency: Boolean(tax?.valueCurrency), number: typeof tax?.valueNumber === "number", text: typeof raw === "string", percent: typeof raw === "string" && raw.includes("%") };
+  });
+}
+
 function lineTaxAmounts(field?: Field): { vatAmount?: string; confidence?: number } {
   const details = field?.valueArray ?? [];
   if (details.length === 0) return {};
@@ -264,7 +272,13 @@ export class DocumentIntelligenceInvoiceExtractor implements InvoiceExtractor {
       const response = await this.fetchImpl(operationUrl, { headers: { authorization: `Bearer ${token}` } });
       if (!response.ok) throw await this.responseError("poll", response);
       const payload = await response.json() as AnalyzeResponse;
-      if (payload.status === "succeeded") return enrichWithFacturX(mapInvoiceResult(payload), input.content);
+      if (payload.status === "succeeded") {
+        const fields = payload.analyzeResult?.documents?.[0]?.fields;
+        if (fields && !fields.SubTotal && !fields.TotalTax && !fields.TaxDetails) {
+          console.warn(`Invoice analysis fiscal line shapes ${JSON.stringify(lineTaxShapes(fields.Items))}`);
+        }
+        return enrichWithFacturX(mapInvoiceResult(payload), input.content);
+      }
       if (payload.status === "failed") throw new Error(`Document Intelligence analysis failed: ${payload.error?.message ?? payload.error?.code ?? "unknown error"}`);
     }
     throw new Error("Document Intelligence analysis timed out");
