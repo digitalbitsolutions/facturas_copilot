@@ -26,7 +26,8 @@
 - [x] Adaptar y validar localmente la funcionalidad de receptor: conservar el archivado por sociedad receptora, eliminar `Área` y persistir los ítems como relación uno-a-muchos en `LineasFactura`. La extracción conserva las descripciones de línea; no reutiliza el `Concepto` de movimientos bancarios ni reduce varios conceptos a un único valor.
 - [x] Desplegar en producción el commit `84b298d` con receptor y líneas de factura, manteniendo todos los procesamientos desactivados (workflow `44357513227`, correcto).
 - [x] Aprovisionar `MaestroReceptores` y `LineasFactura` en producción y añadir los campos `RegistroFacturas.Receptor` y `RegistroFacturas.NIFReceptor` (18 de noviembre).
-- [ ] Cargar y validar los receptores autorizados en `MaestroReceptores`; después ejecutar una prueba controlada de factura con varios ítems cuando el acceso restringido al buzón esté verificado. Acordar un catálogo de conceptos normalizados solo si las búsquedas por texto de descripción no son suficientes.
+- [x] Cargar y activar los cinco receptores autorizados en `MaestroReceptores`, con NIF, aliases y códigos estables (18 de noviembre).
+- [ ] Ejecutar una prueba controlada de factura con varios ítems cuando el acceso restringido al buzón esté verificado. Acordar un catálogo de conceptos normalizados solo si las búsquedas por texto de descripción no son suficientes.
 - [ ] Ejecutar una prueba de producción controlada con un PDF nuevo solo después de verificar el acceso del buzón, maestros/listas y configuración de negocio.
 - [ ] Acordar y configurar el revisor obligatorio de despliegues de producción en el entorno GitHub `prod` antes de la activación operativa.
 
