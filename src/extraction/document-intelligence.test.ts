@@ -144,6 +144,22 @@ test("derives fiscal amounts from a uniform line tax rate when line amounts are 
   assert.equal(extracted.confidence.vatAmount, 0.91);
 });
 
+test("sums line tax amounts before using inconsistent line amounts", () => {
+  const extracted = mapInvoiceResult({
+    status: "succeeded",
+    analyzeResult: { documents: [{ fields: {
+      InvoiceTotal: { valueCurrency: { amount: 1876.45, currencyCode: "EUR" }, confidence: 0.93 },
+      Items: { valueArray: [
+        { valueObject: { Amount: { valueString: "2,393.41" }, Tax: { valueCurrency: { amount: 325.66 }, confidence: 0.91 } } },
+      ] },
+    } }] },
+  });
+  assert.equal(extracted.invoice.taxableBase, "1550.79");
+  assert.equal(extracted.invoice.vatAmount, "325.66");
+  assert.equal(extracted.confidence.taxableBase, 0.91);
+  assert.equal(extracted.confidence.vatAmount, 0.91);
+});
+
 test("retains every extracted invoice line for multi-concept invoices", () => {
   const extracted = mapInvoiceResult({
     status: "succeeded", analyzeResult: { documents: [{ fields: {

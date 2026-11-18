@@ -141,6 +141,21 @@ function uniformLineTaxRate(field?: Field): { percent?: number; confidence?: num
     : {};
 }
 
+function lineTaxAmounts(field?: Field): { vatAmount?: string; confidence?: number } {
+  const details = field?.valueArray ?? [];
+  if (details.length === 0) return {};
+  let total = 0;
+  let minimumConfidence: number | undefined;
+  for (const { valueObject } of details) {
+    const value = numericAmount(valueObject?.Tax);
+    if (typeof value !== "number") return {};
+    total += value;
+    const confidence = valueObject?.Tax?.confidence;
+    if (typeof confidence === "number") minimumConfidence = minimumConfidence === undefined ? confidence : Math.min(minimumConfidence, confidence);
+  }
+  return { vatAmount: total.toFixed(2), ...(minimumConfidence === undefined ? {} : { confidence: minimumConfidence }) };
+}
+
 function derivedTaxableBaseFromRate(total?: Field, percent?: number): string | undefined {
   const totalValue = numericAmount(total);
   if (typeof totalValue !== "number" || !Number.isFinite(totalValue) || typeof percent !== "number" || percent <= 0) return undefined;
@@ -173,14 +188,16 @@ export function mapInvoiceResult(payload: AnalyzeResponse): { invoice: Extracted
   const taxDetails = taxDetailAmounts(fields.TaxDetails);
   const itemAmounts = lineItemAmounts(fields.Items);
   const lineTaxRate = uniformLineTaxRate(fields.Items);
+  const lineTax = lineTaxAmounts(fields.Items);
   const taxableBase = amount(fields.SubTotal) ?? derivedTaxableBase(fields.InvoiceTotal, fields.TotalTax) ?? taxDetails.taxableBase
+    ?? (lineTax.vatAmount ? derivedTaxableBase(fields.InvoiceTotal, { valueNumber: Number(lineTax.vatAmount) }) : undefined)
     ?? derivedTaxableBaseFromRate(fields.InvoiceTotal, lineTaxRate.percent)
     ?? itemAmounts.taxableBase;
-  const vatAmount = amount(fields.TotalTax) ?? taxDetails.vatAmount ?? derivedVatAmount(fields.InvoiceTotal, taxableBase);
+  const vatAmount = amount(fields.TotalTax) ?? taxDetails.vatAmount ?? lineTax.vatAmount ?? derivedVatAmount(fields.InvoiceTotal, taxableBase);
   const taxableBaseConfidence = fields.SubTotal?.confidence
     ?? (typeof fields.InvoiceTotal?.confidence === "number" && typeof fields.TotalTax?.confidence === "number"
       ? Math.min(fields.InvoiceTotal.confidence, fields.TotalTax.confidence)
-      : taxDetails.confidence ?? lineTaxRate.confidence ?? itemAmounts.confidence);
+      : taxDetails.confidence ?? lineTax.confidence ?? lineTaxRate.confidence ?? itemAmounts.confidence);
   const derivedVatConfidence = typeof fields.InvoiceTotal?.confidence === "number" && typeof taxableBaseConfidence === "number"
     ? Math.min(fields.InvoiceTotal.confidence, taxableBaseConfidence)
     : undefined;
@@ -205,8 +222,8 @@ export function mapInvoiceResult(payload: AnalyzeResponse): { invoice: Extracted
         vatAmount: "TotalTax", totalAmount: "InvoiceTotal", currency: "InvoiceTotal",
       }),
       ...(typeof taxableBaseConfidence === "number" ? { taxableBase: taxableBaseConfidence } : {}),
-      ...(fields.TotalTax?.confidence === undefined && typeof (taxDetails.confidence ?? derivedVatConfidence) === "number"
-        ? { vatAmount: taxDetails.confidence ?? derivedVatConfidence }
+      ...(fields.TotalTax?.confidence === undefined && typeof (taxDetails.confidence ?? lineTax.confidence ?? derivedVatConfidence) === "number"
+        ? { vatAmount: taxDetails.confidence ?? lineTax.confidence ?? derivedVatConfidence }
         : {}),
     },
   };
