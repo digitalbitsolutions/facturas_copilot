@@ -113,6 +113,21 @@ test("normalizes Spanish formatted line amounts before deriving VAT", () => {
   assert.equal(extracted.invoice.vatAmount, "21.00");
 });
 
+test("normalizes international formatted line amounts before deriving VAT", () => {
+  const extracted = mapInvoiceResult({
+    status: "succeeded",
+    analyzeResult: { documents: [{ fields: {
+      InvoiceTotal: { valueCurrency: { amount: 121, currencyCode: "EUR" }, confidence: 0.95 },
+      Items: { valueArray: [
+        { valueObject: { Amount: { valueString: "60.00 EUR", confidence: 0.9 } } },
+        { valueObject: { Amount: { content: "40.00", confidence: 0.92 } } },
+      ] },
+    } }] },
+  });
+  assert.equal(extracted.invoice.taxableBase, "100.00");
+  assert.equal(extracted.invoice.vatAmount, "21.00");
+});
+
 test("retains every extracted invoice line for multi-concept invoices", () => {
   const extracted = mapInvoiceResult({
     status: "succeeded", analyzeResult: { documents: [{ fields: {

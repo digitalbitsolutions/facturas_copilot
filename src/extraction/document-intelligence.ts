@@ -48,11 +48,17 @@ function numericAmount(field?: Field): number | undefined {
   if (typeof typedValue === "number" && Number.isFinite(typedValue)) return typedValue;
   const textValue = field?.valueString ?? field?.content;
   if (!textValue) return undefined;
-  const value = textValue.trim().replace(/[\s\u00a0€]/g, "");
-  const normalized = /^\d{1,3}(?:\.\d{3})*,\d{1,2}$/.test(value)
-    ? value.replace(/\./g, "").replace(",", ".")
-    : /^\d+(?:[.,]\d{1,2})?$/.test(value) ? value.replace(",", ".") : undefined;
-  if (!normalized) return undefined;
+  const value = textValue.trim().replace(/[\s\u00a0]/g, "").replace(/(?:€|EUR|USD)$/i, "");
+  if (!/^\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?$|^\d+(?:[.,]\d{1,2})?$/.test(value)) return undefined;
+  const lastComma = value.lastIndexOf(",");
+  const lastDot = value.lastIndexOf(".");
+  const lastSeparator = Math.max(lastComma, lastDot);
+  const decimalSeparator = lastComma >= 0 && lastDot >= 0
+    ? (lastComma > lastDot ? "," : ".")
+    : lastSeparator >= 0 && value.length - lastSeparator - 1 <= 2 ? value[lastSeparator] : undefined;
+  const normalized = decimalSeparator
+    ? value.replace(decimalSeparator === "," ? /\./g : /,/g, "").replace(decimalSeparator, ".")
+    : value.replace(/[.,]/g, "");
   const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : undefined;
 }
