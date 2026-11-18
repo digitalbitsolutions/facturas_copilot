@@ -22,6 +22,13 @@ type AnalyzeResponse = {
   analyzeResult?: { documents?: Array<{ fields?: Record<string, Field> }> };
 };
 
+function fiscalFieldShape(fields: Record<string, Field>): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(fields).map(([name, field]) => [name, {
+    currency: Boolean(field.valueCurrency), number: typeof field.valueNumber === "number", text: Boolean(field.valueString ?? field.valueDate),
+    items: field.valueArray?.map(({ valueObject }) => Object.keys(valueObject ?? {})) ?? [],
+  }]));
+}
+
 export type DocumentIntelligenceOptions = {
   fetch?: typeof fetch;
   pollIntervalMs?: number;
@@ -199,7 +206,13 @@ export class DocumentIntelligenceInvoiceExtractor implements InvoiceExtractor {
       const response = await this.fetchImpl(operationUrl, { headers: { authorization: `Bearer ${token}` } });
       if (!response.ok) throw await this.responseError("poll", response);
       const payload = await response.json() as AnalyzeResponse;
-      if (payload.status === "succeeded") return enrichWithFacturX(mapInvoiceResult(payload), input.content);
+      if (payload.status === "succeeded") {
+        const fields = payload.analyzeResult?.documents?.[0]?.fields;
+        if (fields && !fields.SubTotal && !fields.TotalTax && !fields.TaxDetails) {
+          console.warn("Invoice analysis omitted consolidated fiscal fields", fiscalFieldShape(fields));
+        }
+        return enrichWithFacturX(mapInvoiceResult(payload), input.content);
+      }
       if (payload.status === "failed") throw new Error(`Document Intelligence analysis failed: ${payload.error?.message ?? payload.error?.code ?? "unknown error"}`);
     }
     throw new Error("Document Intelligence analysis timed out");
