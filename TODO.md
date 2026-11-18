@@ -22,13 +22,14 @@
 - [x] Publicar el cambio que limita la lectura a `M365_MAIL_FOLDER=Facturas Copilot`.
 - [x] Autorizar a la Function mediante `Sites.Selected` y `write` exclusivamente sobre `/sites/facturas` (identidad administrada `7a133f34-b993-407d-8a14-90b0097d5691`), verificado el 17 de noviembre.
 - [x] Crear la referencia de identidad administrada en Exchange y asignar `Application Mail.Read` exclusivamente a `direccionfinanciera@grupmedicdental.com`; `Test-ServicePrincipalAuthorization` confirmó `InScope=True` el 18 de noviembre. El rol temporal `Exchange Administrator` de Dirección Financiera se retiró tras la operación.
-- [ ] Definir la regla o procedimiento para mover únicamente facturas autorizadas a `Facturas Copilot`; no activar procesamiento hasta entonces.
+- [x] Definir y activar la regla de entrada `Facturas Copilot - candidatas 2`: correos nuevos con adjuntos y `factura` en el asunto se enrutan a `Facturas Copilot`; la Function valida que sean facturas autorizadas antes de archivarlas. No se aplicó al histórico.
 - [x] Adaptar y validar localmente la funcionalidad de receptor: conservar el archivado por sociedad receptora, eliminar `Área` y persistir los ítems como relación uno-a-muchos en `LineasFactura`. La extracción conserva las descripciones de línea; no reutiliza el `Concepto` de movimientos bancarios ni reduce varios conceptos a un único valor.
 - [x] Desplegar en producción el commit `84b298d` con receptor y líneas de factura, manteniendo todos los procesamientos desactivados (workflow `44357513227`, correcto).
 - [x] Aprovisionar `MaestroReceptores` y `LineasFactura` en producción y añadir los campos `RegistroFacturas.Receptor` y `RegistroFacturas.NIFReceptor` (18 de noviembre).
 - [x] Cargar y activar los cinco receptores autorizados en `MaestroReceptores`, con NIF, aliases y códigos estables (18 de noviembre).
 - [x] Preparar el workflow para habilitar explícitamente el enrutamiento por receptor solo durante una prueba controlada.
-- [ ] Ejecutar una prueba controlada de factura con varios ítems cuando el acceso restringido al buzón esté verificado. Acordar un catálogo de conceptos normalizados solo si las búsquedas por texto de descripción no son suficientes.
+- [x] Desplegar el piloto controlado de receptor con ejecución `44388498841`: procesamiento y validación de receptor activados, previsiones desactivadas y corte `2026-11-18T20:07:43Z`.
+- [ ] Publicar la corrección de clasificación de adjuntos nombrados como factura y repetir la prueba controlada con un correo nuevo: el primer PDF de DENTALIS llegó al buzón el 18 de noviembre, pero quedó `diverted` con `EX-03` porque la lectura solo detectó el encabezado. Acordar un catálogo de conceptos normalizados solo si las búsquedas por texto de descripción no son suficientes.
 - [ ] Ejecutar una prueba de producción controlada con un PDF nuevo solo después de verificar el acceso del buzón, maestros/listas y configuración de negocio.
 - [ ] Acordar y configurar el revisor obligatorio de despliegues de producción en el entorno GitHub `prod` antes de la activación operativa.
 

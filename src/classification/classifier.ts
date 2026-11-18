@@ -21,6 +21,12 @@ const INVOICE_INDICATORS: Indicator[] = [
   { pattern: /\bnumero (?:de )?factura\b/, weight: 1, reason: "Contains invoice number" },
 ];
 
+const INVOICE_FILENAME_INDICATOR: Indicator = {
+  pattern: /\b(?:factura|invoice)\b/,
+  weight: 1,
+  reason: "Filename identifies the attachment as an invoice",
+};
+
 function normalized(value: string): string {
   return value.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().replace(/[^a-z0-9%]+/g, " ").trim();
 }
@@ -30,10 +36,16 @@ function evidence(text: string, indicators: Indicator[]): { score: number; reaso
   return { score: matched.reduce((total, { weight }) => total + weight, 0), reasons: matched.map(({ reason }) => reason) };
 }
 
-export function classifyDocumentText(content: string): DocumentClassification {
+export function classifyDocumentText(content: string, originalFilename?: string): DocumentClassification {
   const text = normalized(content);
   const bank = evidence(text, BANK_INDICATORS);
   const invoice = evidence(text, INVOICE_INDICATORS);
+  const filename = normalized(originalFilename ?? "");
+  const hasInvoiceHeading = invoice.reasons.some((reason) => reason.startsWith("Contains invoice heading"));
+  if (hasInvoiceHeading && INVOICE_FILENAME_INDICATOR.pattern.test(filename)) {
+    invoice.score += INVOICE_FILENAME_INDICATOR.weight;
+    invoice.reasons.push(INVOICE_FILENAME_INDICATOR.reason);
+  }
   if (bank.score >= 6 && bank.score > invoice.score) {
     return { kind: "bank_settlement", confidence: Math.min(0.99, 0.75 + bank.score * 0.02), reasons: bank.reasons };
   }

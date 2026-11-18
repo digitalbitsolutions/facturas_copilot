@@ -1,6 +1,6 @@
 # Contexto de reanudación
 
-Actualizado: 18 de noviembre de 2026, despliegue de receptor y líneas de factura completado; operación aún cerrada.
+Actualizado: 18 de noviembre de 2026, piloto controlado de receptor desplegado; a la espera de un único correo de prueba autorizado.
 
 Responsable documentado: Néstor — Jefe de proyecto.
 
@@ -17,8 +17,10 @@ Responsable documentado: Néstor — Jefe de proyecto.
 - El 18 de noviembre se implementó y publicó el commit `84b298d`: receptor validable contra `MaestroReceptores`, archivado por sociedad receptora y lista idempotente `LineasFactura` con una fila por ítem extraído. No existe campo ni columna `Área`. La extracción conserva descripción, cantidad, precio unitario e importe cuando Document Intelligence los proporciona. `npm.cmd run check` terminó correctamente: compilación y 81 pruebas superadas. El workflow de producción `44357513227` finalizó correctamente, publicando infraestructura y Function con los procesamientos aún desactivados.
 - El 18 de noviembre, mediante Microsoft Graph y una cuenta administradora del tenant, se crearon en `https://grupmedicdental.sharepoint.com/sites/facturas` las listas `LineasFactura` y `MaestroReceptores`; también se añadieron `RegistroFacturas.Receptor` y `RegistroFacturas.NIFReceptor`. No se ha cargado ningún receptor ni se ha habilitado el procesamiento.
 - El 18 de noviembre se cargaron y activaron cinco receptores en `MaestroReceptores`: `TREO_2025` (`B67915157`), `DENTALIS_DICTUM` (`B55641500`), `DENTAL_RIPOLL` (`B16796930`), `DENTAL_CLINIC_REUS` (`B44833002`) y `DC_MOLINS` (`B16896318`). Sus aliases comerciales se almacenaron separados por punto y coma, el formato que consume el directorio de receptores. No se ha habilitado el procesamiento.
-- Se preparó una entrada explícita del workflow para activar `INVOICE_RECIPIENT_ROUTING_ENABLED` solo en la prueba controlada. Permanecerá en `false` hasta el despliegue de esa prueba; no se ha activado el procesamiento ni movido ningún correo.
-- Antes de activar operación: definir el procedimiento para mover solo facturas autorizadas a `Facturas Copilot` y ejecutar una prueba controlada con un PDF nuevo.
+- La ejecución 63 de `Deploy Azure Function` (`44388498841`) terminó correctamente el 18 de noviembre a las 20:14 UTC sobre el commit `1031018`. Es un piloto acotado: `INVOICE_PROCESSING_ENABLED=true`, `INVOICE_RECIPIENT_ROUTING_ENABLED=true`, `INVOICE_PROCESSING_NOT_BEFORE=2026-11-18T20:07:43Z` y `PAYMENT_FORECAST_IMPORT_ENABLED=false`. Solo puede procesar correos recibidos desde ese corte, con un receptor activo en `MaestroReceptores`.
+- El 18 de noviembre se creó y activó en `direccionfinanciera@grupmedicdental.com` la regla de Outlook `Facturas Copilot - candidatas 2`, situada en primera posición. Mueve a `Facturas Copilot` los correos nuevos que tienen adjuntos y contienen `factura` en el asunto; no se ejecutó sobre el histórico. La regla solo enruta candidatos: la Function conserva la clasificación, validación de proveedor y comprobación de receptor activo antes de archivar.
+- La primera prueba de producción llegó correctamente a `Facturas Copilot` mediante la regla y el sondeo de las 21:20:30 UTC leyó un correo y un PDF. Se desvió de forma segura con `EX-03`: `prebuilt-read` detectó solo el encabezado `Factura`, insuficiente para el umbral de clasificación, por lo que no se creó registro, líneas ni archivo. La excepción queda abierta como evidencia y el proceso es terminal por idempotencia.
+- Localmente se corrigió ese falso negativo: el clasificador suma la señal del nombre del adjunto únicamente cuando el texto ya contiene un encabezado `Factura` o `Invoice`; un nombre de archivo por sí solo no habilita la extracción. `npm.cmd run check` terminó correctamente con 83 pruebas superadas. Falta publicar el cambio y enviar un correo nuevo con el mismo PDF para repetir la prueba.
 
 ## Objetivo
 

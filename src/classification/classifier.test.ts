@@ -18,3 +18,13 @@ test("routes weak evidence to other and prioritizes a strong settlement heading"
   assert.equal(classifyDocumentText("Documento informativo con fecha e importe").kind, "other");
   assert.equal(classifyDocumentText("Factura Liquidación de recibos").kind, "bank_settlement");
 });
+
+test("accepts an invoice heading when the attachment filename independently identifies an invoice", () => {
+  const result = classifyDocumentText("FACTURA", "Factura 1-26-11161 DENTALIS DICTUM SL.pdf");
+  assert.equal(result.kind, "invoice");
+  assert.ok(result.reasons.includes("Filename identifies the attachment as an invoice"));
+});
+
+test("does not accept a filename alone as invoice evidence", () => {
+  assert.equal(classifyDocumentText("Documento informativo", "Factura.pdf").kind, "other");
+});
