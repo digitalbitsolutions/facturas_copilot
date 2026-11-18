@@ -81,6 +81,23 @@ test("uses the VAT breakdown when the model omits consolidated tax fields", () =
   assert.equal(extracted.confidence.vatAmount, 0.88);
 });
 
+test("derives fiscal amounts from complete pre-tax invoice line amounts", () => {
+  const extracted = mapInvoiceResult({
+    status: "succeeded",
+    analyzeResult: { documents: [{ fields: {
+      InvoiceTotal: { valueCurrency: { amount: 121, currencyCode: "EUR" }, confidence: 0.95 },
+      Items: { valueArray: [
+        { valueObject: { Amount: { valueCurrency: { amount: 60 }, confidence: 0.9 } } },
+        { valueObject: { Amount: { valueCurrency: { amount: 40 }, confidence: 0.92 } } },
+      ] },
+    } }] },
+  });
+  assert.equal(extracted.invoice.taxableBase, "100.00");
+  assert.equal(extracted.invoice.vatAmount, "21.00");
+  assert.equal(extracted.confidence.taxableBase, 0.9);
+  assert.equal(extracted.confidence.vatAmount, 0.9);
+});
+
 test("retains every extracted invoice line for multi-concept invoices", () => {
   const extracted = mapInvoiceResult({
     status: "succeeded", analyzeResult: { documents: [{ fields: {
