@@ -128,6 +128,22 @@ test("normalizes international formatted line amounts before deriving VAT", () =
   assert.equal(extracted.invoice.vatAmount, "21.00");
 });
 
+test("derives fiscal amounts from a uniform line tax rate when line amounts are inconsistent", () => {
+  const extracted = mapInvoiceResult({
+    status: "succeeded",
+    analyzeResult: { documents: [{ fields: {
+      InvoiceTotal: { valueCurrency: { amount: 1876.45, currencyCode: "EUR" }, confidence: 0.93 },
+      Items: { valueArray: [
+        { valueObject: { Amount: { valueString: "2,393.41" }, Tax: { valueString: "21%", confidence: 0.91 } } },
+      ] },
+    } }] },
+  });
+  assert.equal(extracted.invoice.taxableBase, "1550.79");
+  assert.equal(extracted.invoice.vatAmount, "325.66");
+  assert.equal(extracted.confidence.taxableBase, 0.91);
+  assert.equal(extracted.confidence.vatAmount, 0.91);
+});
+
 test("retains every extracted invoice line for multi-concept invoices", () => {
   const extracted = mapInvoiceResult({
     status: "succeeded", analyzeResult: { documents: [{ fields: {

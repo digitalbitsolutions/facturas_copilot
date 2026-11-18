@@ -122,6 +122,31 @@ function derivedVatAmount(total?: Field, taxableBase?: string): string | undefin
   return (Math.round((totalValue - baseValue) * 100) / 100).toFixed(2);
 }
 
+function uniformLineTaxRate(field?: Field): { percent?: number; confidence?: number } {
+  const details = field?.valueArray ?? [];
+  if (details.length === 0) return {};
+  const rates: number[] = [];
+  let minimumConfidence: number | undefined;
+  for (const { valueObject } of details) {
+    const tax = valueObject?.Tax;
+    const raw = tax?.valueNumber ?? tax?.valueString ?? tax?.content;
+    const text = typeof raw === "string" ? raw.trim().replace(",", ".") : undefined;
+    const percent = typeof raw === "number" ? raw : text && /^\d+(?:\.\d+)?%?$/.test(text) ? Number(text.replace("%", "")) : undefined;
+    if (typeof percent !== "number" || !Number.isFinite(percent) || percent <= 0 || percent > 100) return {};
+    rates.push(percent);
+    if (typeof tax?.confidence === "number") minimumConfidence = minimumConfidence === undefined ? tax.confidence : Math.min(minimumConfidence, tax.confidence);
+  }
+  return rates.every((rate) => Math.abs(rate - rates[0]) < 0.0001)
+    ? { percent: rates[0], ...(minimumConfidence === undefined ? {} : { confidence: minimumConfidence }) }
+    : {};
+}
+
+function derivedTaxableBaseFromRate(total?: Field, percent?: number): string | undefined {
+  const totalValue = numericAmount(total);
+  if (typeof totalValue !== "number" || !Number.isFinite(totalValue) || typeof percent !== "number" || percent <= 0) return undefined;
+  return (Math.round((totalValue / (1 + percent / 100)) * 100) / 100).toFixed(2);
+}
+
 function lineItems(field?: Field): import("../invoices/types.ts").InvoiceLine[] | undefined {
   const lines = field?.valueArray?.flatMap(({ valueObject }) => {
     const description = text(valueObject?.Description);
@@ -147,12 +172,15 @@ export function mapInvoiceResult(payload: AnalyzeResponse): { invoice: Extracted
   const supplier = text(fields.VendorAddressRecipient) ? fields.VendorAddressRecipient : fields.VendorName;
   const taxDetails = taxDetailAmounts(fields.TaxDetails);
   const itemAmounts = lineItemAmounts(fields.Items);
-  const taxableBase = amount(fields.SubTotal) ?? derivedTaxableBase(fields.InvoiceTotal, fields.TotalTax) ?? taxDetails.taxableBase ?? itemAmounts.taxableBase;
+  const lineTaxRate = uniformLineTaxRate(fields.Items);
+  const taxableBase = amount(fields.SubTotal) ?? derivedTaxableBase(fields.InvoiceTotal, fields.TotalTax) ?? taxDetails.taxableBase
+    ?? derivedTaxableBaseFromRate(fields.InvoiceTotal, lineTaxRate.percent)
+    ?? itemAmounts.taxableBase;
   const vatAmount = amount(fields.TotalTax) ?? taxDetails.vatAmount ?? derivedVatAmount(fields.InvoiceTotal, taxableBase);
   const taxableBaseConfidence = fields.SubTotal?.confidence
     ?? (typeof fields.InvoiceTotal?.confidence === "number" && typeof fields.TotalTax?.confidence === "number"
       ? Math.min(fields.InvoiceTotal.confidence, fields.TotalTax.confidence)
-      : taxDetails.confidence ?? itemAmounts.confidence);
+      : taxDetails.confidence ?? lineTaxRate.confidence ?? itemAmounts.confidence);
   const derivedVatConfidence = typeof fields.InvoiceTotal?.confidence === "number" && typeof taxableBaseConfidence === "number"
     ? Math.min(fields.InvoiceTotal.confidence, taxableBaseConfidence)
     : undefined;
