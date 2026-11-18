@@ -38,6 +38,13 @@ test("completes and correlates a valid invoice", async () => {
   assert.equal(result.input.messageId, "message-1");
 });
 
+test("keeps every invoice line when persisting a multi-concept invoice", async () => {
+  const context = setup({ extracted: { ...invoice, lines: [{ description: "MÁRKETING digital", amount: "20.00" }, { description: "Mantenimiento web", amount: "101.00" }] } });
+  assert.equal((await context.processor.process(input())).state, "completed");
+  const stored = [...context.registry.entries.values()][0];
+  assert.deepEqual(stored?.invoice.lines, [{ description: "MÁRKETING digital", amount: "20.00" }, { description: "Mantenimiento web", amount: "101.00" }]);
+});
+
 test("diverts non-invoices without extraction", async () => {
   const context = setup({ kind: "bank_settlement" });
   const result = await context.processor.process(input());

@@ -101,6 +101,8 @@ $definitions = @(
             @{ name = 'DuplicateKey'; indexed = $true; enforceUniqueValues = $true; text = @{} }
             @{ name = 'Proveedor'; text = @{} }
             @{ name = 'NIFProveedor'; text = @{} }
+            @{ name = 'Receptor'; text = @{} }
+            @{ name = 'NIFReceptor'; text = @{} }
             @{ name = 'NumeroFactura'; text = @{} }
             @{ name = 'FechaFactura'; dateTime = @{ format = 'dateOnly' } }
             @{ name = 'FechaVencimiento'; dateTime = @{ format = 'dateOnly' } }
@@ -115,6 +117,18 @@ $definitions = @(
         )
     },
     @{
+        displayName = 'LineasFactura'
+        columns = @(
+            @{ name = 'LineaClave'; indexed = $true; enforceUniqueValues = $true; text = @{} }
+            @{ name = 'ProcessId'; indexed = $true; text = @{} }
+            @{ name = 'NumeroLinea'; number = @{ decimalPlaces = 'none' } }
+            @{ name = 'Descripcion'; text = @{ allowMultipleLines = $true } }
+            @{ name = 'Cantidad'; text = @{} }
+            @{ name = 'PrecioUnitario'; text = @{} }
+            @{ name = 'Importe'; text = @{} }
+        )
+    },
+    @{
         displayName = 'MaestroProveedores'
         columns = @(
             @{ name = 'CodigoProveedor'; text = @{} }
@@ -123,6 +137,16 @@ $definitions = @(
             @{ name = 'Aliases'; text = @{ allowMultipleLines = $true } }
             @{ name = 'Activo'; boolean = @{} }
             @{ name = 'AceptaConfianzaReducida'; boolean = @{} }
+        )
+    },
+    @{
+        displayName = 'MaestroReceptores'
+        columns = @(
+            @{ name = 'CodigoReceptor'; text = @{} }
+            @{ name = 'RazonSocial'; text = @{} }
+            @{ name = 'NIF'; text = @{} }
+            @{ name = 'Aliases'; text = @{ allowMultipleLines = $true } }
+            @{ name = 'Activo'; boolean = @{} }
         )
     },
     @{

@@ -1,6 +1,8 @@
 # Contexto de reanudación
 
-Actualizado: 17 de noviembre de 2026, pausa tras desplegar producción y autorizar SharePoint.
+Actualizado: 18 de noviembre de 2026, pausa operativa tras implementar localmente receptor y líneas de factura.
+
+Responsable documentado: Néstor — Jefe de proyecto.
 
 ## Punto exacto de reanudación — 17 de noviembre de 2026
 
@@ -11,8 +13,9 @@ Actualizado: 17 de noviembre de 2026, pausa tras desplegar producción y autoriz
 - Pendiente inmediato: Exchange Online todavía no reconoce la identidad administrada al ejecutar `New-ServicePrincipal` para Application RBAC (`insufficient access rights` / replicación de directorio). Reintentar `scripts/grant-function-mailbox-rbac.ps1` con los IDs anteriores, conectado como Miguel, hasta que cree la referencia y valide `Application Mail.Read` **solo** sobre `direccionfinanciera@grupmedicdental.com`.
 - Las variables de seguridad permanecen cerradas: `INVOICE_PROCESSING_ENABLED=False`, `INVOICE_PROCESSING_NOT_BEFORE=9999-12-31T23:59:59Z` y `PAYMENT_FORECAST_IMPORT_ENABLED=False`. No realizar pruebas con correos/facturas reales hasta completar y verificar el acceso al buzón.
 - La API de producción responde con `401` sin token, comportamiento esperado. El consentimiento de Azure CLI para `api://c1ab74c4-2f44-4641-80f9-be83c5724b4d/.default` sigue pendiente si se quiere volver a verificar `/api/health` autenticado.
-- La funcionalidad solicitada por cliente para archivar por sociedad receptora y registrar `Área` sigue aislada en `feature/archivo-por-receptor`; no está integrada ni desplegada en `main`.
-- Antes de activar operación: completar el permiso de buzón, preparar/validar maestros y listas de producción, definir el procedimiento para mover solo facturas autorizadas a `Facturas Copilot`, integrar y revisar la rama de receptor/área, y ejecutar una prueba controlada con un PDF nuevo.
+- La funcionalidad solicitada por cliente partió de `feature/archivo-por-receptor`; el 18 de noviembre se adaptó localmente sin `Área` y aún no se ha desplegado en `main` ni en producción. Néstor confirmó que MÁRKETING es un ejemplo de `Concepto`, no un `Área`: el campo `Área` no se incorporará. Si se requieren búsquedas por concepto, se deberá acordar su catálogo y extraerlos de las líneas/descripciones de la factura, no del concepto del extracto bancario. Una factura puede tener varios conceptos: se conservarán como líneas relacionadas, no en un único campo que descarte información.
+- El 18 de noviembre se adaptó localmente la funcionalidad: receptor validable contra `MaestroReceptores`, archivado por sociedad receptora y lista idempotente `LineasFactura` con una fila por ítem extraído. No existe campo ni columna `Área`. La extracción conserva descripción, cantidad, precio unitario e importe cuando Document Intelligence los proporciona. `npm.cmd run check` terminó correctamente: compilación y 81 pruebas superadas. No se ha desplegado ni activado esta funcionalidad en producción.
+- Antes de activar operación: completar el permiso de buzón, preparar/validar maestros y listas de producción, definir el procedimiento para mover solo facturas autorizadas a `Facturas Copilot`, adaptar y revisar la rama de receptor sin `Área` y decidir el origen y almacenamiento del concepto, y ejecutar una prueba controlada con un PDF nuevo.
 
 ## Objetivo
 
@@ -51,7 +54,7 @@ Automatizar la recepción y gestión de facturas en Microsoft 365: correo, clasi
 - Integración M365 validada en el tenant: la Function lee el buzón restringido mediante Graph y archiva adjuntos PDF en SharePoint.
 - Importación bancaria y conciliación local terminadas: lotes, validación, normalización, duplicidad, puntuación explicable y ambigüedad.
 - Azure Functions v4 preparada con endpoints HTTP; infraestructura Flex Consumption y CI/CD preparadas.
-- Pruebas actuales: 77 superadas.
+- Pruebas actuales: 81 superadas.
 - Tenant de pruebas verificado: `INTEGRAMENTE SL`, dominio `integramente.onmicrosoft.com` (`a1a2b397-4ac5-4f94-9004-67f158ea14e0`).
 - Administrador comunicado: `demo@integramente.onmicrosoft.com`; la contraseña no se almacena.
 - Licencias verificadas el 9 de septiembre de 2026: 25 `O365_BUSINESS_PREMIUM` y 25 `MICROSOFT_365_COPILOT_FOR_BUSINESS`, ambas habilitadas y sin asignar.

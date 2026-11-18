@@ -139,7 +139,8 @@ export class SharePointProcessStore extends SharePointLists implements ProcessSt
 
 export class SharePointInvoiceRegistry extends SharePointLists implements InvoiceRegistry {
   private readonly invoicesList: string;
-  constructor(graph: GraphClient, siteId: string, invoicesList = "RegistroFacturas") { super(graph, siteId); this.invoicesList = invoicesList; }
+  private readonly linesList: string;
+  constructor(graph: GraphClient, siteId: string, invoicesList = "RegistroFacturas", linesList = "LineasFactura") { super(graph, siteId); this.invoicesList = invoicesList; this.linesList = linesList; }
 
   async findByDuplicateKey(key: string): Promise<{ processId: string } | undefined> {
     const item = await this.find(this.invoicesList, "DuplicateKey", key);
@@ -148,11 +149,11 @@ export class SharePointInvoiceRegistry extends SharePointLists implements Invoic
   }
 
   async putOnce(input: { processId: string; invoice: ValidatedInvoice; duplicateKey: string; documentUrl: string; metadata: ProcessRecord["input"] }): Promise<void> {
-    if (await this.find(this.invoicesList, "ProcessId", input.processId)) return;
-    try {
+    if (!(await this.find(this.invoicesList, "ProcessId", input.processId))) try {
       const fields: Record<string, unknown> = {
         Title: input.invoice.invoiceNumber, ProcessId: input.processId, DuplicateKey: input.duplicateKey,
         Proveedor: input.invoice.supplierName, NIFProveedor: input.invoice.supplierTaxId ?? "",
+        Receptor: input.invoice.recipientName ?? "", NIFReceptor: input.invoice.recipientTaxId ?? "",
         NumeroFactura: input.invoice.invoiceNumber, FechaFactura: input.invoice.invoiceDate,
         BaseImponible: Number(input.invoice.taxableBase), IVA: Number(input.invoice.vatAmount), Total: Number(input.invoice.totalAmount),
         Moneda: input.invoice.currency ?? "",
@@ -162,6 +163,18 @@ export class SharePointInvoiceRegistry extends SharePointLists implements Invoic
       await this.create(this.invoicesList, fields);
     } catch (error) {
       if (!(error instanceof GraphError) || error.status !== 409) throw error;
+    }
+    for (const [index, line] of (input.invoice.lines ?? []).entries()) {
+      const lineKey = `${input.processId}:${index + 1}`;
+      if (await this.find(this.linesList, "LineaClave", lineKey)) continue;
+      try {
+        await this.create(this.linesList, {
+          Title: line.description.slice(0, 255), LineaClave: lineKey, ProcessId: input.processId, NumeroLinea: index + 1,
+          Descripcion: line.description, Cantidad: line.quantity ?? "", PrecioUnitario: line.unitPrice ?? "", Importe: line.amount ?? "",
+        });
+      } catch (error) {
+        if (!(error instanceof GraphError) || error.status !== 409) throw error;
+      }
     }
   }
 }

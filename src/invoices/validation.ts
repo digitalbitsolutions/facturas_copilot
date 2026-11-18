@@ -1,6 +1,7 @@
 import type {
   ExtractedInvoice,
   ExtractionConfidence,
+  InvoiceField,
   InvoiceValidationConfig,
   InvoiceValidationResult,
   ValidationIssue,
@@ -24,10 +25,10 @@ export const defaultValidationConfig: InvoiceValidationConfig = {
   amountToleranceMinorUnits: 1,
 };
 
-const ALWAYS_REQUIRED: Array<keyof ExtractedInvoice> = [
+const ALWAYS_REQUIRED: InvoiceField[] = [
   "supplierName", "invoiceNumber", "invoiceDate", "taxableBase", "vatAmount", "totalAmount",
 ];
-const AMOUNTS: Array<keyof ExtractedInvoice> = ["taxableBase", "vatAmount", "totalAmount"];
+const AMOUNTS: InvoiceField[] = ["taxableBase", "vatAmount", "totalAmount"];
 const ISO_DATE = /^\d{4}-(0[1-9]|1[0-2])-([0-2]\d|3[01])$/;
 const DECIMAL = /^-?\d+(?:[.,]\d{1,2})?$/;
 const CURRENCY = /^[A-Z]{3}$/;
@@ -71,7 +72,7 @@ export function validateInvoice(
   if (invoice.currency && !CURRENCY.test(invoice.currency)) {
     issues.push({ code: "invalid_currency", field: "currency", message: "currency must be an ISO 4217-style code" });
   }
-  for (const [field, value] of Object.entries(confidence) as Array<[keyof ExtractedInvoice, number]>) {
+  for (const [field, value] of Object.entries(confidence) as Array<[InvoiceField, number]>) {
     const minimumConfidence = config.minimumConfidenceByField?.[field] ?? config.minimumConfidence;
     if (!Number.isFinite(value) || value < minimumConfidence) {
       issues.push({ code: "low_confidence", field, message: `${field} confidence is below ${minimumConfidence}` });
@@ -86,5 +87,5 @@ export function validateInvoice(
   }
 
   if (issues.length) return { valid: false, issues };
-  return { valid: true, invoice: invoice as Required<Pick<ExtractedInvoice, "supplierName" | "invoiceNumber" | "invoiceDate" | "taxableBase" | "vatAmount" | "totalAmount">> & Pick<ExtractedInvoice, "dueDate" | "currency" | "supplierTaxId">, issues: [] };
+  return { valid: true, invoice: invoice as Required<Pick<ExtractedInvoice, "supplierName" | "invoiceNumber" | "invoiceDate" | "taxableBase" | "vatAmount" | "totalAmount">> & Pick<ExtractedInvoice, "dueDate" | "currency" | "supplierTaxId" | "recipientName" | "recipientTaxId" | "lines">, issues: [] };
 }

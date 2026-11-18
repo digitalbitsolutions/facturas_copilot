@@ -1,4 +1,4 @@
-import type { ExtractedInvoice, ExtractionConfidence } from "../invoices/types.ts";
+import type { ExtractedInvoice, ExtractionConfidence, InvoiceField } from "../invoices/types.ts";
 import type { InvoiceExtractor, AttachmentInput } from "../processing/types.ts";
 import type { AccessTokenProvider } from "../microsoft365/graph-client.ts";
 import { enrichWithFacturX } from "./factur-x.ts";
@@ -13,6 +13,7 @@ type Field = {
   valueDate?: string;
   valueNumber?: number;
   valueCurrency?: { amount?: number; currencyCode?: string };
+  valueArray?: Array<{ valueObject?: Record<string, Field> }>;
 };
 
 type AnalyzeResponse = {
@@ -49,7 +50,19 @@ function derivedTaxableBase(total?: Field, tax?: Field): string | undefined {
   return (Math.round((totalValue - taxValue) * 100) / 100).toFixed(2);
 }
 
-function confidence(fields: Record<string, Field>, mapping: Record<keyof ExtractedInvoice, string>): ExtractionConfidence {
+function lineItems(field?: Field): import("../invoices/types.ts").InvoiceLine[] | undefined {
+  const lines = field?.valueArray?.flatMap(({ valueObject }) => {
+    const description = text(valueObject?.Description);
+    if (!description) return [];
+    const quantity = text(valueObject?.Quantity) ?? amount(valueObject?.Quantity);
+    const unitPrice = amount(valueObject?.UnitPrice);
+    const lineAmount = amount(valueObject?.Amount);
+    return [{ description, ...(quantity ? { quantity } : {}), ...(unitPrice ? { unitPrice } : {}), ...(lineAmount ? { amount: lineAmount } : {}) }];
+  }) ?? [];
+  return lines.length ? lines : undefined;
+}
+
+function confidence(fields: Record<string, Field>, mapping: Partial<Record<InvoiceField, string>>): ExtractionConfidence {
   return Object.fromEntries(Object.entries(mapping).flatMap(([target, source]) => {
     const value = fields[source]?.confidence;
     return typeof value === "number" ? [[target, value]] : [];
@@ -68,16 +81,20 @@ export function mapInvoiceResult(payload: AnalyzeResponse): { invoice: Extracted
   const currency = fields.InvoiceTotal?.valueCurrency?.currencyCode
     ?? fields.SubTotal?.valueCurrency?.currencyCode
     ?? fields.TotalTax?.valueCurrency?.currencyCode;
+  const lines = lineItems(fields.Items);
   return {
     invoice: {
       supplierName: text(supplier), ...(text(fields.VendorTaxId) ? { supplierTaxId: text(fields.VendorTaxId) } : {}), invoiceNumber: text(fields.InvoiceId), invoiceDate: text(fields.InvoiceDate),
+      ...(text(fields.CustomerName) ? { recipientName: text(fields.CustomerName) } : {}),
+      ...(text(fields.CustomerTaxId) ? { recipientTaxId: text(fields.CustomerTaxId) } : {}),
+      ...(lines ? { lines } : {}),
       dueDate: text(fields.DueDate), taxableBase, vatAmount: amount(fields.TotalTax),
       totalAmount: amount(fields.InvoiceTotal), currency: currency?.toUpperCase(),
     },
     confidence: {
       ...confidence(fields, {
         supplierName: text(fields.VendorAddressRecipient) ? "VendorAddressRecipient" : "VendorName",
-        supplierTaxId: "VendorTaxId",
+        supplierTaxId: "VendorTaxId", recipientName: "CustomerName", recipientTaxId: "CustomerTaxId",
         invoiceNumber: "InvoiceId", invoiceDate: "InvoiceDate", dueDate: "DueDate", taxableBase: "SubTotal",
         vatAmount: "TotalTax", totalAmount: "InvoiceTotal", currency: "InvoiceTotal",
       }),

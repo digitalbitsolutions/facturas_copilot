@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { buildDuplicateKey, buildInvoicePath, resolveSupplierIdentity, validateInvoice, validationConfigForSupplier } from "../invoices/index.ts";
+import { buildDuplicateKey, buildInvoicePath, resolveRecipientIdentity, resolveSupplierIdentity, validateInvoice, validationConfigForSupplier } from "../invoices/index.ts";
 import type { InvoiceValidationConfig } from "../invoices/types.ts";
 import type {
   AttachmentInput, DocumentClassifier, DocumentRepository, InvoiceExtractor, InvoiceRegistry,
@@ -13,6 +13,8 @@ export type ProcessorDependencies = {
   documents: DocumentRepository;
   registry: InvoiceRegistry;
   supplierDirectory: import("../invoices/index.ts").SupplierDirectory;
+  recipientDirectory?: import("../invoices/index.ts").RecipientDirectory;
+  requireRecipientMatch?: boolean;
   validationConfig?: InvoiceValidationConfig;
   now?: () => Date;
 };
@@ -76,6 +78,22 @@ export class AttachmentProcessor {
         supplierTaxId: supplierIdentity.supplier.taxId ?? validation.invoice.supplierTaxId,
       }, extraction.confidence, supplierValidationConfig);
       if (!validation.valid) throw new Error("Canonical supplier data unexpectedly failed invoice validation");
+
+      if (this.dependencies.requireRecipientMatch) {
+        if (!this.dependencies.recipientDirectory) throw new Error("Recipient routing is enabled without a recipient directory");
+        const recipientIdentity = resolveRecipientIdentity(extraction.invoice, await this.dependencies.recipientDirectory.listActive());
+        if (recipientIdentity.status !== "matched") {
+          return this.finish(record, "review_required", {
+            code: "EX-10", reason: "Recipient identity requires review", retryable: false, issues: [recipientIdentity.issue],
+          });
+        }
+        validation = validateInvoice({
+          ...validation.invoice,
+          recipientName: recipientIdentity.recipient.legalName,
+          recipientTaxId: recipientIdentity.recipient.taxId ?? validation.invoice.recipientTaxId,
+        }, extraction.confidence, supplierValidationConfig);
+        if (!validation.valid) throw new Error("Canonical recipient data unexpectedly failed invoice validation");
+      }
 
       const duplicateKey = buildDuplicateKey(validation.invoice);
       record = await this.transition(record, "validated", { duplicateKey });

@@ -23,7 +23,8 @@
 - [x] Autorizar a la Function mediante `Sites.Selected` y `write` exclusivamente sobre `/sites/facturas` (identidad administrada `7a133f34-b993-407d-8a14-90b0097d5691`), verificado el 17 de noviembre.
 - [ ] Reintentar tras propagación de Exchange Online la creación de la referencia de identidad administrada y asignar `Application Mail.Read` exclusivamente a `direccionfinanciera@grupmedicdental.com`; verificar con `Test-ServicePrincipalAuthorization`.
 - [ ] Definir la regla o procedimiento para mover únicamente facturas autorizadas a `Facturas Copilot`; no activar procesamiento hasta entonces.
-- [ ] Integrar, revisar y desplegar `feature/archivo-por-receptor` (archivado por sociedad receptora y metadato `Área`) antes de la primera campaña operativa.
+- [x] Adaptar y validar localmente la funcionalidad de receptor: conservar el archivado por sociedad receptora, eliminar `Área` y persistir los ítems como relación uno-a-muchos en `LineasFactura`. La extracción conserva las descripciones de línea; no reutiliza el `Concepto` de movimientos bancarios ni reduce varios conceptos a un único valor.
+- [ ] Aprovisionar `MaestroReceptores` y `LineasFactura` en producción, cargar los receptores autorizados y ejecutar una prueba controlada de factura con varios ítems cuando el acceso restringido al buzón esté verificado. Acordar después un catálogo de conceptos normalizados solo si las búsquedas por texto de descripción no son suficientes.
 - [ ] Ejecutar una prueba de producción controlada con un PDF nuevo solo después de verificar el acceso del buzón, maestros/listas y configuración de negocio.
 - [ ] Acordar y configurar el revisor obligatorio de despliegues de producción en el entorno GitHub `prod` antes de la activación operativa.
 

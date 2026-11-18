@@ -196,9 +196,11 @@ resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
         { name: 'M365_PAYMENT_FORECAST_HISTORY_LIST', value: 'HistorialPrevisiones' }
         { name: 'M365_EXCEPTIONS_LIST', value: 'Excepciones' }
         { name: 'M365_SUPPLIERS_LIST', value: 'MaestroProveedores' }
+        { name: 'M365_RECIPIENTS_LIST', value: 'MaestroReceptores' }
         { name: 'M365_INVOICE_PROCESSES_LIST', value: 'ProcesosFacturas' }
         { name: 'M365_INVOICE_REGISTRY_LIST', value: 'RegistroFacturas' }
         { name: 'INVOICE_PROCESSING_ENABLED', value: string(invoiceProcessingEnabled) }
+        { name: 'INVOICE_RECIPIENT_ROUTING_ENABLED', value: 'false' }
         { name: 'INVOICE_PROCESSING_NOT_BEFORE', value: invoiceProcessingNotBefore }
         { name: 'INVOICE_MAIL_POLL_SCHEDULE', value: '30 */10 * * * *' }
         { name: 'M365_INVOICE_FOLDER', value: 'Facturas' }

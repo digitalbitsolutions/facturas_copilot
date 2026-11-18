@@ -65,6 +65,23 @@ test("does not derive a zero base when the model mistakes tax for the invoice to
   assert.equal(extracted.confidence.taxableBase, 0.8);
 });
 
+test("retains every extracted invoice line for multi-concept invoices", () => {
+  const extracted = mapInvoiceResult({
+    status: "succeeded", analyzeResult: { documents: [{ fields: {
+      VendorName: { valueString: "Proveedor" }, InvoiceId: { valueString: "F-2" }, InvoiceDate: { valueDate: "2026-09-02" },
+      SubTotal: { valueCurrency: { amount: 30 } }, TotalTax: { valueCurrency: { amount: 6 } }, InvoiceTotal: { valueCurrency: { amount: 36, currencyCode: "EUR" } },
+      Items: { valueArray: [
+        { valueObject: { Description: { valueString: "MÁRKETING digital" }, Quantity: { valueNumber: 2 }, UnitPrice: { valueCurrency: { amount: 10 } }, Amount: { valueCurrency: { amount: 20 } } } },
+        { valueObject: { Description: { valueString: "Mantenimiento web" }, Quantity: { valueNumber: 1 }, UnitPrice: { valueCurrency: { amount: 10 } }, Amount: { valueCurrency: { amount: 10 } } } },
+      ] },
+    } }] },
+  });
+  assert.deepEqual(extracted.invoice.lines, [
+    { description: "MÁRKETING digital", quantity: "2.00", unitPrice: "10.00", amount: "20.00" },
+    { description: "Mantenimiento web", quantity: "1.00", unitPrice: "10.00", amount: "10.00" },
+  ]);
+});
+
 test("submits and polls a PDF using managed identity", async () => {
   const requests: Array<{ url: string; init?: RequestInit }> = [];
   const fetchMock = async (url: string | URL | Request, init?: RequestInit) => {
