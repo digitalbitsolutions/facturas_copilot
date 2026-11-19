@@ -166,11 +166,13 @@ test("uses a coherent fiscal summary from page three when the first two pages om
       assert.match(String(url), /pages=3/);
       return new Response(null, { status: 202, headers: { "operation-location": "https://di.example.com/result/final" } });
     }
-    return Response.json({ status: "succeeded", analyzeResult: { documents: [{ fields: {
+    if (calls === 4) return Response.json({ status: "succeeded", analyzeResult: { documents: [{ fields: {
       InvoiceId: { valueString: "26/11161" }, SubTotal: { valueCurrency: { amount: 2917.35, currencyCode: "EUR" }, confidence: 0.97 },
       TotalTax: { valueCurrency: { amount: 595.85, currencyCode: "EUR" }, confidence: 0.97 },
       InvoiceTotal: { valueCurrency: { amount: 3513.2, currencyCode: "EUR" }, confidence: 0.98 },
     } }] } });
+    if (calls === 5) return new Response(null, { status: 202, headers: { "operation-location": "https://di.example.com/result/read" } });
+    return Response.json({ status: "succeeded", analyzeResult: { content: "Base Imponible % I.V.A. Imp. I.V.A. Total\n2.764,73 21 % 580,59 3.513,20\n152,62 10,00 15,26" } });
   };
   const extractor = new DocumentIntelligenceInvoiceExtractor("https://di.example.com", { getAccessToken: async () => "token" }, { fetch: fetchMock as typeof fetch, pollIntervalMs: 0 });
   const extracted = await extractor.extract({
@@ -180,7 +182,7 @@ test("uses a coherent fiscal summary from page three when the first two pages om
   assert.equal(extracted.invoice.taxableBase, "2917.35");
   assert.equal(extracted.invoice.vatAmount, "595.85");
   assert.equal(extracted.invoice.totalAmount, "3513.20");
-  assert.equal(calls, 5);
+  assert.equal(calls, 6);
 });
 
 test("normalizes international formatted line amounts before deriving VAT", () => {

@@ -310,12 +310,13 @@ function enrichWithFiscalTable(primary: Extraction, content?: string): Extractio
   const total = Number(primary.invoice.totalAmount);
   if (!content || !Number.isFinite(total)) return primary;
   const amount = "(\\d{1,3}(?:[.,]\\d{3})*(?:[.,]\\d{1,2})?|\\d+(?:[.,]\\d{1,2})?)";
-  const rows = [...content.matchAll(new RegExp(`${amount}\\s+(\\d+(?:[.,]\\d+)?)\\s*%?\\s+${amount}`, "g"))]
+  const summary = content.slice(Math.max(0, content.search(/base\s+imponible/i)));
+  const rows = [...summary.matchAll(new RegExp(`${amount}\\s+(\\d+(?:[.,]\\d+)?)\\s*%?\\s+${amount}`, "g"))]
     .map((match) => ({ base: numericAmount({ content: match[1] }), tax: numericAmount({ content: match[3] }) }))
     .filter((row): row is { base: number; tax: number } => row.base !== undefined && row.tax !== undefined);
   const base = rows.reduce((sum, row) => sum + row.base, 0);
   const tax = rows.reduce((sum, row) => sum + row.tax, 0);
-  if (!rows.length || Math.abs(base + tax - total) > 0.01) return primary;
+  if (rows.length < 1 || Math.abs(base + tax - total) > 0.01) return primary;
   return { invoice: { ...primary.invoice, taxableBase: base.toFixed(2), vatAmount: tax.toFixed(2) }, confidence: primary.confidence };
 }
 
