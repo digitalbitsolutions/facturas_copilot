@@ -29,7 +29,7 @@
 - [x] Cargar y activar los cinco receptores autorizados en `MaestroReceptores`, con NIF, aliases y códigos estables (18 de noviembre).
 - [x] Preparar el workflow para habilitar explícitamente el enrutamiento por receptor solo durante una prueba controlada.
 - [x] Desplegar el piloto controlado de receptor con ejecución `44388498841`: procesamiento y validación de receptor activados, previsiones desactivadas y corte `2026-11-18T20:07:43Z`.
-- [ ] Publicar el ajuste que solicita la página 3 únicamente cuando los campos fiscales faltan en las páginas 1-2, y acepta su resumen solo si es coherente y corresponde a la misma factura. El PDF DENTALIS concentra base, IVA y total en la última página. Después, enviar un único correo nuevo y comprobar `completed`, registro, PDF archivado y líneas. No realizar más envíos hasta revisar ese resultado. Acordar un catálogo de conceptos normalizados solo si las búsquedas por texto de descripción no son suficientes.
+- [ ] Enviar un único correo nuevo con el mismo PDF DENTALIS y comprobar `completed`, registro, PDF archivado y líneas. El ajuste `ecddeda`, desplegado correctamente mediante `44579940353`, consulta la página 3 solo si los campos fiscales faltan en las páginas 1-2 y acepta el resumen solo si es coherente y corresponde a la misma factura. No realizar más envíos hasta revisar ese resultado. Acordar un catálogo de conceptos normalizados solo si las búsquedas por texto de descripción no son suficientes.
 - [ ] Ejecutar una prueba de producción controlada con un PDF nuevo solo después de verificar el acceso del buzón, maestros/listas y configuración de negocio.
 - [ ] Acordar y configurar el revisor obligatorio de despliegues de producción en el entorno GitHub `prod` antes de la activación operativa.
 
