@@ -1,8 +1,17 @@
 # Contexto de reanudación
 
-Actualizado: 19 de noviembre de 2026, piloto de archivo SharePoint activo; protección de vencimiento y PDF multifactura preparada localmente, pendiente de completar el esquema de SharePoint antes del despliegue.
+Actualizado: 20 de noviembre de 2026, piloto de archivo SharePoint activo; política de vencimiento y barrera contra PDFs multifactura desplegadas y verificadas.
 
 Responsable documentado: Néstor — Jefe de proyecto.
+
+## Punto exacto de reanudación — 20 de noviembre de 2026
+
+- Se crearon y verificaron en SharePoint las columnas opcionales de elección `DueDateStatus` en `RegistroFacturas` y `ConsultaPagosCopilot`, con los valores `present` y `not_stated`, sin valor predeterminado.
+- Producción ejecuta el commit `707672e` mediante el despliegue `44635262269`, terminado correctamente. Están activos `INVOICE_PROCESSING_ENABLED=True`, `INVOICE_RECIPIENT_ROUTING_ENABLED=True` e `INVOICE_FISCAL_DIAGNOSTIC_ONLY=False`.
+- La protección desplegada deja `dueDate` vacío y persiste `dueDateStatus = not_stated` cuando la factura no declara vencimiento. Si hay indicios de vencimiento sin fecha fiable, mantiene la revisión. También desvía a revisión, sin archivo ni registro, un PDF cuyas páginas identifican números de factura diferentes.
+- La prueba individual `cygnus 488 ANT 26.pdf`, recibida a las 00:13 CET y procesada a las 00:20:48 CET, quedó en `review_required` / `EX-06`. El vencimiento no fue una incidencia. Las únicas incidencias son confianza insuficiente de `recipientName` (< 0,80), `recipientTaxId` (< 0,80) e `invoiceDate` (< 0,85). No se creó archivo ni registro.
+- Se entregó a Claude el resultado de proceso y se adjuntará el PDF Cygnus. Se espera su propuesta para completar esos tres campos solo cuando el texto sea inequívoco y el receptor se pueda validar contra `MaestroReceptores`, sin reducir umbrales ni debilitar la revisión segura.
+- Hasta recibir y revisar esa propuesta, no reenviar Cygnus ni continuar con Vidrios. Después: integrar y probar el ajuste, validar Cygnus y Vidrios con archivado completo, y crear/probar el agente de Copilot con `ConsultaPagosCopilot` y `docs/COPILOT_PAYMENT_AGENT.md`.
 
 ## Punto exacto de reanudación — 19 de noviembre de 2026
 

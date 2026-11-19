@@ -30,9 +30,10 @@
 - [x] Preparar el workflow para habilitar explícitamente el enrutamiento por receptor solo durante una prueba controlada.
 - [x] Desplegar el piloto controlado de receptor con ejecución `44388498841`: procesamiento y validación de receptor activados, previsiones desactivadas y corte `2026-11-18T20:07:43Z`.
 - [x] Verificar DENTALIS en producción con resumen fiscal de la página 3: base `2.917,35`, IVA `595,85` y total `3.513,20`; mantener la normalización del carácter `�` en `Total �`.
-- [ ] Confirmar la creación de `RegistroFacturas.dueDateStatus` y su proyección a `ConsultaPagosCopilot`. Hasta entonces no desplegar la política que permite archivar una factura sin vencimiento declarado.
-- [ ] Tras crear esa columna, desplegar la política de vencimiento y la barrera contra PDFs que contienen números de factura distintos por página. Mantener `Esclatoil factura.pdf` en revisión: contiene cuatro facturas y nunca debe archivarse como una sola.
-- [ ] Enviar una factura individual de Cygnus y comprobar `completed`, fila en `ProcesosFacturas`, registro en `RegistroFacturas`, líneas y PDF archivado en SharePoint.
+- [x] Crear y verificar `DueDateStatus` en `RegistroFacturas` y `ConsultaPagosCopilot`; desplegar la política de vencimiento y la barrera contra PDFs con facturas distintas por página (commit `707672e`, despliegue `44635262269`).
+- [ ] Esperar y revisar la propuesta de Claude para completar de forma segura `recipientName`, `recipientTaxId` e `invoiceDate` de `cygnus 488 ANT 26.pdf`. La prueba del 20 de noviembre quedó en `EX-06` solo por esos tres campos de baja confianza; el vencimiento no bloqueó.
+- [ ] Integrar, validar y desplegar la corrección aprobada para Cygnus, sin cambiar umbrales ni reglas de validación.
+- [ ] Reenviar una factura individual de Cygnus y comprobar `completed`, fila en `ProcesosFacturas`, registro en `RegistroFacturas`, líneas y PDF archivado en SharePoint.
 - [ ] Enviar una factura individual de Vidrios y comprobar el mismo circuito completo.
 - [ ] Crear el agente de Copilot conectado exclusivamente a `ConsultaPagosCopilot`, aplicar `docs/COPILOT_PAYMENT_AGENT.md` como instrucciones y validar consultas de factura, importe, vencimiento y ausencia de vencimiento.
 - [ ] Acordar y configurar el revisor obligatorio de despliegues de producción en el entorno GitHub `prod` antes de la activación operativa.
