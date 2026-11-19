@@ -46,6 +46,11 @@ on:
         required: true
         type: boolean
         default: false
+      invoice_fiscal_diagnostic_only:
+        description: Process invoices only for fiscal diagnostics; keep every document in review and do not archive it
+        required: true
+        type: boolean
+        default: false
       bank_import_profile:
         description: Versioned bank-import profile (standard-es-v1 or bankinter-simulated-csv-v1)
         required: true
@@ -87,7 +92,7 @@ jobs:
             --name main \
             --resource-group "rg-facturas-copilot-${{ inputs.environment }}" \
             --template-file infra/main.bicep \
-            --parameters environmentName="${{ inputs.environment }}" location="${{ inputs.location }}" documentIntelligenceLocation="${{ inputs.document_intelligence_location }}" entraApiClientId="${{ vars.ENTRA_API_CLIENT_ID }}" m365MailboxAddress="${{ inputs.m365_mailbox_address }}" m365MailFolder="${{ inputs.m365_mail_folder }}" m365SharePointSiteId="${{ inputs.m365_sharepoint_site_id }}" m365SharePointDriveId="${{ inputs.m365_sharepoint_drive_id }}" invoiceProcessingEnabled="${{ inputs.invoice_processing_enabled }}" invoiceProcessingNotBefore="${{ inputs.invoice_processing_not_before }}" invoiceRecipientRoutingEnabled="${{ inputs.invoice_recipient_routing_enabled }}" bankImportProfile="${{ inputs.bank_import_profile }}" paymentForecastImportEnabled="${{ inputs.payment_forecast_import_enabled }}" \
+            --parameters environmentName="${{ inputs.environment }}" location="${{ inputs.location }}" documentIntelligenceLocation="${{ inputs.document_intelligence_location }}" entraApiClientId="${{ vars.ENTRA_API_CLIENT_ID }}" m365MailboxAddress="${{ inputs.m365_mailbox_address }}" m365MailFolder="${{ inputs.m365_mail_folder }}" m365SharePointSiteId="${{ inputs.m365_sharepoint_site_id }}" m365SharePointDriveId="${{ inputs.m365_sharepoint_drive_id }}" invoiceProcessingEnabled="${{ inputs.invoice_processing_enabled }}" invoiceProcessingNotBefore="${{ inputs.invoice_processing_not_before }}" invoiceRecipientRoutingEnabled="${{ inputs.invoice_recipient_routing_enabled }}" invoiceFiscalDiagnosticOnly="${{ inputs.invoice_fiscal_diagnostic_only }}" bankImportProfile="${{ inputs.bank_import_profile }}" paymentForecastImportEnabled="${{ inputs.payment_forecast_import_enabled }}" \
             --query properties.outputs.functionAppName.value -o tsv)
           principal=$(az deployment group show \
             --name main \
