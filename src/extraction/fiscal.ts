@@ -77,7 +77,7 @@ const RATE_RE = /^(\d{1,2})(?:,(\d{1,2}))?%?$/;
 
 /** "2.917,35" -> 291735. Exige exactamente 2 decimales con coma; rechaza formatos ambiguos. */
 export function parseAmount(raw: string): Cents | null {
-  const s = raw.replace(/[€\s]/g, "");
+  const s = raw.replace(/[€�\s]/g, "");
   if (!AMOUNT_RE.test(s)) return null;
   const neg = s.startsWith("-");
   const [int = "", dec = ""] = s.replace("-", "").split(",");
@@ -106,7 +106,8 @@ function normLabel(s: string): string {
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
-    .replace(/[.€]/g, "")
+    .replace(/\s+/g, " ")
+    .replace(/[^\p{L}\p{N}% ]/gu, "")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -227,7 +228,7 @@ function headerSegments(words: W[]): Seg[] {
 }
 
 const isNumericLike = (w: W) =>
-  parseAmount(w.t) !== null || parseRateBp(w.t) !== null || w.t === "%" || w.t === "€";
+  parseAmount(w.t) !== null || parseRateBp(w.t) !== null || /^[%€�]$/.test(w.t);
 
 function gridFromWords(page: DiPage, minConf: number): { grid: Grid | null; errors: string[] } {
   const words = (page.words ?? []).map(toW).filter((w): w is W => w !== null);
@@ -257,8 +258,10 @@ function gridFromWords(page: DiPage, minConf: number): { grid: Grid | null; erro
     if (!line.words.every(isNumericLike)) break;         // aparece texto: fin de la tabla
     prevCy = line.cy;
     const cells: string[][] = segs.map(() => []);
+    let lastSlot = -1;
     for (const w of line.words) {
       if (w.conf !== undefined && w.conf < minConf) errors.push(`Confianza baja (${w.conf}) en "${w.t}".`);
+      if (/^[%€�]$/.test(w.t) && lastSlot >= 0) { cells[lastSlot]!.push(w.t); continue; }
       let best = -1, bestD = Infinity;
       segs.forEach((s, i) => {
         const d = Math.abs(w.cx - (s.x0 + s.x1) / 2);
@@ -266,7 +269,7 @@ function gridFromWords(page: DiPage, minConf: number): { grid: Grid | null; erro
       });
       const s = segs[best];
       if (!s || bestD > Math.max(3 * hdr.h, s.x1 - s.x0)) errors.push(`Valor "${w.t}" sin columna asignable.`);
-      else cells[best]!.push(w.t);
+      else { cells[best]!.push(w.t); lastSlot = best; }
     }
     rows.push(cells.map((c) => c.join(" ")));
     if (rows.length > 8) { errors.push("Demasiadas filas bajo la cabecera fiscal."); break; }
