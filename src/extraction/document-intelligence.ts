@@ -64,8 +64,8 @@ function numericAmount(field?: Field): number | undefined {
 }
 
 function derivedTaxableBase(total?: Field, tax?: Field): string | undefined {
-  const totalValue = total?.valueCurrency?.amount ?? total?.valueNumber;
-  const taxValue = tax?.valueCurrency?.amount ?? tax?.valueNumber;
+  const totalValue = numericAmount(total);
+  const taxValue = numericAmount(tax);
   if (typeof totalValue !== "number" || typeof taxValue !== "number" || !Number.isFinite(totalValue) || !Number.isFinite(taxValue) || totalValue <= taxValue) return undefined;
   return (Math.round((totalValue - taxValue) * 100) / 100).toFixed(2);
 }
@@ -116,7 +116,7 @@ function lineItemAmounts(field?: Field): { taxableBase?: string; confidence?: nu
 }
 
 function derivedVatAmount(total?: Field, taxableBase?: string): string | undefined {
-  const totalValue = total?.valueCurrency?.amount ?? total?.valueNumber;
+  const totalValue = numericAmount(total);
   const baseValue = taxableBase === undefined ? undefined : Number(taxableBase);
   if (typeof totalValue !== "number" || !Number.isFinite(totalValue) || typeof baseValue !== "number" || !Number.isFinite(baseValue) || totalValue < baseValue) return undefined;
   return (Math.round((totalValue - baseValue) * 100) / 100).toFixed(2);

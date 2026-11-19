@@ -4,7 +4,7 @@ Este repositorio contiene el núcleo TypeScript y la documentación de una soluc
 
 ## Estado
 
-- Fase actual: producción DENTAL CATALUNYA desplegada el 17 de noviembre de 2026. La Function tiene acceso de escritura restringido al sitio SharePoint de facturas y `Application Mail.Read` limitado exclusivamente al buzón de facturas. El procesamiento automático permanece desactivado.
+- Fase actual: piloto controlado de receptor activo en producción DENTAL CATALUNYA desde el 18 de noviembre de 2026. La Function tiene acceso de escritura restringido al sitio SharePoint de facturas y `Application Mail.Read` limitado exclusivamente al buzón de facturas. Procesa solo correos posteriores a `2026-11-18T20:07:43Z`, exige un receptor activo y mantiene desactivada la importación de previsiones.
 - Núcleo de facturas: validación, nomenclatura, duplicados, estados, excepciones e idempotencia.
 - Integración: lectura restringida del buzón y circuito clasificación → extracción → proveedor → validación → archivo conectado con estado persistente en SharePoint; las excepciones se resuelven de forma auditable y actualizan el estado terminal del proceso.
 - Conciliación: importación por lotes, normalización, duplicidad y puntuación explicable implementadas; aceptación automática deshabilitada.
