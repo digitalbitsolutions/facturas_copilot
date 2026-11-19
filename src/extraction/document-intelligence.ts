@@ -351,6 +351,9 @@ export class DocumentIntelligenceInvoiceExtractor implements InvoiceExtractor {
       extraction = enrichWithFinalPageFiscalSummary(extraction, mapInvoiceResult(await this.analyze(input, token, "3")));
       const fiscalText = await this.analyze(input, token, "3", "prebuilt-read");
       extraction = enrichWithFiscalTable(extraction, fiscalText.analyzeResult?.content);
+      const layout = await this.analyze(input, token, "3", "prebuilt-layout") as unknown as { analyzeResult?: { tables?: Array<{ rowCount?: number; columnCount?: number; cells?: Array<{ kind?: string; rowIndex?: number; columnIndex?: number; content?: string; boundingRegions?: unknown }> }> } };
+      const fiscalTables = (layout.analyzeResult?.tables ?? []).map((table) => ({ rowCount: table.rowCount, columnCount: table.columnCount, cells: (table.cells ?? []).filter((cell) => /base|iva|importe|total|%/i.test(cell.content ?? "")).map((cell) => ({ kind: cell.kind, rowIndex: cell.rowIndex, columnIndex: cell.columnIndex, content: cell.content, boundingRegions: cell.boundingRegions })) }));
+      console.warn(`Invoice fiscal layout ${JSON.stringify(fiscalTables)}`);
     } catch {
       // A two-page PDF has no continuation page. Preserve the original safe review path.
       console.warn("Invoice fiscal continuation page was unavailable");
