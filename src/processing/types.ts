@@ -38,7 +38,7 @@ export interface DocumentClassifier {
   classify(input: AttachmentInput): Promise<DocumentClassification>;
 }
 export interface InvoiceExtractor {
-  extract(input: AttachmentInput, context?: { recognizedText?: string }): Promise<{ invoice: ExtractedInvoice; confidence?: ExtractionConfidence }>;
+  extract(input: AttachmentInput, context?: { recognizedText?: string; ensureSingleInvoiceDocument?: boolean }): Promise<{ invoice: ExtractedInvoice; confidence?: ExtractionConfidence }>;
 }
 export interface ProcessStore {
   get(processId: string): Promise<ProcessRecord | undefined>;

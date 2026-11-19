@@ -150,6 +150,24 @@ test("uses labelled OCR fiscal text only when it reconciles to the extracted tot
   assert.equal(extracted.confidence.vatAmount, 0.9);
 });
 
+test("requires review when different pages identify different invoices", async () => {
+  let calls = 0;
+  const fetchMock = async (_url: string | URL | Request, _init?: RequestInit) => {
+    calls += 1;
+    if (calls % 2 === 1) return new Response(null, { status: 202, headers: { "operation-location": `https://di.example.com/result/${calls}` } });
+    const invoiceId = calls === 2 ? "VEB-26452129" : "VEB-26452130";
+    return Response.json({ status: "succeeded", analyzeResult: { documents: [{ fields: {
+      InvoiceId: { valueString: invoiceId }, InvoiceTotal: { valueCurrency: { amount: 60.5, currencyCode: "EUR" }, confidence: 0.99 },
+      SubTotal: { valueCurrency: { amount: 55, currencyCode: "EUR" }, confidence: 0.99 }, TotalTax: { valueCurrency: { amount: 5.5, currencyCode: "EUR" }, confidence: 0.99 },
+    } }] } });
+  };
+  const extractor = new DocumentIntelligenceInvoiceExtractor("https://di.example.com", { getAccessToken: async () => "token" }, { fetch: fetchMock as typeof fetch, pollIntervalMs: 0 });
+  await assert.rejects(() => extractor.extract({
+    messageId: "manual", attachmentId: "multiple-invoices", sender: "pilot", receivedAt: "2026-11-19T00:00:00Z",
+    originalFilename: "Esclatoil factura.pdf", contentType: "application/pdf", content: new Uint8Array([1, 2, 3]),
+  }, { ensureSingleInvoiceDocument: true }), /multiple invoice numbers/);
+});
+
 test("uses a coherent fiscal summary from page three when the first two pages omit tax", async () => {
   let calls = 0;
   const fetchMock = async (url: string | URL | Request, _init?: RequestInit) => {

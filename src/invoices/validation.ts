@@ -87,5 +87,5 @@ export function validateInvoice(
   }
 
   if (issues.length) return { valid: false, issues };
-  return { valid: true, invoice: invoice as Required<Pick<ExtractedInvoice, "supplierName" | "invoiceNumber" | "invoiceDate" | "taxableBase" | "vatAmount" | "totalAmount">> & Pick<ExtractedInvoice, "dueDate" | "currency" | "supplierTaxId" | "recipientName" | "recipientTaxId" | "lines">, issues: [] };
+  return { valid: true, invoice: invoice as Required<Pick<ExtractedInvoice, "supplierName" | "invoiceNumber" | "invoiceDate" | "taxableBase" | "vatAmount" | "totalAmount">> & Pick<ExtractedInvoice, "dueDate" | "dueDateStatus" | "currency" | "supplierTaxId" | "recipientName" | "recipientTaxId" | "lines">, issues: [] };
 }

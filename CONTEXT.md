@@ -1,8 +1,19 @@
 # Contexto de reanudación
 
-Actualizado: 19 de noviembre de 2026, piloto controlado de receptor activo; diagnóstico fiscal por líneas desplegado y pendiente de una nueva prueba de correo.
+Actualizado: 19 de noviembre de 2026, piloto de archivo SharePoint activo; protección de vencimiento y PDF multifactura preparada localmente, pendiente de completar el esquema de SharePoint antes del despliegue.
 
 Responsable documentado: Néstor — Jefe de proyecto.
+
+## Punto exacto de reanudación — 19 de noviembre de 2026
+
+- Producción ejecuta el commit `93f3271`; el despliegue `44626265818` desactivó `INVOICE_FISCAL_DIAGNOSTIC_ONLY`. Las facturas válidas pueden avanzar a registro, líneas y archivo en SharePoint. Las pruebas anteriores que terminaron en diagnóstico no se reprocesan automáticamente.
+- DENTALIS validó la extracción fiscal de la página 3: base `2.917,35`, IVA `595,85` y total `3.513,20`. Document Intelligence entrega la cabecera `Total �`, que el extractor normaliza de forma segura.
+- Straumann se clasificó como factura y quedó en `review_required` mientras el diagnóstico estaba activo. Esclatoil también se clasificó como factura, pero al desactivar el diagnóstico quedó en revisión `EX-06`: la única incidencia fue `dueDate confidence is below 0.65`.
+- La política local `due-date.ts` conserva el umbral de `0,65`: si una factura no declara vencimiento, descarta cualquier fecha dudosa y marca `dueDateStatus = not_stated`; si declara indicios de vencimiento sin una fecha fiable, permanece en revisión. No se deduce nunca el vencimiento de la fecha de factura ni de `Data valor`.
+- `RegistroFacturas.FechaVencimiento` es opcional y admite vacío. Falta la columna `dueDateStatus` (sin equivalente actual), necesaria para persistir `present` o `not_stated` y proyectarlo a `ConsultaPagosCopilot`. No se ha creado ni modificado esa columna; los cambios locales no se han desplegado.
+- Esclatoil no se debe volver a enviar ni archivar: su PDF contiene cuatro facturas distintas (`VEB-26452129`, `26452130`, `26452131` y `26452132`). La versión local añade una barrera que revisa los identificadores página a página —respetando el límite F0 de dos páginas por operación— y desvía a revisión si encuentra números distintos. La producción vigente solo analiza inicialmente las páginas 1–2, y la página 3 condicionalmente para el resumen fiscal; podría elegir el primer documento devuelto y archivar el PDF completo, por lo que no se desplegará hasta completar esa barrera y el esquema.
+- Validación local más reciente: `npm.cmd run check` superó 126 pruebas, incluidas las 9 comprobaciones de `due-date.test.ts` y la regresión que detecta números de factura distintos por página.
+- Objetivo inmediato: tras confirmar el esquema `dueDateStatus`, desplegar la protección; probar una factura individual de Cygnus y otra de Vidrios hasta obtener `completed`, PDF archivado, fila en `RegistroFacturas` y líneas; después crear y probar el agente de Copilot contra `ConsultaPagosCopilot` con consultas de factura, importe, vencimiento y ausencia de vencimiento.
 
 ## Punto exacto de reanudación — 17 de noviembre de 2026
 

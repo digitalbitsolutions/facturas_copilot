@@ -70,7 +70,7 @@ export function enrichWithFacturX(extraction: Extraction, content: Uint8Array): 
 
   const invoice = { ...current };
   const confidence = { ...extraction.confidence };
-  for (const field of Object.keys(candidate) as Array<Exclude<keyof ExtractedInvoice, "lines">>) {
+  for (const field of Object.keys(candidate) as Array<Exclude<keyof ExtractedInvoice, "lines" | "dueDateStatus">>) {
     if (!invoice[field] && candidate[field]) {
       invoice[field] = candidate[field];
       confidence[field] = 1;

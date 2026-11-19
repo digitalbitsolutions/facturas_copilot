@@ -1,4 +1,4 @@
-export type InvoiceField = Exclude<keyof ExtractedInvoice, "lines">;
+export type InvoiceField = Exclude<keyof ExtractedInvoice, "lines" | "dueDateStatus">;
 export type ExtractionConfidence = Partial<Record<InvoiceField, number>>;
 
 export type InvoiceLine = {
@@ -7,6 +7,9 @@ export type InvoiceLine = {
   unitPrice?: string;
   amount?: string;
 };
+
+/** Whether the source document explicitly stated a due date. */
+export type DueDateStatus = "present" | "not_stated";
 
 export type ExtractedInvoice = {
   supplierName?: string;
@@ -18,6 +21,7 @@ export type ExtractedInvoice = {
   invoiceNumber?: string;
   invoiceDate?: string;
   dueDate?: string;
+  dueDateStatus?: DueDateStatus;
   taxableBase?: string;
   vatAmount?: string;
   totalAmount?: string;
@@ -40,7 +44,7 @@ export type ValidationIssue = {
 
 export type ValidatedInvoice = Required<Pick<ExtractedInvoice,
   "supplierName" | "invoiceNumber" | "invoiceDate" | "taxableBase" | "vatAmount" | "totalAmount"
->> & Pick<ExtractedInvoice, "dueDate" | "currency" | "supplierTaxId" | "recipientName" | "recipientTaxId" | "lines">;
+>> & Pick<ExtractedInvoice, "dueDate" | "dueDateStatus" | "currency" | "supplierTaxId" | "recipientName" | "recipientTaxId" | "lines">;
 
 export type InvoiceValidationResult =
   | { valid: true; invoice: ValidatedInvoice; issues: [] }

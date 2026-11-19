@@ -2,6 +2,7 @@ import type { ExtractedInvoice, ExtractionConfidence, InvoiceField } from "../in
 import type { InvoiceExtractor, AttachmentInput } from "../processing/types.ts";
 import type { AccessTokenProvider } from "../microsoft365/graph-client.ts";
 import { enrichWithFacturX } from "./factur-x.ts";
+import { decideDueDate } from "./due-date.ts";
 import { extractFiscal, type DiAnalyzeResult } from "./fiscal.ts";
 import { dumpTaxTables } from "./fiscal-diagnose.ts";
 
@@ -23,6 +24,8 @@ type AnalyzeResponse = {
   error?: { code?: string; message?: string };
   analyzeResult?: { documents?: Array<{ fields?: Record<string, Field> }>; content?: string };
 };
+
+const MAX_INVOICE_PAGES_TO_VERIFY = 16;
 
 export type DocumentIntelligenceOptions = {
   fetch?: typeof fetch;
@@ -281,6 +284,34 @@ export function mapInvoiceResult(payload: AnalyzeResponse): { invoice: Extracted
 
 type Extraction = { invoice: ExtractedInvoice; confidence: ExtractionConfidence };
 
+/**
+ * Applies the business decision before generic confidence validation.  A document
+ * that does not state a due date must not retain a low-confidence date that was
+ * inferred from another date such as "Data valor".
+ */
+function enrichWithDueDateDecision(extraction: Extraction, dueDate: Field | undefined, documentText: string): Extraction {
+  const decision = decideDueDate({
+    value: text(dueDate), content: dueDate?.content, confidence: dueDate?.confidence,
+  }, documentText);
+  if (decision.status === "ok") {
+    return {
+      invoice: { ...extraction.invoice, dueDate: decision.dueDate, dueDateStatus: "present" },
+      confidence: { ...extraction.confidence, dueDate: decision.confidence },
+    };
+  }
+  if (decision.status === "not_stated") {
+    const { dueDate: _dueDate, ...invoice } = extraction.invoice;
+    const { dueDate: _dueDateConfidence, ...confidence } = extraction.confidence;
+    return { invoice: { ...invoice, dueDateStatus: "not_stated" }, confidence };
+  }
+  // Preserve the existing low-confidence validation path.  A missing field with
+  // explicit payment terms also remains a manual review rather than an absence.
+  return {
+    invoice: extraction.invoice,
+    confidence: { ...extraction.confidence, dueDate: dueDate?.confidence ?? 0 },
+  };
+}
+
 function coherentFiscalSummary(invoice: ExtractedInvoice): boolean {
   const base = Number(invoice.taxableBase);
   const tax = Number(invoice.vatAmount);
@@ -290,6 +321,22 @@ function coherentFiscalSummary(invoice: ExtractedInvoice): boolean {
 
 function sameInvoiceNumber(left?: string, right?: string): boolean {
   return !left || !right || left.normalize("NFKC").replace(/\W/g, "").toLocaleUpperCase("es-ES") === right.normalize("NFKC").replace(/\W/g, "").toLocaleUpperCase("es-ES");
+}
+
+function normalizedInvoiceNumber(value: string): string {
+  return value.normalize("NFKC").replace(/\W/g, "").toLocaleUpperCase("es-ES");
+}
+
+function invoiceNumbers(payload: AnalyzeResponse): string[] {
+  return (payload.analyzeResult?.documents ?? [])
+    .map((document) => text(document.fields?.InvoiceId))
+    .filter((value): value is string => Boolean(value?.trim()))
+    .map(normalizedInvoiceNumber);
+}
+
+function isPastLastPage(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /(?:page.*(?:range|out of|does not exist|invalid)|invalid.*page)/i.test(message);
 }
 
 function enrichWithFinalPageFiscalSummary(primary: Extraction, finalPage: Extraction): Extraction {
@@ -358,11 +405,12 @@ export class DocumentIntelligenceInvoiceExtractor implements InvoiceExtractor {
     this.timeoutMs = options.timeoutMs ?? 60_000;
   }
 
-  async extract(input: AttachmentInput, context: { recognizedText?: string } = {}): Promise<{ invoice: ExtractedInvoice; confidence: ExtractionConfidence }> {
+  async extract(input: AttachmentInput, context: { recognizedText?: string; ensureSingleInvoiceDocument?: boolean } = {}): Promise<{ invoice: ExtractedInvoice; confidence: ExtractionConfidence }> {
     if (input.contentType !== "application/pdf") throw new Error("Document Intelligence pilot only accepts PDF files");
     if (input.content.length === 0 || input.content.length > 4 * 1024 * 1024) throw new Error("PDF must be between 1 byte and 4 MB for the F0 tier");
     const token = await this.tokenProvider.getAccessToken();
     const primary = await this.analyze(input, token, "1-2");
+    if (context.ensureSingleInvoiceDocument) await this.assertSingleInvoiceDocument(input, token, primary);
     const fields = primary.analyzeResult?.documents?.[0]?.fields;
     if (fields && !fields.SubTotal && !fields.TotalTax && !fields.TaxDetails) {
       console.warn(`Invoice analysis fiscal line shapes ${JSON.stringify(lineTaxShapes(fields.Items))}`);
@@ -381,7 +429,33 @@ export class DocumentIntelligenceInvoiceExtractor implements InvoiceExtractor {
       // A two-page PDF has no continuation page. Preserve the original safe review path.
       console.warn("Invoice fiscal continuation page was unavailable");
     }
-    return enrichWithRecognizedFiscalText(extraction, context.recognizedText);
+    extraction = enrichWithRecognizedFiscalText(extraction, context.recognizedText);
+    // The mailbox classifier supplies transient OCR text from the attachment;
+    // mailbox processing must provide text for one invoice only.
+    return enrichWithDueDateDecision(extraction, fields?.DueDate, context.recognizedText ?? primary.analyzeResult?.content ?? "");
+  }
+
+  /**
+   * The F0 tier accepts only two selected pages per operation.  A PDF used by
+   * the mailbox flow is therefore checked one page at a time after the first
+   * pair.  Different invoice identifiers are never combined into one archive.
+   */
+  private async assertSingleInvoiceDocument(input: AttachmentInput, token: string, primary: AnalyzeResponse): Promise<void> {
+    const identifiers = new Set(invoiceNumbers(primary));
+    for (let page = 2; page <= MAX_INVOICE_PAGES_TO_VERIFY; page += 1) {
+      let analysis: AnalyzeResponse;
+      try {
+        analysis = await this.analyze(input, token, String(page));
+      } catch (error) {
+        if (isPastLastPage(error)) return;
+        throw error;
+      }
+      for (const identifier of invoiceNumbers(analysis)) identifiers.add(identifier);
+      if (identifiers.size > 1) {
+        throw new Error("PDF contains multiple invoice numbers and requires manual review");
+      }
+    }
+    throw new Error(`PDF has more than ${MAX_INVOICE_PAGES_TO_VERIFY} pages and requires manual review`);
   }
 
   private async analyze(input: AttachmentInput, token: string, pages: string, model = MODEL_ID): Promise<AnalyzeResponse> {

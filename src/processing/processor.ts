@@ -58,7 +58,10 @@ export class AttachmentProcessor {
 
       // OCR text is transient: it is reused only to corroborate fiscal labels when
       // the invoice model omitted them, and is never persisted in process state.
-      const extraction = await this.dependencies.extractor.extract(input, { recognizedText: classification.recognizedText });
+      const extraction = await this.dependencies.extractor.extract(input, {
+        recognizedText: classification.recognizedText,
+        ensureSingleInvoiceDocument: true,
+      });
       record = await this.transition(record, "extracted");
       if (this.dependencies.fiscalDiagnosticOnly) {
         return this.finish(record, "review_required", { code: "EX-05", reason: "REVISION_FISCAL_DIAGNOSTICO", retryable: false });

@@ -106,6 +106,7 @@ $definitions = @(
             @{ name = 'NumeroFactura'; text = @{} }
             @{ name = 'FechaFactura'; dateTime = @{ format = 'dateOnly' } }
             @{ name = 'FechaVencimiento'; dateTime = @{ format = 'dateOnly' } }
+            @{ name = 'DueDateStatus'; choice = @{ choices = @('present','not_stated') } }
             @{ name = 'BaseImponible'; number = @{ decimalPlaces = 'automatic' } }
             @{ name = 'IVA'; number = @{ decimalPlaces = 'automatic' } }
             @{ name = 'Total'; number = @{ decimalPlaces = 'automatic' } }
@@ -233,6 +234,7 @@ $definitions = @(
             @{ name = 'NumeroFactura'; text = @{} }
             @{ name = 'FechaFactura'; dateTime = @{ format = 'dateOnly' } }
             @{ name = 'FechaVencimiento'; dateTime = @{ format = 'dateOnly' } }
+            @{ name = 'DueDateStatus'; choice = @{ choices = @('present','not_stated') } }
             @{ name = 'ImporteFacturaMenor'; number = @{ decimalPlaces = 'none' } }
             @{ name = 'ImporteFacturaPresentacion'; text = @{} }
             @{ name = 'FechaPagoPrevista'; indexed = $true; dateTime = @{ format = 'dateOnly' } }
