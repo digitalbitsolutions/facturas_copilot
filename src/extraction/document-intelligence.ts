@@ -170,6 +170,46 @@ function derivedTaxableBaseFromRate(total?: Field, percent?: number): string | u
   return (Math.round((totalValue / (1 + percent / 100)) * 100) / 100).toFixed(2);
 }
 
+function labelledAmounts(content: string, label: RegExp): number[] {
+  const values: number[] = [];
+  for (const line of content.split(/\r?\n/)) {
+    if (!label.test(line)) continue;
+    for (const candidate of line.match(/\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?/g) ?? []) {
+      const parsed = numericAmount({ content: candidate });
+      if (typeof parsed === "number" && Number.isFinite(parsed)) values.push(parsed);
+    }
+  }
+  return values;
+}
+
+function enrichWithRecognizedFiscalText(
+  extraction: { invoice: ExtractedInvoice; confidence: ExtractionConfidence }, content?: string,
+): { invoice: ExtractedInvoice; confidence: ExtractionConfidence } {
+  if (!content || extraction.invoice.vatAmount) return extraction;
+  const total = Number(extraction.invoice.totalAmount);
+  if (!Number.isFinite(total)) return extraction;
+  const bases = labelledAmounts(content, /\bbase\s+(?:imponible|gravable|tributaria)\b/i);
+  const taxes = labelledAmounts(content, /\b(?:i\.?\s*v\.?\s*a\.?|iva|vat|cuota\s+tributaria)\b/i);
+  const currentBase = Number(extraction.invoice.taxableBase);
+  const candidateBases = Number.isFinite(currentBase) ? [currentBase, ...bases] : bases;
+  for (const base of candidateBases) {
+    for (const tax of taxes) {
+      if (base < 0 || tax < 0 || Math.abs(base + tax - total) > 0.01) continue;
+      const invoice = { ...extraction.invoice, taxableBase: base.toFixed(2), vatAmount: tax.toFixed(2) };
+      const confidence = { ...extraction.confidence };
+      const derivedConfidence = [extraction.confidence.taxableBase, extraction.confidence.totalAmount]
+        .filter((value): value is number => typeof value === "number")
+        .reduce<number | undefined>((minimum, value) => minimum === undefined ? value : Math.min(minimum, value), undefined);
+      if (derivedConfidence !== undefined) {
+        confidence.taxableBase ??= derivedConfidence;
+        confidence.vatAmount = derivedConfidence;
+      }
+      return { invoice, confidence };
+    }
+  }
+  return extraction;
+}
+
 function lineItems(field?: Field): import("../invoices/types.ts").InvoiceLine[] | undefined {
   const lines = field?.valueArray?.flatMap(({ valueObject }) => {
     const description = text(valueObject?.Description);
@@ -252,7 +292,7 @@ export class DocumentIntelligenceInvoiceExtractor implements InvoiceExtractor {
     this.timeoutMs = options.timeoutMs ?? 60_000;
   }
 
-  async extract(input: AttachmentInput): Promise<{ invoice: ExtractedInvoice; confidence: ExtractionConfidence }> {
+  async extract(input: AttachmentInput, context: { recognizedText?: string } = {}): Promise<{ invoice: ExtractedInvoice; confidence: ExtractionConfidence }> {
     if (input.contentType !== "application/pdf") throw new Error("Document Intelligence pilot only accepts PDF files");
     if (input.content.length === 0 || input.content.length > 4 * 1024 * 1024) throw new Error("PDF must be between 1 byte and 4 MB for the F0 tier");
     const token = await this.tokenProvider.getAccessToken();
@@ -277,7 +317,7 @@ export class DocumentIntelligenceInvoiceExtractor implements InvoiceExtractor {
         if (fields && !fields.SubTotal && !fields.TotalTax && !fields.TaxDetails) {
           console.warn(`Invoice analysis fiscal line shapes ${JSON.stringify(lineTaxShapes(fields.Items))}`);
         }
-        return enrichWithFacturX(mapInvoiceResult(payload), input.content);
+        return enrichWithRecognizedFiscalText(enrichWithFacturX(mapInvoiceResult(payload), input.content), context.recognizedText);
       }
       if (payload.status === "failed") throw new Error(`Document Intelligence analysis failed: ${payload.error?.message ?? payload.error?.code ?? "unknown error"}`);
     }

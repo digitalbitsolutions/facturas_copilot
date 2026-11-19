@@ -129,6 +129,27 @@ test("derives VAT when the invoice total is also formatted text", () => {
   assert.equal(extracted.invoice.vatAmount, "325.66");
 });
 
+test("uses labelled OCR fiscal text only when it reconciles to the extracted total", async () => {
+  let calls = 0;
+  const fetchMock = async (_url: string | URL | Request, _init?: RequestInit) => {
+    calls += 1;
+    return calls === 1
+      ? new Response(null, { status: 202, headers: { "operation-location": "https://di.example.com/result/ocr-fiscal" } })
+      : Response.json({ status: "succeeded", analyzeResult: { documents: [{ fields: {
+        InvoiceTotal: { valueCurrency: { amount: 121, currencyCode: "EUR" }, confidence: 0.95 },
+        Items: { valueArray: [{ valueObject: { Amount: { valueCurrency: { amount: 100 }, confidence: 0.9 } } }] },
+      } }] } });
+  };
+  const extractor = new DocumentIntelligenceInvoiceExtractor("https://di.example.com", { getAccessToken: async () => "token" }, { fetch: fetchMock as typeof fetch, pollIntervalMs: 0 });
+  const extracted = await extractor.extract({
+    messageId: "manual", attachmentId: "ocr-fiscal", sender: "pilot", receivedAt: "2026-09-10T12:00:00Z",
+    originalFilename: "factura.pdf", contentType: "application/pdf", content: new Uint8Array([1, 2, 3]),
+  }, { recognizedText: "Base imponible 100,00 EUR\nIVA 21,00 EUR\nTotal factura 121,00 EUR" });
+  assert.equal(extracted.invoice.taxableBase, "100.00");
+  assert.equal(extracted.invoice.vatAmount, "21.00");
+  assert.equal(extracted.confidence.vatAmount, 0.9);
+});
+
 test("normalizes international formatted line amounts before deriving VAT", () => {
   const extracted = mapInvoiceResult({
     status: "succeeded",

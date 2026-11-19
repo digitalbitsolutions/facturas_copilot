@@ -55,7 +55,9 @@ export class AttachmentProcessor {
         return this.finish(record, "diverted", { code: "EX-03", reason: `Document classified as ${classification.kind}`, retryable: false });
       }
 
-      const extraction = await this.dependencies.extractor.extract(input);
+      // OCR text is transient: it is reused only to corroborate fiscal labels when
+      // the invoice model omitted them, and is never persisted in process state.
+      const extraction = await this.dependencies.extractor.extract(input, { recognizedText: classification.recognizedText });
       record = await this.transition(record, "extracted");
       const supplierIdentity = resolveSupplierIdentity(extraction.invoice, await this.dependencies.supplierDirectory.listActive());
       const supplierValidationConfig = validationConfigForSupplier(this.dependencies.validationConfig, supplierIdentity);

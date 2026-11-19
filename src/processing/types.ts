@@ -1,7 +1,7 @@
 import type { ExtractedInvoice, ExtractionConfidence, RecipientDirectory, SupplierDirectory, ValidatedInvoice, ValidationIssue } from "../invoices/index.ts";
 
 export type DocumentKind = "invoice" | "bank_settlement" | "other";
-export type DocumentClassification = { kind: DocumentKind; confidence: number; reasons: string[] };
+export type DocumentClassification = { kind: DocumentKind; confidence: number; reasons: string[]; recognizedText?: string };
 export type ProcessState =
   | "received" | "classified" | "extracted" | "validated" | "archived"
   | "completed" | "diverted" | "review_required" | "resolved" | "discarded" | "failed";
@@ -38,7 +38,7 @@ export interface DocumentClassifier {
   classify(input: AttachmentInput): Promise<DocumentClassification>;
 }
 export interface InvoiceExtractor {
-  extract(input: AttachmentInput): Promise<{ invoice: ExtractedInvoice; confidence?: ExtractionConfidence }>;
+  extract(input: AttachmentInput, context?: { recognizedText?: string }): Promise<{ invoice: ExtractedInvoice; confidence?: ExtractionConfidence }>;
 }
 export interface ProcessStore {
   get(processId: string): Promise<ProcessRecord | undefined>;

@@ -52,7 +52,10 @@ export class DocumentIntelligenceDocumentClassifier implements DocumentClassifie
       const poll = await this.fetchImpl(operationUrl, { headers: { authorization: `Bearer ${token}` } });
       if (!poll.ok) throw await this.responseError("poll", poll);
       const payload = await poll.json() as AnalyzeResponse;
-      if (payload.status === "succeeded") return classifyDocumentText(payload.analyzeResult?.content ?? "", input.originalFilename);
+      if (payload.status === "succeeded") {
+        const recognizedText = payload.analyzeResult?.content ?? "";
+        return { ...classifyDocumentText(recognizedText, input.originalFilename), recognizedText };
+      }
       if (payload.status === "failed") throw new Error(`Document classification failed: ${payload.error?.message ?? payload.error?.code ?? "unknown error"}`);
     }
     throw new Error("Document classification timed out");
