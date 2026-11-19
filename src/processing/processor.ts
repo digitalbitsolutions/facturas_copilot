@@ -16,6 +16,7 @@ export type ProcessorDependencies = {
   recipientDirectory?: import("../invoices/index.ts").RecipientDirectory;
   requireRecipientMatch?: boolean;
   validationConfig?: InvoiceValidationConfig;
+  fiscalDiagnosticOnly?: boolean;
   now?: () => Date;
 };
 
@@ -59,6 +60,9 @@ export class AttachmentProcessor {
       // the invoice model omitted them, and is never persisted in process state.
       const extraction = await this.dependencies.extractor.extract(input, { recognizedText: classification.recognizedText });
       record = await this.transition(record, "extracted");
+      if (this.dependencies.fiscalDiagnosticOnly) {
+        return this.finish(record, "review_required", { code: "EX-05", reason: "REVISION_FISCAL_DIAGNOSTICO", retryable: false });
+      }
       const supplierIdentity = resolveSupplierIdentity(extraction.invoice, await this.dependencies.supplierDirectory.listActive());
       const supplierValidationConfig = validationConfigForSupplier(this.dependencies.validationConfig, supplierIdentity);
       let validation = validateInvoice(extraction.invoice, extraction.confidence, supplierValidationConfig);

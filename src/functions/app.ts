@@ -232,6 +232,7 @@ app.timer("pollInvoiceMailbox", {
         documents: new SharePointDocumentRepository(graph, requiredSetting("M365_SHAREPOINT_DRIVE_ID"), process.env.M365_INVOICE_FOLDER ?? "Facturas"),
         registry: new SharePointInvoiceRegistry(graph, siteId, process.env.M365_INVOICE_REGISTRY_LIST ?? "RegistroFacturas"),
         supplierDirectory: new SharePointSupplierDirectory(graph, siteId, process.env.M365_SUPPLIERS_LIST ?? "MaestroProveedores"),
+        fiscalDiagnosticOnly: process.env.INVOICE_FISCAL_DIAGNOSTIC_ONLY?.toLowerCase() === "true",
         ...(recipientRoutingEnabled ? {
           recipientDirectory: new SharePointRecipientDirectory(graph, siteId, process.env.M365_RECIPIENTS_LIST ?? "MaestroReceptores"),
           requireRecipientMatch: true,
