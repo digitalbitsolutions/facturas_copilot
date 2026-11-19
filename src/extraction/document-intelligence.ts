@@ -19,7 +19,7 @@ type Field = {
 type AnalyzeResponse = {
   status?: "notStarted" | "running" | "succeeded" | "failed";
   error?: { code?: string; message?: string };
-  analyzeResult?: { documents?: Array<{ fields?: Record<string, Field> }> };
+  analyzeResult?: { documents?: Array<{ fields?: Record<string, Field> }>; content?: string };
 };
 
 export type DocumentIntelligenceOptions = {
@@ -306,6 +306,19 @@ function enrichWithFinalPageFiscalSummary(primary: Extraction, finalPage: Extrac
   return { invoice, confidence };
 }
 
+function enrichWithFiscalTable(primary: Extraction, content?: string): Extraction {
+  const total = Number(primary.invoice.totalAmount);
+  if (!content || !Number.isFinite(total)) return primary;
+  const amount = "(\\d{1,3}(?:[.,]\\d{3})*(?:[.,]\\d{1,2})?|\\d+(?:[.,]\\d{1,2})?)";
+  const rows = [...content.matchAll(new RegExp(`${amount}\\s+(\\d+(?:[.,]\\d+)?)\\s*%?\\s+${amount}`, "g"))]
+    .map((match) => ({ base: numericAmount({ content: match[1] }), tax: numericAmount({ content: match[3] }) }))
+    .filter((row): row is { base: number; tax: number } => row.base !== undefined && row.tax !== undefined);
+  const base = rows.reduce((sum, row) => sum + row.base, 0);
+  const tax = rows.reduce((sum, row) => sum + row.tax, 0);
+  if (!rows.length || Math.abs(base + tax - total) > 0.01) return primary;
+  return { invoice: { ...primary.invoice, taxableBase: base.toFixed(2), vatAmount: tax.toFixed(2) }, confidence: primary.confidence };
+}
+
 export class DocumentIntelligenceInvoiceExtractor implements InvoiceExtractor {
   private readonly endpoint: string;
   private readonly tokenProvider: AccessTokenProvider;
@@ -335,6 +348,8 @@ export class DocumentIntelligenceInvoiceExtractor implements InvoiceExtractor {
       // F0 analyses a maximum of two selected pages per request. A separate page-3
       // request retrieves a final fiscal summary without widening every invoice run.
       extraction = enrichWithFinalPageFiscalSummary(extraction, mapInvoiceResult(await this.analyze(input, token, "3")));
+      const fiscalText = await this.analyze(input, token, "3", "prebuilt-read");
+      extraction = enrichWithFiscalTable(extraction, fiscalText.analyzeResult?.content);
     } catch {
       // A two-page PDF has no continuation page. Preserve the original safe review path.
       console.warn("Invoice fiscal continuation page was unavailable");
@@ -342,8 +357,8 @@ export class DocumentIntelligenceInvoiceExtractor implements InvoiceExtractor {
     return enrichWithRecognizedFiscalText(extraction, context.recognizedText);
   }
 
-  private async analyze(input: AttachmentInput, token: string, pages: string): Promise<AnalyzeResponse> {
-    const analyzeUrl = `${this.endpoint}/documentintelligence/documentModels/${MODEL_ID}:analyze?api-version=${API_VERSION}&pages=${pages}`;
+  private async analyze(input: AttachmentInput, token: string, pages: string, model = MODEL_ID): Promise<AnalyzeResponse> {
+    const analyzeUrl = `${this.endpoint}/documentintelligence/documentModels/${model}:analyze?api-version=${API_VERSION}&pages=${pages}`;
     const initial = await this.fetchImpl(analyzeUrl, {
       method: "POST",
       headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },

@@ -180,7 +180,7 @@ test("uses a coherent fiscal summary from page three when the first two pages om
   assert.equal(extracted.invoice.taxableBase, "2917.35");
   assert.equal(extracted.invoice.vatAmount, "595.85");
   assert.equal(extracted.invoice.totalAmount, "3513.20");
-  assert.equal(calls, 4);
+  assert.equal(calls, 5);
 });
 
 test("normalizes international formatted line amounts before deriving VAT", () => {
