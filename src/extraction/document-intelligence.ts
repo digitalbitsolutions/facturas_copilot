@@ -277,6 +277,35 @@ export function mapInvoiceResult(payload: AnalyzeResponse): { invoice: Extracted
   };
 }
 
+type Extraction = { invoice: ExtractedInvoice; confidence: ExtractionConfidence };
+
+function coherentFiscalSummary(invoice: ExtractedInvoice): boolean {
+  const base = Number(invoice.taxableBase);
+  const tax = Number(invoice.vatAmount);
+  const total = Number(invoice.totalAmount);
+  return [base, tax, total].every(Number.isFinite) && base >= 0 && tax >= 0 && Math.abs(base + tax - total) <= 0.01;
+}
+
+function sameInvoiceNumber(left?: string, right?: string): boolean {
+  return !left || !right || left.normalize("NFKC").replace(/\W/g, "").toLocaleUpperCase("es-ES") === right.normalize("NFKC").replace(/\W/g, "").toLocaleUpperCase("es-ES");
+}
+
+function enrichWithFinalPageFiscalSummary(primary: Extraction, finalPage: Extraction): Extraction {
+  if (!coherentFiscalSummary(finalPage.invoice) || !sameInvoiceNumber(primary.invoice.invoiceNumber, finalPage.invoice.invoiceNumber)) return primary;
+  const invoice = {
+    ...primary.invoice,
+    taxableBase: finalPage.invoice.taxableBase,
+    vatAmount: finalPage.invoice.vatAmount,
+    totalAmount: finalPage.invoice.totalAmount,
+    ...(finalPage.invoice.currency ? { currency: finalPage.invoice.currency } : {}),
+  };
+  const confidence = { ...primary.confidence };
+  for (const field of ["taxableBase", "vatAmount", "totalAmount", "currency"] as const) {
+    if (typeof finalPage.confidence[field] === "number") confidence[field] = finalPage.confidence[field];
+  }
+  return { invoice, confidence };
+}
+
 export class DocumentIntelligenceInvoiceExtractor implements InvoiceExtractor {
   private readonly endpoint: string;
   private readonly tokenProvider: AccessTokenProvider;
@@ -296,7 +325,25 @@ export class DocumentIntelligenceInvoiceExtractor implements InvoiceExtractor {
     if (input.contentType !== "application/pdf") throw new Error("Document Intelligence pilot only accepts PDF files");
     if (input.content.length === 0 || input.content.length > 4 * 1024 * 1024) throw new Error("PDF must be between 1 byte and 4 MB for the F0 tier");
     const token = await this.tokenProvider.getAccessToken();
-    const analyzeUrl = `${this.endpoint}/documentintelligence/documentModels/${MODEL_ID}:analyze?api-version=${API_VERSION}&pages=1-2`;
+    const primary = await this.analyze(input, token, "1-2");
+    const fields = primary.analyzeResult?.documents?.[0]?.fields;
+    if (fields && !fields.SubTotal && !fields.TotalTax && !fields.TaxDetails) {
+      console.warn(`Invoice analysis fiscal line shapes ${JSON.stringify(lineTaxShapes(fields.Items))}`);
+    }
+    let extraction = enrichWithFacturX(mapInvoiceResult(primary), input.content);
+    if (!fields?.SubTotal && !fields?.TotalTax && !fields?.TaxDetails) try {
+      // F0 analyses a maximum of two selected pages per request. A separate page-3
+      // request retrieves a final fiscal summary without widening every invoice run.
+      extraction = enrichWithFinalPageFiscalSummary(extraction, mapInvoiceResult(await this.analyze(input, token, "3")));
+    } catch {
+      // A two-page PDF has no continuation page. Preserve the original safe review path.
+      console.warn("Invoice fiscal continuation page was unavailable");
+    }
+    return enrichWithRecognizedFiscalText(extraction, context.recognizedText);
+  }
+
+  private async analyze(input: AttachmentInput, token: string, pages: string): Promise<AnalyzeResponse> {
+    const analyzeUrl = `${this.endpoint}/documentintelligence/documentModels/${MODEL_ID}:analyze?api-version=${API_VERSION}&pages=${pages}`;
     const initial = await this.fetchImpl(analyzeUrl, {
       method: "POST",
       headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
@@ -312,13 +359,7 @@ export class DocumentIntelligenceInvoiceExtractor implements InvoiceExtractor {
       const response = await this.fetchImpl(operationUrl, { headers: { authorization: `Bearer ${token}` } });
       if (!response.ok) throw await this.responseError("poll", response);
       const payload = await response.json() as AnalyzeResponse;
-      if (payload.status === "succeeded") {
-        const fields = payload.analyzeResult?.documents?.[0]?.fields;
-        if (fields && !fields.SubTotal && !fields.TotalTax && !fields.TaxDetails) {
-          console.warn(`Invoice analysis fiscal line shapes ${JSON.stringify(lineTaxShapes(fields.Items))}`);
-        }
-        return enrichWithRecognizedFiscalText(enrichWithFacturX(mapInvoiceResult(payload), input.content), context.recognizedText);
-      }
+      if (payload.status === "succeeded") return payload;
       if (payload.status === "failed") throw new Error(`Document Intelligence analysis failed: ${payload.error?.message ?? payload.error?.code ?? "unknown error"}`);
     }
     throw new Error("Document Intelligence analysis timed out");

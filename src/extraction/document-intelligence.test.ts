@@ -150,6 +150,39 @@ test("uses labelled OCR fiscal text only when it reconciles to the extracted tot
   assert.equal(extracted.confidence.vatAmount, 0.9);
 });
 
+test("uses a coherent fiscal summary from page three when the first two pages omit tax", async () => {
+  let calls = 0;
+  const fetchMock = async (url: string | URL | Request, _init?: RequestInit) => {
+    calls += 1;
+    if (calls === 1) {
+      assert.match(String(url), /pages=1-2/);
+      return new Response(null, { status: 202, headers: { "operation-location": "https://di.example.com/result/first" } });
+    }
+    if (calls === 2) return Response.json({ status: "succeeded", analyzeResult: { documents: [{ fields: {
+      InvoiceId: { valueString: "26/11161" }, InvoiceTotal: { valueCurrency: { amount: 2393.41, currencyCode: "EUR" }, confidence: 0.95 },
+      Items: { valueArray: [{ valueObject: { Amount: { valueCurrency: { amount: 2393.41 }, confidence: 0.9 } } }] },
+    } }] } });
+    if (calls === 3) {
+      assert.match(String(url), /pages=3/);
+      return new Response(null, { status: 202, headers: { "operation-location": "https://di.example.com/result/final" } });
+    }
+    return Response.json({ status: "succeeded", analyzeResult: { documents: [{ fields: {
+      InvoiceId: { valueString: "26/11161" }, SubTotal: { valueCurrency: { amount: 2917.35, currencyCode: "EUR" }, confidence: 0.97 },
+      TotalTax: { valueCurrency: { amount: 595.85, currencyCode: "EUR" }, confidence: 0.97 },
+      InvoiceTotal: { valueCurrency: { amount: 3513.2, currencyCode: "EUR" }, confidence: 0.98 },
+    } }] } });
+  };
+  const extractor = new DocumentIntelligenceInvoiceExtractor("https://di.example.com", { getAccessToken: async () => "token" }, { fetch: fetchMock as typeof fetch, pollIntervalMs: 0 });
+  const extracted = await extractor.extract({
+    messageId: "manual", attachmentId: "page-three", sender: "pilot", receivedAt: "2026-11-19T00:00:00Z",
+    originalFilename: "factura.pdf", contentType: "application/pdf", content: new Uint8Array([1, 2, 3]),
+  });
+  assert.equal(extracted.invoice.taxableBase, "2917.35");
+  assert.equal(extracted.invoice.vatAmount, "595.85");
+  assert.equal(extracted.invoice.totalAmount, "3513.20");
+  assert.equal(calls, 4);
+});
+
 test("normalizes international formatted line amounts before deriving VAT", () => {
   const extracted = mapInvoiceResult({
     status: "succeeded",
