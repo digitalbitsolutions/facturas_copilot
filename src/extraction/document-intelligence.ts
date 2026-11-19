@@ -2,6 +2,7 @@ import type { ExtractedInvoice, ExtractionConfidence, InvoiceField } from "../in
 import type { InvoiceExtractor, AttachmentInput } from "../processing/types.ts";
 import type { AccessTokenProvider } from "../microsoft365/graph-client.ts";
 import { enrichWithFacturX } from "./factur-x.ts";
+import { extractFiscal, type DiAnalyzeResult } from "./fiscal.ts";
 import { dumpTaxTables } from "./fiscal-diagnose.ts";
 
 const API_VERSION = "2024-11-30";
@@ -321,6 +322,27 @@ function enrichWithFiscalTable(primary: Extraction, content?: string): Extractio
   return { invoice: { ...primary.invoice, taxableBase: base.toFixed(2), vatAmount: tax.toFixed(2) }, confidence: primary.confidence };
 }
 
+function enrichWithValidatedFiscalLayout(primary: Extraction, result: DiAnalyzeResult): Extraction {
+  const headerTotal = Number(primary.invoice.totalAmount);
+  const fiscal = extractFiscal(result, {
+    ...(Number.isFinite(headerTotal) ? { headerTotal: Math.round(headerTotal * 100) } : {}),
+  });
+  if (!fiscal.ok) return primary;
+  const { baseTotal, vatTotal } = fiscal.summary;
+  return {
+    invoice: {
+      ...primary.invoice,
+      taxableBase: (baseTotal / 100).toFixed(2),
+      vatAmount: (vatTotal / 100).toFixed(2),
+    },
+    confidence: {
+      ...primary.confidence,
+      taxableBase: 0.9,
+      vatAmount: 0.9,
+    },
+  };
+}
+
 export class DocumentIntelligenceInvoiceExtractor implements InvoiceExtractor {
   private readonly endpoint: string;
   private readonly tokenProvider: AccessTokenProvider;
@@ -352,8 +374,9 @@ export class DocumentIntelligenceInvoiceExtractor implements InvoiceExtractor {
       extraction = enrichWithFinalPageFiscalSummary(extraction, mapInvoiceResult(await this.analyze(input, token, "3")));
       const fiscalText = await this.analyze(input, token, "3", "prebuilt-read");
       extraction = enrichWithFiscalTable(extraction, fiscalText.analyzeResult?.content);
-      const layout = await this.analyze(input, token, "3", "prebuilt-layout") as unknown as { analyzeResult?: { tables?: Array<{ rowCount?: number; columnCount?: number; cells?: Array<{ kind?: string; rowIndex?: number; columnIndex?: number; content?: string; boundingRegions?: unknown }> }> } };
-      console.warn(`Invoice fiscal layout ${JSON.stringify(dumpTaxTables((layout.analyzeResult ?? {}) as never))}`);
+      const layout = await this.analyze(input, token, "3", "prebuilt-layout") as { analyzeResult?: DiAnalyzeResult };
+      extraction = enrichWithValidatedFiscalLayout(extraction, layout.analyzeResult ?? {});
+      console.warn(`Invoice fiscal layout ${JSON.stringify(dumpTaxTables(layout.analyzeResult ?? {}))}`);
     } catch {
       // A two-page PDF has no continuation page. Preserve the original safe review path.
       console.warn("Invoice fiscal continuation page was unavailable");
