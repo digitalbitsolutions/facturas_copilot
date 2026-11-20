@@ -25,7 +25,22 @@ export function normalizeSupplierName(value: string): string {
 }
 
 export function normalizeTaxId(value: string): string {
-  return value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const normalized = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  return hasSpanishCountryPrefix(normalized) ? normalized.slice(2) : normalized;
+}
+
+export function hasSpanishCountryPrefix(value: string): boolean {
+  const normalized = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  return normalized.startsWith("ES") && isSpanishTaxId(normalized.slice(2));
+}
+
+/**
+ * Makes the optional EU country prefix comparable with the domestic Spanish
+ * identifier. It deliberately accepts only recognisable Spanish NIF/NIE/CIF
+ * shapes, so an arbitrary identifier beginning with "ES" is not modified.
+ */
+function isSpanishTaxId(value: string): boolean {
+  return /^(?:\d{8}[A-Z]|[XYZ]\d{7}[A-Z]|[A-HJ-NP-SUVW]\d{7}[0-9A-J])$/.test(value);
 }
 
 export function resolveSupplierIdentity(invoice: ExtractedInvoice, suppliers: SupplierMasterRecord[]): SupplierIdentityResult {

@@ -23,9 +23,9 @@ test("corroborates only an explicit invoice date or a place-date header", () => 
 test("corroborates a single recipient only with its complete NIF and nearby name", () => {
   assert.equal(corroborateRecipient(serviceText, recipients, "B00000009")?.recipient.recipientId, "ALFA");
   assert.equal(corroborateRecipient("Alfa Norte\nSin NIF", recipients), undefined);
-  assert.equal(corroborateRecipient("Alfa Norte\nCIF ESB00000001", recipients), undefined);
+  assert.equal(corroborateRecipient("Alfa Norte\nCIF ESB00000001", recipients)?.recipient.recipientId, "ALFA");
   assert.equal(corroborateRecipient("ALFA DENTAL NORTE B00000001\nBETA CLINICA SUR B00000002", recipients), undefined);
-  assert.equal(normalizeTaxId("ESB00000001"), "ESB00000001");
+  assert.equal(normalizeTaxId("ESB00000001"), "B00000001");
 });
 
 test("completes deficient values with audited text provenance and does not invent confidence", () => {

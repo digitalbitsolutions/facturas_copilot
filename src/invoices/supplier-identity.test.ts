@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { normalizeSupplierName, resolveSupplierIdentity } from "./supplier-identity.ts";
+import { normalizeSupplierName, normalizeTaxId, resolveSupplierIdentity } from "./supplier-identity.ts";
 
 const suppliers = [
   { supplierId: "SUP-001", legalName: "Energía Ejemplo, S.A.U.", taxId: "A-12345678", aliases: ["ENERGIA"], active: true },
@@ -15,6 +15,17 @@ test("matches an active supplier by exact normalized tax ID", () => {
   const result = resolveSupplierIdentity({ supplierName: "wrong name", supplierTaxId: "a 12345678" }, suppliers);
   assert.equal(result.status, "matched");
   if (result.status === "matched") assert.equal(result.matchedBy, "tax_id");
+});
+
+test("compares an ES-prefixed Spanish NIF to its domestic master value", () => {
+  assert.equal(normalizeTaxId("ESA80219462"), "A80219462");
+  assert.equal(resolveSupplierIdentity({ supplierTaxId: "ESA80219462" }, [{
+    supplierId: "MANOHAY_A80219462", legalName: "Manohay Dental S.A.U.", taxId: "A80219462", active: true,
+  }]).status, "matched");
+});
+
+test("does not remove ES from an unrecognised identifier", () => {
+  assert.equal(normalizeTaxId("ESNOT_A_SPANISH_NIF"), "ESNOTASPANISHNIF");
 });
 
 test("does not fall back to the name when an extracted tax ID conflicts", () => {

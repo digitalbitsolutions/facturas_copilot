@@ -1,5 +1,5 @@
 import type { ExtractedInvoice, ValidationIssue } from "./types.ts";
-import { normalizeSupplierName, normalizeTaxId } from "./supplier-identity.ts";
+import { hasSpanishCountryPrefix, normalizeSupplierName, normalizeTaxId } from "./supplier-identity.ts";
 
 export type RecipientMasterRecord = { recipientId: string; legalName: string; taxId?: string; aliases?: string[]; active: boolean };
 export type RecipientIdentityResult =
@@ -15,7 +15,15 @@ export function resolveRecipientIdentity(invoice: ExtractedInvoice, recipients: 
   const taxId = invoice.recipientTaxId && normalizeTaxId(invoice.recipientTaxId);
   if (taxId) {
     const matches = active.filter((recipient) => recipient.taxId && normalizeTaxId(recipient.taxId) === taxId);
-    if (matches.length === 1) return { status: "matched", recipient: matches[0], matchedBy: "tax_id" };
+    if (matches.length === 1) {
+      const recipient = matches[0];
+      const names = [recipient.legalName, ...(recipient.aliases ?? [])].map(normalizeSupplierName);
+      const extractedName = invoice.recipientName && normalizeSupplierName(invoice.recipientName);
+      if (hasSpanishCountryPrefix(invoice.recipientTaxId ?? "") && extractedName && !names.includes(extractedName)) {
+        return notFound("recipientName", "Recipient name conflicts with the active master record for an ES-prefixed tax ID");
+      }
+      return { status: "matched", recipient, matchedBy: "tax_id" };
+    }
     if (matches.length > 1) return ambiguous(matches, "recipientTaxId", "Recipient tax ID matches multiple active master records");
     return notFound("recipientTaxId", "Recipient tax ID does not match an active master record");
   }

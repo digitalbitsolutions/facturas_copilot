@@ -63,7 +63,7 @@ export function corroborateInvoiceDate(text: string): DateCorroboration | undefi
 
 function nifPattern(taxId: string): RegExp {
   const chars = normalizeTaxId(taxId).split("");
-  return new RegExp(`(?<![A-Za-z0-9])${chars.join("[ .\\-]?")}(?![A-Za-z0-9])`, "i");
+  return new RegExp(`(?<![A-Za-z0-9])(?:ES[ .\\-]?)?${chars.join("[ .\\-]?")}(?![A-Za-z0-9])`, "i");
 }
 
 /** Requires exactly one active master whose complete NIF token and name are near each other. */
