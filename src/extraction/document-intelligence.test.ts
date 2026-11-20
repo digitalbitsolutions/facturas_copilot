@@ -24,6 +24,14 @@ const facturX = `
   <ram:ApplicableHeaderTradeSettlement><ram:SpecifiedTradeSettlementHeaderMonetarySummation><ram:TaxBasisTotalAmount>55.00</ram:TaxBasisTotalAmount><ram:TaxTotalAmount currencyID="EUR">0.00</ram:TaxTotalAmount><ram:GrandTotalAmount>55.00</ram:GrandTotalAmount></ram:SpecifiedTradeSettlementHeaderMonetarySummation><ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode></ram:ApplicableHeaderTradeSettlement>
 </rsm:CrossIndustryInvoice>`;
 
+const straumannLayout = {
+  tables: [{ rowCount: 3, columnCount: 4, cells: [
+    { rowIndex: 0, columnIndex: 0, content: "Desglose IVA" }, { rowIndex: 0, columnIndex: 1, content: "Base" }, { rowIndex: 0, columnIndex: 2, content: "Tarifa" }, { rowIndex: 0, columnIndex: 3, content: "IVA" },
+    { rowIndex: 1, columnIndex: 0, content: "IVA" }, { rowIndex: 1, columnIndex: 1, content: "43,06" }, { rowIndex: 1, columnIndex: 2, content: "10 %" }, { rowIndex: 1, columnIndex: 3, content: "4,31" },
+    { rowIndex: 2, columnIndex: 0, content: "IVA Porte" }, { rowIndex: 2, columnIndex: 1, content: "8,00" }, { rowIndex: 2, columnIndex: 2, content: "21 %" }, { rowIndex: 2, columnIndex: 3, content: "1,68" },
+  ] }],
+};
+
 test("maps the prebuilt invoice fields to the validation contract", () => {
   assert.deepEqual(mapInvoiceResult(result), {
     invoice: {
@@ -128,6 +136,34 @@ test("derives VAT when the invoice total is also formatted text", () => {
   assert.equal(extracted.invoice.totalAmount, "1876.45");
   assert.equal(extracted.invoice.taxableBase, "1550.79");
   assert.equal(extracted.invoice.vatAmount, "325.66");
+});
+
+test("uses a coherent first-pages fiscal layout when invoice header omits freight", async () => {
+  const requests: string[] = [];
+  const primary = { status: "succeeded" as const, analyzeResult: { documents: [{ fields: {
+    InvoiceId: { valueString: "9100227659", confidence: 0.99 }, InvoiceTotal: { valueCurrency: { amount: 57.05, currencyCode: "EUR" }, confidence: 0.99 },
+    SubTotal: { valueCurrency: { amount: 43.06, currencyCode: "EUR" }, confidence: 0.95 }, TotalTax: { valueCurrency: { amount: 5.99, currencyCode: "EUR" }, confidence: 0.6 },
+  } }] } };
+  const fetchMock = async (url: string | URL | Request, init?: RequestInit) => {
+    const target = String(url);
+    if (init?.method === "POST") {
+      requests.push(target);
+      const model = target.includes("prebuilt-layout") ? "layout" : "invoice";
+      return new Response(null, { status: 202, headers: { "operation-location": `https://di.example.com/result/${model}` } });
+    }
+    return Response.json(target.endsWith("layout") ? { status: "succeeded", analyzeResult: straumannLayout } : primary);
+  };
+  const extractor = new DocumentIntelligenceInvoiceExtractor("https://di.example.com", { getAccessToken: async () => "token" }, { fetch: fetchMock as typeof fetch, pollIntervalMs: 0 });
+  const extracted = await extractor.extract({
+    messageId: "manual", attachmentId: "straumann", sender: "pilot", receivedAt: "2026-11-20T18:07:16Z",
+    originalFilename: "10 STRAUMANN OCT FRA 9100227659 (IMPLANTES).PDF", contentType: "application/pdf", content: new Uint8Array([1, 2, 3]),
+  });
+  assert.deepEqual(
+    { base: extracted.invoice.taxableBase, vat: extracted.invoice.vatAmount, total: extracted.invoice.totalAmount, rates: extracted.invoice.vatRateSlots },
+    { base: "51.06", vat: "5.99", total: "57.05", rates: [21, 10, 0] },
+  );
+  assert.equal(extracted.confidence.vatAmount, 0.9);
+  assert.ok(requests.some((url) => url.includes("prebuilt-layout") && url.includes("pages=1-2")));
 });
 
 test("uses labelled OCR fiscal text only when it reconciles to the extracted total", async () => {

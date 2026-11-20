@@ -125,7 +125,7 @@ function normLabel(s: string): string {
 export function classifyHeader(text: string): Col | null {
   const n = normLabel(text);
   if (/^base( imponible)?$/.test(n)) return "base";
-  if (/^(% ?iva|iva ?%|tipo( de)? iva)$/.test(n)) return "rate";
+  if (/^(% ?iva|iva ?%|tipo( de)? iva|tarifa)$/.test(n)) return "rate";
   if (/^(imp|importe|cuota)( de)? iva$/.test(n) || n === "cuota") return "vat";
   if (/^total( factura)?$/.test(n)) return "total";
   if (n === "importe") return "gross";
@@ -164,6 +164,10 @@ function gridFromTables(tables: DiTable[]): { grid: Grid | null; errors: string[
         const k = classifyHeader(c);
         if (k && cols[k] === undefined) cols[k] = i;
       });
+      if (cols.vat === undefined && cols.base !== undefined && cols.rate !== undefined) {
+        const bareVat = header.findIndex((cell, index) => normLabel(cell) === "iva" && index !== cols.base && index !== cols.rate);
+        if (bareVat >= 0) cols.vat = bareVat;
+      }
       if (cols.base !== undefined && cols.rate !== undefined && cols.vat !== undefined) {
         const errors = header.some((c) => UNSUPPORTED_RE.test(normLabel(c)))
           ? ["La tabla fiscal tiene columnas no soportadas (recargo/IRPF/retención): revisión manual."]

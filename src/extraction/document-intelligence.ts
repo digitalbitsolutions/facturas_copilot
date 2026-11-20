@@ -372,6 +372,23 @@ function enrichWithFiscalTable(primary: Extraction, content?: string): Extractio
   return { invoice: { ...primary.invoice, taxableBase: base.toFixed(2), vatAmount: tax.toFixed(2) }, confidence: primary.confidence };
 }
 
+function isFiscallyCoherent(invoice: ExtractedInvoice): boolean {
+  const [base, vat, total] = [invoice.taxableBase, invoice.vatAmount, invoice.totalAmount]
+    .map((value) => (value ? Math.round(Number(value) * 100) : Number.NaN));
+  return [base, vat, total].every(Number.isFinite) && Math.abs(base + vat - total) <= 1;
+}
+
+/** Emits only the approved diagnostic properties for deficient fiscal fields. */
+function logLowConfidenceFiscalFields(extraction: Extraction, fields?: Record<string, Field>): void {
+  for (const [source, field] of [["SubTotal", "taxableBase"], ["TotalTax", "vatAmount"], ["InvoiceTotal", "totalAmount"]] as const) {
+    const raw = fields?.[source];
+    const confidence = raw?.confidence ?? extraction.confidence[field];
+    if (typeof confidence !== "number" || confidence >= 0.8) continue;
+    const region = raw?.boundingRegions?.[0];
+    console.warn(`Invoice fiscal field diagnostic ${JSON.stringify({ field, value: extraction.invoice[field] ?? null, confidence, page: region?.pageNumber ?? null, polygon: region?.polygon ?? null })}`);
+  }
+}
+
 function enrichWithValidatedFiscalLayout(primary: Extraction, result: DiAnalyzeResult): Extraction {
   const headerTotal = Number(primary.invoice.totalAmount);
   const fiscal = extractFiscal(result, {
@@ -433,6 +450,16 @@ export class DocumentIntelligenceInvoiceExtractor implements InvoiceExtractor {
     } catch {
       // A two-page PDF has no continuation page. Preserve the original safe review path.
       console.warn("Invoice fiscal continuation page was unavailable");
+    }
+    if (!isFiscallyCoherent(extraction.invoice)) try {
+      // The invoice model can omit freight from SubTotal. Read pages 1-2 only
+      // when its fiscal header is incomplete or incoherent, then accept layout
+      // data exclusively through extractFiscal's existing reconciliation rules.
+      const layout = await this.analyze(input, token, "1-2", "prebuilt-layout") as { analyzeResult?: DiAnalyzeResult };
+      extraction = enrichWithValidatedFiscalLayout(extraction, layout.analyzeResult ?? {});
+      if (!isFiscallyCoherent(extraction.invoice)) logLowConfidenceFiscalFields(extraction, fields);
+    } catch {
+      console.warn("Invoice first-pages fiscal layout was unavailable");
     }
     extraction = enrichWithRecognizedFiscalText(extraction, context.recognizedText);
     // The mailbox classifier supplies transient OCR text from the attachment;

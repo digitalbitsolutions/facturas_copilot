@@ -24,6 +24,14 @@ const assertDentalis = (result: ReturnType<typeof extractFiscal>) => {
   );
 };
 
+const straumannTable: DiAnalyzeResult = { tables: [{
+  rowCount: 3, columnCount: 4, cells: [
+    { rowIndex: 0, columnIndex: 0, content: "Desglose IVA" }, { rowIndex: 0, columnIndex: 1, content: "Base" }, { rowIndex: 0, columnIndex: 2, content: "Tarifa" }, { rowIndex: 0, columnIndex: 3, content: "IVA" },
+    { rowIndex: 1, columnIndex: 0, content: "IVA" }, { rowIndex: 1, columnIndex: 1, content: "43,06" }, { rowIndex: 1, columnIndex: 2, content: "10 %" }, { rowIndex: 1, columnIndex: 3, content: "4,31" },
+    { rowIndex: 2, columnIndex: 0, content: "IVA Porte" }, { rowIndex: 2, columnIndex: 1, content: "8,00" }, { rowIndex: 2, columnIndex: 2, content: "21 %" }, { rowIndex: 2, columnIndex: 3, content: "1,68" },
+  ],
+}] };
+
 const checks: Array<[string, () => void]> = [
   ["parseAmount convierte importe español", () => assert.equal(parseAmount("2.917,35"), 291735)],
   ["parseAmount conserva negativo", () => assert.equal(parseAmount("-1.000,00"), -100000)],
@@ -59,7 +67,16 @@ const checks: Array<[string, () => void]> = [
   ["los tipos de IVA ocupan tres huecos y los no usados quedan a cero", () => { const r = extractFiscal(resultFromDump()); assert.ok(r.ok); if (r.ok) assert.deepEqual(vatRateSlots(r.summary.rows), [21, 10, 0]); }],
   ["más de tres tipos de IVA no se truncan silenciosamente", () => assert.throws(() => vatRateSlots([{ base: 1, rateBp: 2100, vat: 0 }, { base: 1, rateBp: 1000, vat: 0 }, { base: 1, rateBp: 500, vat: 0 }, { base: 1, rateBp: 400, vat: 0 }]), /more than three/)],
   ["el total coincide con base más IVA", () => { const r = extractFiscal(resultFromDump()); assert.ok(r.ok); if (r.ok) assert.equal(r.summary.baseTotal + r.summary.vatTotal, r.summary.grossTotal); }],
+  ["Straumann reconoce Base Tarifa IVA y sus dos tipos", () => {
+    const r = extractFiscal(straumannTable, { headerTotal: 5705 });
+    assert.ok(r.ok, r.ok ? "" : r.errors.join(" | "));
+    if (r.ok) {
+      assert.deepEqual({ base: r.summary.baseTotal, vat: r.summary.vatTotal, total: r.summary.grossTotal }, { base: 5106, vat: 599, total: 5705 });
+      assert.deepEqual(vatRateSlots(r.summary.rows), [21, 10, 0]);
+    }
+  }],
+  ["Straumann se rechaza si no cuadra con el total de cabecera", () => assert.equal(extractFiscal(straumannTable, { headerTotal: 5800 }).ok, false)],
 ];
 
-assert.equal(checks.length, 34);
+assert.equal(checks.length, 36);
 for (const [name, check] of checks) test(name, check);
