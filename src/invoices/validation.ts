@@ -1,6 +1,7 @@
 import type {
   ExtractedInvoice,
   ExtractionConfidence,
+  FieldSources,
   InvoiceField,
   InvoiceValidationConfig,
   InvoiceValidationResult,
@@ -52,6 +53,7 @@ export function validateInvoice(
   invoice: ExtractedInvoice,
   confidence: ExtractionConfidence = {},
   config: InvoiceValidationConfig = defaultValidationConfig,
+  fieldSources: FieldSources = {},
 ): InvoiceValidationResult {
   const issues: ValidationIssue[] = [];
   const required = [...ALWAYS_REQUIRED];
@@ -73,6 +75,7 @@ export function validateInvoice(
     issues.push({ code: "invalid_currency", field: "currency", message: "currency must be an ISO 4217-style code" });
   }
   for (const [field, value] of Object.entries(confidence) as Array<[InvoiceField, number]>) {
+    if (fieldSources[field] === "text_fallback") continue;
     const minimumConfidence = config.minimumConfidenceByField?.[field] ?? config.minimumConfidence;
     if (!Number.isFinite(value) || value < minimumConfidence) {
       issues.push({ code: "low_confidence", field, message: `${field} confidence is below ${minimumConfidence}` });

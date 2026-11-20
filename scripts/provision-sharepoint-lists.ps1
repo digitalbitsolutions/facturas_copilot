@@ -84,6 +84,7 @@ $definitions = @(
             @{ name = 'DocumentKind'; choice = @{ choices = @('invoice','bank_settlement','other') } }
             @{ name = 'ClassificationConfidence'; number = @{ decimalPlaces = 'automatic' } }
             @{ name = 'ClassificationReasons'; text = @{ allowMultipleLines = $true } }
+            @{ name = 'FieldAudit'; text = @{ allowMultipleLines = $true } }
             @{ name = 'DuplicateKey'; text = @{} }
             @{ name = 'FinalFilename'; text = @{} }
             @{ name = 'DocumentUrl'; text = @{ allowMultipleLines = $true } }

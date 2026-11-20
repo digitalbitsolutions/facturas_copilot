@@ -36,6 +36,17 @@ export type InvoiceValidationConfig = {
   amountToleranceMinorUnits: number;
 };
 
+/** Provenance for a field completed after Document Intelligence extraction. */
+export type FieldSource = "text_fallback";
+export type FieldSources = Partial<Record<InvoiceField, FieldSource>>;
+export type FieldAuditEntry = {
+  field: "recipientName" | "recipientTaxId" | "invoiceDate";
+  fieldSource: "text_fallback";
+  rule: "recipient_nif_name_proximity_v1" | "invoice_date_labelled_v1" | "invoice_date_place_date_v1";
+  evidence: Array<{ line: number; text: string }>;
+  previous?: { value?: string; confidence?: number };
+};
+
 export type ValidationIssue = {
   code: "required" | "invalid_date" | "invalid_amount" | "invalid_currency" | "low_confidence" | "amount_mismatch" | "supplier_not_found" | "supplier_ambiguous" | "recipient_not_found" | "recipient_ambiguous";
   field: keyof ExtractedInvoice;

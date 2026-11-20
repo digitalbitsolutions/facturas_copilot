@@ -5,6 +5,7 @@ import { enrichWithFacturX } from "./factur-x.ts";
 import { decideDueDate } from "./due-date.ts";
 import { extractFiscal, type DiAnalyzeResult } from "./fiscal.ts";
 import { dumpTaxTables } from "./fiscal-diagnose.ts";
+import { diagnoseFields } from "./field-diagnostic.ts";
 
 const API_VERSION = "2024-11-30";
 const MODEL_ID = "prebuilt-invoice";
@@ -17,6 +18,7 @@ type Field = {
   valueNumber?: number;
   valueCurrency?: { amount?: number; currencyCode?: string };
   valueArray?: Array<{ valueObject?: Record<string, Field> }>;
+  boundingRegions?: Array<{ pageNumber?: number; polygon?: number[] }>;
 };
 
 type AnalyzeResponse = {
@@ -415,6 +417,7 @@ export class DocumentIntelligenceInvoiceExtractor implements InvoiceExtractor {
     if (fields && !fields.SubTotal && !fields.TotalTax && !fields.TaxDetails) {
       console.warn(`Invoice analysis fiscal line shapes ${JSON.stringify(lineTaxShapes(fields.Items))}`);
     }
+    for (const diagnostic of diagnoseFields(fields)) console.warn(`Invoice field diagnostic ${JSON.stringify(diagnostic)}`);
     let extraction = enrichWithFacturX(mapInvoiceResult(primary), input.content);
     if (!fields?.SubTotal && !fields?.TotalTax && !fields?.TaxDetails) try {
       // F0 analyses a maximum of two selected pages per request. A separate page-3

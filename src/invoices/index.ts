@@ -4,4 +4,5 @@ export { normalizeSupplierName, normalizeTaxId, resolveSupplierIdentity, validat
 export type { SupplierDirectory, SupplierIdentityResult, SupplierMasterRecord } from "./supplier-identity.ts";
 export { resolveRecipientIdentity } from "./recipient-identity.ts";
 export type { RecipientDirectory, RecipientIdentityResult, RecipientMasterRecord } from "./recipient-identity.ts";
-export type { ExtractedInvoice, ExtractionConfidence, InvoiceLine, InvoiceValidationConfig, InvoiceValidationResult, ValidatedInvoice, ValidationIssue } from "./types.ts";
+export { applyTextCorroboration, corroborateInvoiceDate, corroborateRecipient } from "./text-corroboration.ts";
+export type { ExtractedInvoice, ExtractionConfidence, FieldAuditEntry, FieldSource, FieldSources, InvoiceLine, InvoiceValidationConfig, InvoiceValidationResult, ValidatedInvoice, ValidationIssue } from "./types.ts";

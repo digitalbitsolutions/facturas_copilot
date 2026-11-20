@@ -78,6 +78,7 @@ export class SharePointProcessStore extends SharePointLists implements ProcessSt
       ...(string(fields.DocumentKind) ? { documentKind: string(fields.DocumentKind) as ProcessRecord["documentKind"] } : {}),
       ...(typeof fields.ClassificationConfidence === "number" ? { classificationConfidence: fields.ClassificationConfidence } : {}),
       ...(string(fields.ClassificationReasons) ? { classificationReasons: json(fields.ClassificationReasons, []) } : {}),
+      ...(string(fields.FieldAudit) ? { fieldAudit: json(fields.FieldAudit, []) } : {}),
       ...(string(fields.DuplicateKey) ? { duplicateKey: string(fields.DuplicateKey) } : {}),
       ...(string(fields.FinalFilename) ? { finalFilename: string(fields.FinalFilename) } : {}),
       ...(string(fields.DocumentUrl) ? { documentUrl: string(fields.DocumentUrl) } : {}),
@@ -133,6 +134,7 @@ export class SharePointProcessStore extends SharePointLists implements ProcessSt
     };
     if (record.documentKind !== undefined) fields.DocumentKind = record.documentKind;
     if (record.classificationConfidence !== undefined) fields.ClassificationConfidence = record.classificationConfidence;
+    if (record.fieldAudit?.length) fields.FieldAudit = JSON.stringify(record.fieldAudit);
     return fields;
   }
 }

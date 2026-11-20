@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { buildDuplicateKey, buildInvoicePath, resolveRecipientIdentity, resolveSupplierIdentity, validateInvoice, validationConfigForSupplier } from "../invoices/index.ts";
+import { applyTextCorroboration, buildDuplicateKey, buildInvoicePath, defaultValidationConfig, resolveRecipientIdentity, resolveSupplierIdentity, validateInvoice, validationConfigForSupplier } from "../invoices/index.ts";
 import type { InvoiceValidationConfig } from "../invoices/types.ts";
 import type {
   AttachmentInput, DocumentClassifier, DocumentRepository, InvoiceExtractor, InvoiceRegistry,
@@ -68,7 +68,16 @@ export class AttachmentProcessor {
       }
       const supplierIdentity = resolveSupplierIdentity(extraction.invoice, await this.dependencies.supplierDirectory.listActive());
       const supplierValidationConfig = validationConfigForSupplier(this.dependencies.validationConfig, supplierIdentity);
-      let validation = validateInvoice(extraction.invoice, extraction.confidence, supplierValidationConfig);
+      if (this.dependencies.requireRecipientMatch && !this.dependencies.recipientDirectory) throw new Error("Recipient routing is enabled without a recipient directory");
+      const recipients = this.dependencies.requireRecipientMatch ? await this.dependencies.recipientDirectory!.listActive() : undefined;
+      // This is deliberately scoped to the recipient-routing pilot. The extractor has
+      // already rejected PDFs that identify more than one invoice before OCR text is used.
+      const corroborated = recipients ? applyTextCorroboration({
+        invoice: extraction.invoice, confidence: extraction.confidence ?? {}, text: classification.recognizedText,
+        recipients, config: supplierValidationConfig ?? defaultValidationConfig,
+      }) : { invoice: extraction.invoice, fieldSources: {}, audit: [] };
+      if (corroborated.audit.length) record = { ...record, fieldAudit: corroborated.audit };
+      let validation = validateInvoice(corroborated.invoice, extraction.confidence, supplierValidationConfig, corroborated.fieldSources);
       if (!validation.valid) {
         const missing = validation.issues.some((issue) => issue.code === "required");
         return this.finish(record, "review_required", {
@@ -85,12 +94,11 @@ export class AttachmentProcessor {
         ...validation.invoice,
         supplierName: supplierIdentity.supplier.legalName,
         supplierTaxId: supplierIdentity.supplier.taxId ?? validation.invoice.supplierTaxId,
-      }, extraction.confidence, supplierValidationConfig);
+      }, extraction.confidence, supplierValidationConfig, corroborated.fieldSources);
       if (!validation.valid) throw new Error("Canonical supplier data unexpectedly failed invoice validation");
 
-      if (this.dependencies.requireRecipientMatch) {
-        if (!this.dependencies.recipientDirectory) throw new Error("Recipient routing is enabled without a recipient directory");
-        const recipientIdentity = resolveRecipientIdentity(extraction.invoice, await this.dependencies.recipientDirectory.listActive());
+      if (recipients) {
+        const recipientIdentity = resolveRecipientIdentity(corroborated.invoice, recipients);
         if (recipientIdentity.status !== "matched") {
           return this.finish(record, "review_required", {
             code: "EX-10", reason: "Recipient identity requires review", retryable: false, issues: [recipientIdentity.issue],
@@ -100,7 +108,7 @@ export class AttachmentProcessor {
           ...validation.invoice,
           recipientName: recipientIdentity.recipient.legalName,
           recipientTaxId: recipientIdentity.recipient.taxId ?? validation.invoice.recipientTaxId,
-        }, extraction.confidence, supplierValidationConfig);
+        }, extraction.confidence, supplierValidationConfig, corroborated.fieldSources);
         if (!validation.valid) throw new Error("Canonical recipient data unexpectedly failed invoice validation");
       }
 

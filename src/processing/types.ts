@@ -25,6 +25,7 @@ export type ProcessRecord = {
   documentKind?: DocumentKind;
   classificationConfidence?: number;
   classificationReasons?: string[];
+  fieldAudit?: import("../invoices/index.ts").FieldAuditEntry[];
   duplicateKey?: string;
   finalFilename?: string;
   documentUrl?: string;

@@ -112,6 +112,7 @@ test("persists and reloads invoice process state by stable process ID", async ()
   await store.save({
     processId: "stable-id", state: "classified", documentKind: "invoice", classificationConfidence: 0.91,
     classificationReasons: ["invoice heading"],
+    fieldAudit: [{ field: "invoiceDate", fieldSource: "text_fallback", rule: "invoice_date_labelled_v1", evidence: [{ line: 2, text: "Fecha factura: 01/01/2026" }] }],
     input: { messageId: "message", attachmentId: "attachment", sender: "sender@example.test", receivedAt: "2026-09-11T08:00:00Z", originalFilename: "invoice.pdf", contentType: "application/pdf" },
     updatedAt: "2026-09-11T08:01:00Z",
   });
@@ -119,6 +120,26 @@ test("persists and reloads invoice process state by stable process ID", async ()
   assert.equal(loaded?.state, "classified");
   assert.equal(loaded?.documentKind, "invoice");
   assert.deepEqual(loaded?.classificationReasons, ["invoice heading"]);
+  assert.deepEqual(loaded?.fieldAudit, [{ field: "invoiceDate", fieldSource: "text_fallback", rule: "invoice_date_labelled_v1", evidence: [{ line: 2, text: "Fecha factura: 01/01/2026" }] }]);
+  assert.equal(typeof storedFields?.FieldAudit, "string");
+});
+
+test("does not send FieldAudit when a process has no text fallback evidence", async () => {
+  let storedFields: Record<string, unknown> | undefined;
+  const graph = new GraphClient({ getAccessToken: async () => "token" }, async (url, init) => {
+    if (String(url).endsWith("/lists?$select=id,displayName")) return Response.json({ value: [{ id: "processes", displayName: "ProcesosFacturas" }] });
+    if (init?.method === "POST") {
+      storedFields = (JSON.parse(String(init.body)) as { fields: Record<string, unknown> }).fields;
+      return Response.json({ id: "item-1", fields: storedFields }, { status: 201 });
+    }
+    return Response.json({ value: [] });
+  });
+  await new SharePointProcessStore(graph, "site").save({
+    processId: "without-audit", state: "received",
+    input: { messageId: "message", attachmentId: "attachment", sender: "sender@example.test", receivedAt: "2026-09-11T08:00:00Z", originalFilename: "invoice.pdf", contentType: "application/pdf" },
+    updatedAt: "2026-09-11T08:01:00Z",
+  });
+  assert.equal("FieldAudit" in (storedFields ?? {}), false);
 });
 
 test("adds a hash suffix rather than overwriting a colliding SharePoint document", async () => {
