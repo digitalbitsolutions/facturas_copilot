@@ -1,4 +1,4 @@
-import type { ExtractedInvoice, ExtractionConfidence, InvoiceField } from "../invoices/types.ts";
+import type { ExtractedInvoice, ExtractionConfidence, FieldSources, InvoiceField } from "../invoices/types.ts";
 import type { InvoiceExtractor, AttachmentInput } from "../processing/types.ts";
 import type { AccessTokenProvider } from "../microsoft365/graph-client.ts";
 import { enrichWithFacturX } from "./factur-x.ts";
@@ -240,6 +240,41 @@ function enrichWithRecognizedFiscalText(
   return extraction;
 }
 
+/**
+ * Recovers a fiscal summary only when each amount has an explicit label and
+ * the documented IRPF makes the arithmetic exact. This handles layouts that
+ * expose both an item import and a separately labelled "Total a pagar".
+ */
+function enrichWithExplicitIrpfSummary(extraction: Extraction, content?: string): Extraction {
+  if (!content || !extraction.invoice.irpfAmount) return extraction;
+  const labelled = (label: RegExp): { amount: number; currency?: string } | undefined => {
+    const matches = content.split(/\r?\n/).flatMap((line) => {
+      if (!label.test(line)) return [];
+      const values = line.match(/-?\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?|-?\d+(?:[.,]\d{1,2})?/g) ?? [];
+      const amount = numericAmount({ content: values.at(-1) });
+      return amount === undefined ? [] : [{ amount, currency: /(?:€|\bEUR\b)/i.test(line) ? "EUR" : undefined }];
+    });
+    return matches.length === 1 ? matches[0] : undefined;
+  };
+  const base = labelled(/\bbase\s+imponible\b/i);
+  const vat = labelled(/\b(?:i\.?v\.?a\.?|iva|vat)\b/i);
+  const total = labelled(/\btotal\s+(?:a\s+)?(?:pagar|pay|factura)\b/i);
+  const irpf = Number(extraction.invoice.irpfAmount);
+  if (!base || !vat || !total || !Number.isFinite(irpf) || Math.abs(base.amount + vat.amount + irpf - total.amount) > 0.01) return extraction;
+  return {
+    invoice: {
+      ...extraction.invoice,
+      taxableBase: base.amount.toFixed(2), vatAmount: vat.amount.toFixed(2), totalAmount: total.amount.toFixed(2),
+      ...(total.currency ? { currency: total.currency } : {}),
+    },
+    confidence: extraction.confidence,
+    fieldSources: {
+      ...extraction.fieldSources, taxableBase: "text_fallback", vatAmount: "text_fallback", totalAmount: "text_fallback",
+      ...(total.currency ? { currency: "text_fallback" as const } : {}),
+    },
+  };
+}
+
 function lineItems(field?: Field): import("../invoices/types.ts").InvoiceLine[] | undefined {
   const lines = field?.valueArray?.flatMap(({ valueObject }) => {
     const description = text(valueObject?.Description);
@@ -310,7 +345,7 @@ export function mapInvoiceResult(payload: AnalyzeResponse): { invoice: Extracted
   };
 }
 
-type Extraction = { invoice: ExtractedInvoice; confidence: ExtractionConfidence };
+type Extraction = { invoice: ExtractedInvoice; confidence: ExtractionConfidence; fieldSources?: FieldSources };
 
 /**
  * Applies the business decision before generic confidence validation.  A document
@@ -324,19 +359,19 @@ function enrichWithDueDateDecision(extraction: Extraction, dueDate: Field | unde
   if (decision.status === "ok") {
     return {
       invoice: { ...extraction.invoice, dueDate: decision.dueDate, dueDateStatus: "present" },
-      confidence: { ...extraction.confidence, dueDate: decision.confidence },
+      confidence: { ...extraction.confidence, dueDate: decision.confidence }, fieldSources: extraction.fieldSources,
     };
   }
   if (decision.status === "not_stated") {
     const { dueDate: _dueDate, ...invoice } = extraction.invoice;
     const { dueDate: _dueDateConfidence, ...confidence } = extraction.confidence;
-    return { invoice: { ...invoice, dueDateStatus: "not_stated" }, confidence };
+    return { invoice: { ...invoice, dueDateStatus: "not_stated" }, confidence, fieldSources: extraction.fieldSources };
   }
   // Preserve the existing low-confidence validation path.  A missing field with
   // explicit payment terms also remains a manual review rather than an absence.
   return {
     invoice: extraction.invoice,
-    confidence: { ...extraction.confidence, dueDate: dueDate?.confidence ?? 0 },
+    confidence: { ...extraction.confidence, dueDate: dueDate?.confidence ?? 0 }, fieldSources: extraction.fieldSources,
   };
 }
 
@@ -452,7 +487,7 @@ export class DocumentIntelligenceInvoiceExtractor implements InvoiceExtractor {
     this.timeoutMs = options.timeoutMs ?? 60_000;
   }
 
-  async extract(input: AttachmentInput, context: { recognizedText?: string; ensureSingleInvoiceDocument?: boolean } = {}): Promise<{ invoice: ExtractedInvoice; confidence: ExtractionConfidence }> {
+  async extract(input: AttachmentInput, context: { recognizedText?: string; ensureSingleInvoiceDocument?: boolean } = {}): Promise<Extraction> {
     if (input.contentType !== "application/pdf") throw new Error("Document Intelligence pilot only accepts PDF files");
     if (input.content.length === 0 || input.content.length > 4 * 1024 * 1024) throw new Error("PDF must be between 1 byte and 4 MB for the F0 tier");
     const token = await this.tokenProvider.getAccessToken();
@@ -488,6 +523,7 @@ export class DocumentIntelligenceInvoiceExtractor implements InvoiceExtractor {
       console.warn("Invoice first-pages fiscal layout was unavailable");
     }
     extraction = enrichWithRecognizedFiscalText(extraction, context.recognizedText);
+    extraction = enrichWithExplicitIrpfSummary(extraction, context.recognizedText);
     // The mailbox classifier supplies transient OCR text from the attachment;
     // mailbox processing must provide text for one invoice only.
     return enrichWithDueDateDecision(extraction, fields?.DueDate, context.recognizedText ?? primary.analyzeResult?.content ?? "");

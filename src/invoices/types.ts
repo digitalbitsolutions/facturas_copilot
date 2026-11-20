@@ -45,7 +45,7 @@ export type InvoiceValidationConfig = {
 };
 
 /** Provenance for a field completed after Document Intelligence extraction. */
-export type FieldSource = "text_fallback";
+export type FieldSource = "text_fallback" | "master_match";
 export type FieldSources = Partial<Record<InvoiceField, FieldSource>>;
 export type FieldAuditEntry = {
   field: "recipientName" | "recipientTaxId" | "invoiceDate";

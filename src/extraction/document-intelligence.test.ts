@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { DocumentIntelligenceInvoiceExtractor, mapInvoiceResult } from "./document-intelligence.ts";
 import { DENTALIS_PAGE3_DUMP } from "./fixtures-dentalis.ts";
+import { validateInvoice } from "../invoices/index.ts";
 
 const result = {
   status: "succeeded" as const,
@@ -200,6 +201,38 @@ test("uses labelled OCR fiscal text only when it reconciles to the extracted tot
   assert.equal(extracted.invoice.taxableBase, "100.00");
   assert.equal(extracted.invoice.vatAmount, "21.00");
   assert.equal(extracted.confidence.vatAmount, 0.9);
+});
+
+test("recovers a labelled IRPF summary only when its arithmetic is exact", async () => {
+  let calls = 0;
+  const primary = { status: "succeeded" as const, analyzeResult: { content: "IRPF 15,00 % -180,00", documents: [{ fields: {
+    VendorName: { valueString: "Carlota Comulada Aragon", confidence: 0.6 },
+    VendorTaxId: { valueString: "48216083X", confidence: 0.6 },
+    InvoiceId: { valueString: "001/2026", confidence: 0.99 },
+    InvoiceDate: { valueDate: "2026-11-19", confidence: 0.99 },
+    DueDate: { valueDate: "2026-11-19", confidence: 0.3 },
+    SubTotal: { valueCurrency: { amount: 1200 }, confidence: 0.7 },
+    TotalTax: { valueCurrency: { amount: 0 }, confidence: 0.5 },
+    InvoiceTotal: { valueCurrency: { amount: 1200, currencyCode: "EUR" }, confidence: 0.7 },
+  } }] } };
+  const fetchMock = async (_url: string | URL | Request, init?: RequestInit) => {
+    calls += 1;
+    return init?.method === "POST"
+      ? new Response(null, { status: 202, headers: { "operation-location": "https://di.example.com/result/irpf" } })
+      : Response.json(primary);
+  };
+  const extractor = new DocumentIntelligenceInvoiceExtractor("https://di.example.com", { getAccessToken: async () => "token" }, { fetch: fetchMock as typeof fetch, pollIntervalMs: 0 });
+  const extracted = await extractor.extract({
+    messageId: "manual", attachmentId: "irpf", sender: "pilot", receivedAt: "2026-11-20T23:28:00Z",
+    originalFilename: "FACTURA SMILEXPRESS 001.pdf", contentType: "application/pdf", content: new Uint8Array([1, 2, 3]),
+  }, { recognizedText: "Base imponible 1.200,00 EUR\nIVA exempt 0,00 EUR\nRetencio IRPF 15,00 % -180,00 EUR\nTOTAL A PAGAR 1.020,00 EUR\nDades de pagament:\nIBAN ES73 0081 4291 6000 1374 4140" });
+  assert.deepEqual(
+    { base: extracted.invoice.taxableBase, vat: extracted.invoice.vatAmount, irpf: extracted.invoice.irpfAmount, total: extracted.invoice.totalAmount, dueDate: extracted.invoice.dueDate, dueDateStatus: extracted.invoice.dueDateStatus },
+    { base: "1200.00", vat: "0.00", irpf: "-180.00", total: "1020.00", dueDate: undefined, dueDateStatus: "not_stated" },
+  );
+  assert.deepEqual(extracted.fieldSources, { taxableBase: "text_fallback", vatAmount: "text_fallback", totalAmount: "text_fallback", currency: "text_fallback" });
+  const validation = validateInvoice(extracted.invoice, extracted.confidence, undefined, extracted.fieldSources);
+  assert.deepEqual(validation.issues.map((issue) => issue.field), ["supplierName", "supplierTaxId"]);
 });
 
 test("requires review when different pages identify different invoices", async () => {

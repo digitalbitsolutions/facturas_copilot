@@ -40,6 +40,10 @@ const INDICATORS: RegExp[] = [
   /\bgiro\b/, /\bdomiciliad/, /\brecibo\b/,
 ];
 
+// A bank-details footer is not a payment term or a due date. OCR sometimes
+// normalizes the Catalan heading "Dades de pagament" as "Data de pagament".
+const BANK_DETAILS = /\b(?:dades?|data|datos) de (?:pagament|pago)\b/i;
+
 /**
  * @param field         campo dueDate de prebuilt-invoice (valor ya normalizado + confianza)
  * @param documentText  texto completo de LA factura (no de un PDF con varias facturas)
@@ -50,7 +54,10 @@ export function decideDueDate(field: DueDateField | null | undefined, documentTe
   if (value && conf !== null && conf >= DUE_DATE_MIN_CONFIDENCE) {
     return { status: "ok", dueDate: value, confidence: conf };
   }
-  const t = norm(documentText);
+  const t = norm(documentText
+    .split(/\r?\n/)
+    .filter((line) => !BANK_DETAILS.test(line))
+    .join("\n"));
   return INDICATORS.some((re) => re.test(t))
     ? { status: "review", reason: "due_date_indicators_present_but_unverified" }
     : { status: "not_stated" };

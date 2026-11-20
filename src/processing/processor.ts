@@ -72,12 +72,21 @@ export class AttachmentProcessor {
       const recipients = this.dependencies.requireRecipientMatch ? await this.dependencies.recipientDirectory!.listActive() : undefined;
       // This is deliberately scoped to the recipient-routing pilot. The extractor has
       // already rejected PDFs that identify more than one invoice before OCR text is used.
+      // A unique exact NIF match to an active supplier is stronger evidence than
+      // the model confidence for that identity. It never bypasses fiscal checks.
+      const supplierCorroborated = supplierIdentity.status === "matched" && supplierIdentity.matchedBy === "tax_id"
+        ? {
+          invoice: { ...extraction.invoice, supplierName: supplierIdentity.supplier.legalName, supplierTaxId: supplierIdentity.supplier.taxId ?? extraction.invoice.supplierTaxId },
+          fieldSources: { ...extraction.fieldSources, supplierName: "master_match" as const, supplierTaxId: "master_match" as const },
+        }
+        : { invoice: extraction.invoice, fieldSources: extraction.fieldSources ?? {} };
       const corroborated = recipients ? applyTextCorroboration({
-        invoice: extraction.invoice, confidence: extraction.confidence ?? {}, text: classification.recognizedText,
+        invoice: supplierCorroborated.invoice, confidence: extraction.confidence ?? {}, text: classification.recognizedText,
         recipients, config: supplierValidationConfig ?? defaultValidationConfig,
-      }) : { invoice: extraction.invoice, fieldSources: {}, audit: [] };
+      }) : { invoice: supplierCorroborated.invoice, fieldSources: {}, audit: [] };
       if (corroborated.audit.length) record = { ...record, fieldAudit: corroborated.audit };
-      let validation = validateInvoice(corroborated.invoice, extraction.confidence, supplierValidationConfig, corroborated.fieldSources);
+      const fieldSources = { ...supplierCorroborated.fieldSources, ...corroborated.fieldSources };
+      let validation = validateInvoice(corroborated.invoice, extraction.confidence, supplierValidationConfig, fieldSources);
       if (!validation.valid) {
         const missing = validation.issues.some((issue) => issue.code === "required");
         return this.finish(record, "review_required", {
@@ -94,7 +103,7 @@ export class AttachmentProcessor {
         ...validation.invoice,
         supplierName: supplierIdentity.supplier.legalName,
         supplierTaxId: supplierIdentity.supplier.taxId ?? validation.invoice.supplierTaxId,
-      }, extraction.confidence, supplierValidationConfig, corroborated.fieldSources);
+      }, extraction.confidence, supplierValidationConfig, fieldSources);
       if (!validation.valid) throw new Error("Canonical supplier data unexpectedly failed invoice validation");
 
       if (recipients) {
@@ -108,7 +117,7 @@ export class AttachmentProcessor {
           ...validation.invoice,
           recipientName: recipientIdentity.recipient.legalName,
           recipientTaxId: recipientIdentity.recipient.taxId ?? validation.invoice.recipientTaxId,
-        }, extraction.confidence, supplierValidationConfig, corroborated.fieldSources);
+        }, extraction.confidence, supplierValidationConfig, fieldSources);
         if (!validation.valid) throw new Error("Canonical recipient data unexpectedly failed invoice validation");
       }
 

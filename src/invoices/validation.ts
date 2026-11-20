@@ -84,7 +84,10 @@ export function validateInvoice(
     issues.push({ code: "invalid_currency", field: "currency", message: "currency must be an ISO 4217-style code" });
   }
   for (const [field, value] of Object.entries(confidence) as Array<[InvoiceField, number]>) {
-    if (fieldSources[field] === "text_fallback") continue;
+    // A value corroborated from explicit document text or canonically matched to
+    // one active master record is validated by that evidence rather than the
+    // model's confidence score. Required, format and fiscal checks still apply.
+    if (fieldSources[field]) continue;
     const minimumConfidence = config.minimumConfidenceByField?.[field] ?? config.minimumConfidence;
     if (!Number.isFinite(value) || value < minimumConfidence) {
       issues.push({ code: "low_confidence", field, message: `${field} confidence is below ${minimumConfidence}` });

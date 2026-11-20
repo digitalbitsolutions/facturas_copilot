@@ -56,5 +56,10 @@ check("'Pagats', 'Data valor' y 'cobrament' NO cuentan como indicio de vencimien
   assert.equal(decideDueDate({ value: "2026-11-10", confidence: 0.3 }, "Ports Pagats Data valor 10/11/2026 Adreça de cobrament").status, "not_stated");
 });
 
+check("los datos bancarios de pago no son un vencimiento", () => {
+  const r = decideDueDate({ value: "2026-11-19", confidence: 0.3 }, "Dades de pagament:\nData de pagament: 19/11/2026\nTitular: Professional\nIBAN: ES73 0081 4291 6000 1374 4140");
+  assert.deepEqual(r, { status: "not_stated" });
+});
+
 if (failed) { console.error(`\n${failed} test(s) fallaron`); process.exit(1); }
 console.log("\nTodos los tests pasaron");

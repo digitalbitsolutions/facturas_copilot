@@ -72,6 +72,22 @@ test("keeps an IRPF-only invoice in review without archiving or registering it",
   assert.equal(context.registry.entries.size, 0);
 });
 
+test("uses an exact active supplier NIF match before confidence validation", async () => {
+  const processor = new AttachmentProcessor({
+    classifier: { classify: async () => ({ kind: "invoice", confidence: 0.99, reasons: ["test"] }) },
+    extractor: { extract: async () => ({
+      invoice: { ...invoice, supplierName: "Carlota", supplierTaxId: "48216083X", vatAmount: "0", irpfRate: 15, irpfAmount: "-15.00", totalAmount: "85.00" },
+      confidence: { supplierName: 0.1, supplierTaxId: 0.1, totalAmount: 0.99 },
+    }) },
+    processStore: new MemoryProcessStore(), documents: new MemoryDocumentRepository(), registry: new MemoryInvoiceRegistry(),
+    supplierDirectory: new MemorySupplierDirectory([{ supplierId: "CARLOTA", legalName: "Carlota Comulada Aragon", taxId: "48216083X", active: true }]),
+  });
+  const result = await processor.process(input("carlota-irpf"));
+  assert.equal(result.state, "review_required");
+  assert.equal(result.exception?.code, "EX-05");
+  assert.equal(result.exception?.reason, "Invoice with IRPF and no VAT requires review");
+});
+
 test("allows an invoice with both documented IRPF and VAT", async () => {
   const context = setup({ extracted: { ...invoice, irpfRate: 15, irpfAmount: "-15.00", totalAmount: "106.00" } });
   assert.equal((await context.processor.process(input())).state, "completed");
