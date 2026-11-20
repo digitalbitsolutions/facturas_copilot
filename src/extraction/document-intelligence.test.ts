@@ -203,9 +203,9 @@ test("uses labelled OCR fiscal text only when it reconciles to the extracted tot
   assert.equal(extracted.confidence.vatAmount, 0.9);
 });
 
-test("recovers a labelled IRPF summary only when its arithmetic is exact", async () => {
+test("recovers a labelled IRPF summary from the invoice model text only when its arithmetic is exact", async () => {
   let calls = 0;
-  const primary = { status: "succeeded" as const, analyzeResult: { content: "IRPF 15,00 % -180,00", documents: [{ fields: {
+  const primary = { status: "succeeded" as const, analyzeResult: { content: "Base imponible 1.200,00 EUR\nIVA exempt 0,00 EUR\nRetencio IRPF 15,00 % -180,00 EUR\nTOTAL A PAGAR 1.020,00 EUR\nDades de pagament:\nIBAN ES73 0081 4291 6000 1374 4140", documents: [{ fields: {
     VendorName: { valueString: "Carlota Comulada Aragon", confidence: 0.6 },
     VendorTaxId: { valueString: "48216083X", confidence: 0.6 },
     InvoiceId: { valueString: "001/2026", confidence: 0.99 },
@@ -225,7 +225,7 @@ test("recovers a labelled IRPF summary only when its arithmetic is exact", async
   const extracted = await extractor.extract({
     messageId: "manual", attachmentId: "irpf", sender: "pilot", receivedAt: "2026-11-20T23:28:00Z",
     originalFilename: "FACTURA SMILEXPRESS 001.pdf", contentType: "application/pdf", content: new Uint8Array([1, 2, 3]),
-  }, { recognizedText: "Base imponible 1.200,00 EUR\nIVA exempt 0,00 EUR\nRetencio IRPF 15,00 % -180,00 EUR\nTOTAL A PAGAR 1.020,00 EUR\nDades de pagament:\nIBAN ES73 0081 4291 6000 1374 4140" });
+  }, { recognizedText: "Factura de servicios profesionales" });
   assert.deepEqual(
     { base: extracted.invoice.taxableBase, vat: extracted.invoice.vatAmount, irpf: extracted.invoice.irpfAmount, total: extracted.invoice.totalAmount, dueDate: extracted.invoice.dueDate, dueDateStatus: extracted.invoice.dueDateStatus },
     { base: "1200.00", vat: "0.00", irpf: "-180.00", total: "1020.00", dueDate: undefined, dueDateStatus: "not_stated" },

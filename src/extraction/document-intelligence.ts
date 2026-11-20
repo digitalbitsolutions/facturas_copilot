@@ -246,7 +246,7 @@ function enrichWithRecognizedFiscalText(
  * expose both an item import and a separately labelled "Total a pagar".
  */
 function enrichWithExplicitIrpfSummary(extraction: Extraction, content?: string): Extraction {
-  if (!content || !extraction.invoice.irpfAmount) return extraction;
+  if (!content) return extraction;
   const labelled = (label: RegExp): { amount: number; currency?: string } | undefined => {
     const matches = content.split(/\r?\n/).flatMap((line) => {
       if (!label.test(line)) return [];
@@ -259,12 +259,17 @@ function enrichWithExplicitIrpfSummary(extraction: Extraction, content?: string)
   const base = labelled(/\bbase\s+imponible\b/i);
   const vat = labelled(/\b(?:i\.?v\.?a\.?|iva|vat)\b/i);
   const total = labelled(/\btotal\s+(?:a\s+)?(?:pagar|pay|factura)\b/i);
-  const irpf = Number(extraction.invoice.irpfAmount);
+  // Prefer the signed amount on the explicitly labelled line itself. Some
+  // layouts expose a positive retention in a structured field even though the
+  // document writes the reduction with a minus sign.
+  const documentedIrpf = irpfFromRecognizedText(content);
+  const irpf = Number(documentedIrpf?.amount ?? extraction.invoice.irpfAmount);
   if (!base || !vat || !total || !Number.isFinite(irpf) || Math.abs(base.amount + vat.amount + irpf - total.amount) > 0.01) return extraction;
   return {
     invoice: {
       ...extraction.invoice,
       taxableBase: base.amount.toFixed(2), vatAmount: vat.amount.toFixed(2), totalAmount: total.amount.toFixed(2),
+      ...(documentedIrpf ? { irpfAmount: documentedIrpf.amount, irpfRate: documentedIrpf.rate } : {}),
       ...(total.currency ? { currency: total.currency } : {}),
     },
     confidence: extraction.confidence,
@@ -523,10 +528,14 @@ export class DocumentIntelligenceInvoiceExtractor implements InvoiceExtractor {
       console.warn("Invoice first-pages fiscal layout was unavailable");
     }
     extraction = enrichWithRecognizedFiscalText(extraction, context.recognizedText);
+    // The read-model text and the invoice model text may differ. Each source
+    // must independently carry the complete labelled summary; values are never
+    // assembled across them.
     extraction = enrichWithExplicitIrpfSummary(extraction, context.recognizedText);
+    extraction = enrichWithExplicitIrpfSummary(extraction, primary.analyzeResult?.content);
     // The mailbox classifier supplies transient OCR text from the attachment;
     // mailbox processing must provide text for one invoice only.
-    return enrichWithDueDateDecision(extraction, fields?.DueDate, context.recognizedText ?? primary.analyzeResult?.content ?? "");
+    return enrichWithDueDateDecision(extraction, fields?.DueDate, [context.recognizedText, primary.analyzeResult?.content].filter((value): value is string => Boolean(value)).join("\n"));
   }
 
   /**
