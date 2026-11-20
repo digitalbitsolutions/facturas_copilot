@@ -56,7 +56,7 @@ app.http("extractInvoice", {
         requiredSetting("DOCUMENT_INTELLIGENCE_ENDPOINT"),
         cognitiveTokenProvider,
       );
-      const extraction = await extractor.extract(attachment);
+      const extraction = await extractor.extract(attachment, { recognizedText: classification.recognizedText });
       const supplierDirectory = new SharePointSupplierDirectory(
         new GraphClient(new ManagedIdentityTokenProvider()),
         requiredSetting("M365_SHAREPOINT_SITE_ID"),
@@ -66,7 +66,10 @@ app.http("extractInvoice", {
       const resolvedInvoice = supplierIdentity.status === "matched"
         ? { ...extraction.invoice, supplierName: supplierIdentity.supplier.legalName, supplierTaxId: supplierIdentity.supplier.taxId ?? extraction.invoice.supplierTaxId }
         : extraction.invoice;
-      const invoiceValidation = validateInvoice(resolvedInvoice, extraction.confidence, validationConfigForSupplier(undefined, supplierIdentity));
+      const fieldSources = supplierIdentity.status === "matched"
+        ? { ...extraction.fieldSources, supplierName: "master_match" as const, supplierTaxId: "master_match" as const }
+        : extraction.fieldSources;
+      const invoiceValidation = validateInvoice(resolvedInvoice, extraction.confidence, validationConfigForSupplier(undefined, supplierIdentity), fieldSources);
       const validation = supplierIdentity.status === "matched"
         ? invoiceValidation
         : { valid: false as const, issues: invoiceValidation.valid ? [supplierIdentity.issue] : [...invoiceValidation.issues, supplierIdentity.issue] };

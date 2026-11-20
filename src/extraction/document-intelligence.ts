@@ -71,20 +71,27 @@ function numericAmount(field?: Field): number | undefined {
 }
 
 /**
- * Reads a retention only when its own line states both its percentage and its
- * amount.  The amount keeps the sign shown in the document: usually negative,
- * so the independently stated invoice total remains base + VAT + IRPF.
+ * Reads a retention only from one explicitly labelled document block. The
+ * amount keeps the sign shown in the document: usually negative, so the
+ * independently stated invoice total remains base + VAT + IRPF.
  */
 function irpfFromRecognizedText(content?: string): { amount: string; rate: number } | undefined {
   if (!content) return undefined;
   const number = "-?\\d{1,3}(?:[.,]\\d{3})*(?:[.,]\\d{1,2})?|-?\\d+(?:[.,]\\d{1,2})?";
-  for (const line of content.split(/\r?\n/)) {
+  const lines = content.split(/\r?\n/);
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
     if (!/\b(?:irpf|retenci[oó]n)\b/i.test(line)) continue;
-    const rateMatch = new RegExp(`(${number})\\s*%`).exec(line);
+    // Prebuilt-read can emit a fiscal label, its rate and its signed amount as
+    // three consecutive lines. If the labelled line already includes the rate,
+    // do not consume the next line (which can be the invoice total).
+    const inlineRateMatch = new RegExp(`(${number})\\s*%`).exec(line);
+    const block = inlineRateMatch ? line : lines.slice(index, index + 3).join(" ");
+    const rateMatch = inlineRateMatch ?? new RegExp(`(${number})\\s*%`).exec(block);
     if (!rateMatch) continue;
     const rate = numericAmount({ content: rateMatch[1] });
     if (rate === undefined || rate <= 0 || rate > 100) continue;
-    const withoutRate = line.slice(0, rateMatch.index) + line.slice((rateMatch.index ?? 0) + rateMatch[0].length);
+    const withoutRate = block.slice(0, rateMatch.index) + block.slice((rateMatch.index ?? 0) + rateMatch[0].length);
     const amountTokens = withoutRate.match(new RegExp(number, "g")) ?? [];
     const amount = numericAmount({ content: amountTokens.at(-1) });
     if (amount === undefined || amount === 0) continue;
@@ -248,11 +255,18 @@ function enrichWithRecognizedFiscalText(
 function enrichWithExplicitIrpfSummary(extraction: Extraction, content?: string): Extraction {
   if (!content) return extraction;
   const labelled = (label: RegExp): { amount: number; currency?: string } | undefined => {
-    const matches = content.split(/\r?\n/).flatMap((line) => {
+    const lines = content.split(/\r?\n/);
+    const matches = lines.flatMap((line, index) => {
       if (!label.test(line)) return [];
-      const values = line.match(/-?\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?|-?\d+(?:[.,]\d{1,2})?/g) ?? [];
+      // Preserve the label-to-value link when prebuilt-read puts the value on
+      // the following line(s). A label that already carries its amount must
+      // not absorb following bank-reference numbers.
+      const inlineValues = line.match(/-?\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?|-?\d+(?:[.,]\d{1,2})?/g) ?? [];
+      const block = inlineValues.length > 0 ? line : lines.slice(index, index + 3).join(" ");
+      const values = block.match(/-?\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?|-?\d+(?:[.,]\d{1,2})?/g) ?? [];
+      if (values.length !== 1) return [];
       const amount = numericAmount({ content: values.at(-1) });
-      return amount === undefined ? [] : [{ amount, currency: /(?:€|\bEUR\b)/i.test(line) ? "EUR" : undefined }];
+      return amount === undefined ? [] : [{ amount, currency: /(?:€|\bEUR\b)/i.test(block) ? "EUR" : undefined }];
     });
     return matches.length === 1 ? matches[0] : undefined;
   };
