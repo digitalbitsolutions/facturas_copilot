@@ -7,6 +7,7 @@ const recipients = [{ recipientId: "DC-MOLINS", legalName: "DC Molins, S.L.", ta
 test("matches an active recipient by tax ID and approved alias", () => {
   assert.equal(resolveRecipientIdentity({ recipientTaxId: "b-12345678" }, recipients).status, "matched");
   assert.equal(resolveRecipientIdentity({ recipientTaxId: "ESB12345678" }, recipients).status, "matched");
+  assert.equal(resolveRecipientIdentity({ recipientTaxId: "ESB12345678", recipientName: "DC Molins SL Smilexpress" }, recipients).status, "matched");
   const result = resolveRecipientIdentity({ recipientName: "Dental Catalunya Molins" }, recipients);
   assert.equal(result.status, "matched");
   if (result.status === "matched") assert.equal(result.matchedBy, "alias");

@@ -9,6 +9,13 @@ export type RecipientIdentityResult =
 
 export interface RecipientDirectory { listActive(): Promise<RecipientMasterRecord[]>; }
 
+function isCompatibleRecipientName(value: string, recipient: RecipientMasterRecord): boolean {
+  const extracted = normalizeSupplierName(value);
+  return [recipient.legalName, ...(recipient.aliases ?? [])]
+    .map(normalizeSupplierName)
+    .some((authorised) => extracted === authorised || (authorised.length >= 8 && extracted.includes(authorised)));
+}
+
 /** Matches the recipient against tenant-authorised legal entities. */
 export function resolveRecipientIdentity(invoice: ExtractedInvoice, recipients: RecipientMasterRecord[]): RecipientIdentityResult {
   const active = recipients.filter((recipient) => recipient.active);
@@ -17,9 +24,7 @@ export function resolveRecipientIdentity(invoice: ExtractedInvoice, recipients: 
     const matches = active.filter((recipient) => recipient.taxId && normalizeTaxId(recipient.taxId) === taxId);
     if (matches.length === 1) {
       const recipient = matches[0];
-      const names = [recipient.legalName, ...(recipient.aliases ?? [])].map(normalizeSupplierName);
-      const extractedName = invoice.recipientName && normalizeSupplierName(invoice.recipientName);
-      if (hasSpanishCountryPrefix(invoice.recipientTaxId ?? "") && extractedName && !names.includes(extractedName)) {
+      if (hasSpanishCountryPrefix(invoice.recipientTaxId ?? "") && invoice.recipientName && !isCompatibleRecipientName(invoice.recipientName, recipient)) {
         return notFound("recipientName", "Recipient name conflicts with the active master record for an ES-prefixed tax ID");
       }
       return { status: "matched", recipient, matchedBy: "tax_id" };
