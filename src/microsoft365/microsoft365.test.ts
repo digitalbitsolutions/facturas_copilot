@@ -162,6 +162,26 @@ test("persists three VAT rate slots with zeroes for unused rates", async () => {
   assert.deepEqual([storedFields?.TipoIVA1, storedFields?.TipoIVA2, storedFields?.TipoIVA3], [21, 10, 0]);
 });
 
+test("persists documented IRPF amount and rate without deriving the invoice total", async () => {
+  let storedFields: Record<string, unknown> | undefined;
+  const graph = new GraphClient({ getAccessToken: async () => "token" }, async (url, init) => {
+    const path = String(url);
+    if (path.endsWith("/lists?$select=id,displayName")) return Response.json({ value: [{ id: "registry", displayName: "RegistroFacturas" }] });
+    if (path.includes("/lists/registry/items?") && !init?.method) return Response.json({ value: [] });
+    if (path.endsWith("/lists/registry/items") && init?.method === "POST") {
+      storedFields = (JSON.parse(String(init.body)) as { fields: Record<string, unknown> }).fields;
+      return Response.json({ id: "invoice" }, { status: 201 });
+    }
+    throw new Error(`Unexpected request ${path}`);
+  });
+  await new SharePointInvoiceRegistry(graph, "site").putOnce({
+    processId: "process", duplicateKey: "duplicate", documentUrl: "https://company.test/invoice.pdf",
+    invoice: { supplierName: "Proveedor", invoiceNumber: "F-IRPF", invoiceDate: "2026-11-20", taxableBase: "100.00", vatAmount: "21.00", irpfRate: 15, irpfAmount: "-15.00", totalAmount: "106.00" },
+    metadata: { messageId: "message", attachmentId: "attachment", sender: "sender@example.test", receivedAt: "2026-11-20T10:00:00Z", originalFilename: "invoice.pdf", contentType: "application/pdf" },
+  });
+  assert.deepEqual([storedFields?.IRPF, storedFields?.TipoIRPF, storedFields?.Total], [-15, 15, 106]);
+});
+
 test("does not treat an unidentified non-zero VAT amount as a zero rate", async () => {
   let storedFields: Record<string, unknown> | undefined;
   const graph = new GraphClient({ getAccessToken: async () => "token" }, async (url, init) => {

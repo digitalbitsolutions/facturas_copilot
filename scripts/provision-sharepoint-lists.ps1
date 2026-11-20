@@ -110,6 +110,8 @@ $definitions = @(
             @{ name = 'DueDateStatus'; choice = @{ choices = @('present','not_stated') } }
             @{ name = 'BaseImponible'; number = @{ decimalPlaces = 'automatic' } }
             @{ name = 'IVA'; number = @{ decimalPlaces = 'automatic' } }
+            @{ name = 'IRPF'; number = @{ decimalPlaces = 'automatic' } }
+            @{ name = 'TipoIRPF'; number = @{ decimalPlaces = 'automatic' } }
             @{ name = 'TipoIVA1'; number = @{ decimalPlaces = 'automatic' } }
             @{ name = 'TipoIVA2'; number = @{ decimalPlaces = 'automatic' } }
             @{ name = 'TipoIVA3'; number = @{ decimalPlaces = 'automatic' } }

@@ -1,6 +1,6 @@
 export type VatRateSlots = readonly [number, number, number];
 
-export type InvoiceField = Exclude<keyof ExtractedInvoice, "lines" | "dueDateStatus" | "vatRateSlots">;
+export type InvoiceField = Exclude<keyof ExtractedInvoice, "lines" | "dueDateStatus" | "vatRateSlots" | "irpfRate">;
 export type ExtractionConfidence = Partial<Record<InvoiceField, number>>;
 
 export type InvoiceLine = {
@@ -26,6 +26,10 @@ export type ExtractedInvoice = {
   dueDateStatus?: DueDateStatus;
   taxableBase?: string;
   vatAmount?: string;
+  /** Retention amount as stated in the document. It is normally negative. */
+  irpfAmount?: string;
+  /** IRPF/withholding rate, expressed as a percentage. */
+  irpfRate?: number;
   /** Up to three fiscal VAT rates, expressed as percentages. Zero means the slot does not apply. */
   vatRateSlots?: VatRateSlots;
   totalAmount?: string;
@@ -59,7 +63,7 @@ export type ValidationIssue = {
 
 export type ValidatedInvoice = Required<Pick<ExtractedInvoice,
   "supplierName" | "invoiceNumber" | "invoiceDate" | "taxableBase" | "vatAmount" | "totalAmount"
->> & Pick<ExtractedInvoice, "dueDate" | "dueDateStatus" | "currency" | "supplierTaxId" | "recipientName" | "recipientTaxId" | "lines" | "vatRateSlots">;
+>> & Pick<ExtractedInvoice, "dueDate" | "dueDateStatus" | "currency" | "supplierTaxId" | "recipientName" | "recipientTaxId" | "lines" | "vatRateSlots" | "irpfAmount" | "irpfRate">;
 
 export type InvoiceValidationResult =
   | { valid: true; invoice: ValidatedInvoice; issues: [] }

@@ -29,7 +29,7 @@ export const defaultValidationConfig: InvoiceValidationConfig = {
 const ALWAYS_REQUIRED: InvoiceField[] = [
   "supplierName", "invoiceNumber", "invoiceDate", "taxableBase", "vatAmount", "totalAmount",
 ];
-const AMOUNTS: InvoiceField[] = ["taxableBase", "vatAmount", "totalAmount"];
+const AMOUNTS: InvoiceField[] = ["taxableBase", "vatAmount", "irpfAmount", "totalAmount"];
 const ISO_DATE = /^\d{4}-(0[1-9]|1[0-2])-([0-2]\d|3[01])$/;
 const DECIMAL = /^-?\d+(?:[.,]\d{1,2})?$/;
 const CURRENCY = /^[A-Z]{3}$/;
@@ -71,6 +71,15 @@ export function validateInvoice(
     const value = invoice[field];
     if (value && toMinorUnits(value) === undefined) issues.push({ code: "invalid_amount", field, message: `${field} must have at most two decimals` });
   }
+  const hasIrpfAmount = invoice.irpfAmount !== undefined && invoice.irpfAmount.trim() !== "";
+  const irpfRate = invoice.irpfRate;
+  const hasIrpfRate = irpfRate !== undefined;
+  if (hasIrpfAmount !== hasIrpfRate) {
+    issues.push({ code: "required", field: hasIrpfAmount ? "irpfRate" : "irpfAmount", message: "IRPF amount and rate must be provided together" });
+  }
+  if (irpfRate !== undefined && (!Number.isFinite(irpfRate) || irpfRate <= 0 || irpfRate > 100)) {
+    issues.push({ code: "invalid_amount", field: "irpfRate", message: "irpfRate must be greater than zero and no more than 100" });
+  }
   if (invoice.currency && !CURRENCY.test(invoice.currency)) {
     issues.push({ code: "invalid_currency", field: "currency", message: "currency must be an ISO 4217-style code" });
   }
@@ -84,11 +93,12 @@ export function validateInvoice(
 
   const base = invoice.taxableBase ? toMinorUnits(invoice.taxableBase) : undefined;
   const vat = invoice.vatAmount ? toMinorUnits(invoice.vatAmount) : undefined;
+  const irpf = invoice.irpfAmount ? toMinorUnits(invoice.irpfAmount) : 0;
   const total = invoice.totalAmount ? toMinorUnits(invoice.totalAmount) : undefined;
-  if (base !== undefined && vat !== undefined && total !== undefined && Math.abs(base + vat - total) > config.amountToleranceMinorUnits) {
-    issues.push({ code: "amount_mismatch", field: "totalAmount", message: "taxableBase plus vatAmount does not match totalAmount" });
+  if (base !== undefined && vat !== undefined && irpf !== undefined && total !== undefined && Math.abs(base + vat + irpf - total) > config.amountToleranceMinorUnits) {
+    issues.push({ code: "amount_mismatch", field: "totalAmount", message: "taxableBase plus vatAmount plus irpfAmount does not match totalAmount" });
   }
 
   if (issues.length) return { valid: false, issues };
-  return { valid: true, invoice: invoice as Required<Pick<ExtractedInvoice, "supplierName" | "invoiceNumber" | "invoiceDate" | "taxableBase" | "vatAmount" | "totalAmount">> & Pick<ExtractedInvoice, "dueDate" | "dueDateStatus" | "currency" | "supplierTaxId" | "recipientName" | "recipientTaxId" | "lines">, issues: [] };
+  return { valid: true, invoice: invoice as Required<Pick<ExtractedInvoice, "supplierName" | "invoiceNumber" | "invoiceDate" | "taxableBase" | "vatAmount" | "totalAmount">> & Pick<ExtractedInvoice, "dueDate" | "dueDateStatus" | "currency" | "supplierTaxId" | "recipientName" | "recipientTaxId" | "lines" | "vatRateSlots" | "irpfAmount" | "irpfRate">, issues: [] };
 }

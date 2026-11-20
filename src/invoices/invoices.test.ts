@@ -12,6 +12,17 @@ test("accepts a complete coherent invoice", () => {
   assert.equal(result.valid, true);
 });
 
+test("accepts a document total after a stated IRPF retention", () => {
+  const result = validateInvoice({ ...validInvoice, taxableBase: "100.00", vatAmount: "21.00", irpfRate: 15, irpfAmount: "-15.00", totalAmount: "106.00" });
+  assert.equal(result.valid, true);
+});
+
+test("requires both documented IRPF fields together", () => {
+  const result = validateInvoice({ ...validInvoice, irpfAmount: "-15.00", totalAmount: "106.00" });
+  assert.equal(result.valid, false);
+  if (!result.valid) assert.ok(result.issues.some((issue) => issue.field === "irpfRate" && issue.code === "required"));
+});
+
 test("reports missing, invalid and incoherent fields together", () => {
   const result = validateInvoice({ invoiceDate: "2026-02-30", taxableBase: "100", vatAmount: "21", totalAmount: "130", currency: "euro" });
   assert.equal(result.valid, false);

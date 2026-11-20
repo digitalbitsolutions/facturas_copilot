@@ -112,6 +112,12 @@ export class AttachmentProcessor {
         if (!validation.valid) throw new Error("Canonical recipient data unexpectedly failed invoice validation");
       }
 
+      if (validation.invoice.irpfAmount && Number(validation.invoice.irpfAmount) !== 0 && Number(validation.invoice.vatAmount) === 0) {
+        return this.finish(record, "review_required", {
+          code: "EX-05", reason: "Invoice with IRPF and no VAT requires review", retryable: false,
+        });
+      }
+
       const duplicateKey = buildDuplicateKey(validation.invoice);
       record = await this.transition(record, "validated", { duplicateKey });
       const duplicate = await this.dependencies.registry.findByDuplicateKey(duplicateKey);

@@ -159,6 +159,8 @@ export class SharePointInvoiceRegistry extends SharePointLists implements Invoic
         Receptor: input.invoice.recipientName ?? "", NIFReceptor: input.invoice.recipientTaxId ?? "",
         NumeroFactura: input.invoice.invoiceNumber, FechaFactura: input.invoice.invoiceDate,
         BaseImponible: Number(input.invoice.taxableBase), IVA: Number(input.invoice.vatAmount), Total: Number(input.invoice.totalAmount),
+        ...(input.invoice.irpfAmount !== undefined ? { IRPF: Number(input.invoice.irpfAmount) } : {}),
+        ...(input.invoice.irpfRate !== undefined ? { TipoIRPF: input.invoice.irpfRate } : {}),
         ...(vatRateSlots ? { TipoIVA1: vatRateSlots[0], TipoIVA2: vatRateSlots[1], TipoIVA3: vatRateSlots[2] } : {}),
         Moneda: input.invoice.currency ?? "", DueDateStatus: input.invoice.dueDateStatus ?? "",
         DocumentoUrl: input.documentUrl, Remitente: input.metadata.sender, Recibido: input.metadata.receivedAt,

@@ -45,6 +45,21 @@ test("maps the prebuilt invoice fields to the validation contract", () => {
   });
 });
 
+test("extracts an explicitly labelled IRPF rate and signed amount from document text", () => {
+  const extracted = mapInvoiceResult({
+    status: "succeeded",
+    analyzeResult: {
+      content: "Base imponible 100,00\nIVA 21,00\nIRPF 15 % -15,00\nTotal 106,00",
+      documents: [{ fields: {
+        VendorName: { valueString: "Profesional, SL" }, InvoiceId: { valueString: "IRPF-1" }, InvoiceDate: { valueDate: "2026-11-20" },
+        SubTotal: { valueCurrency: { amount: 100 } }, TotalTax: { valueCurrency: { amount: 21 } }, InvoiceTotal: { valueCurrency: { amount: 106, currencyCode: "EUR" } },
+      } }],
+    },
+  });
+  assert.equal(extracted.invoice.irpfRate, 15);
+  assert.equal(extracted.invoice.irpfAmount, "-15.00");
+});
+
 test("prefers the legal vendor name and derives a missing taxable base conservatively", () => {
   const extracted = mapInvoiceResult({
     status: "succeeded",

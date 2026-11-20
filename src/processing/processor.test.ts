@@ -63,6 +63,20 @@ test("creates a review exception for incomplete extraction", async () => {
   assert.equal(context.documents.documents.size, 0);
 });
 
+test("keeps an IRPF-only invoice in review without archiving or registering it", async () => {
+  const context = setup({ extracted: { ...invoice, vatAmount: "0", irpfRate: 15, irpfAmount: "-15.00", totalAmount: "85.00" } });
+  const result = await context.processor.process(input());
+  assert.equal(result.state, "review_required");
+  assert.equal(result.exception?.reason, "Invoice with IRPF and no VAT requires review");
+  assert.equal(context.documents.documents.size, 0);
+  assert.equal(context.registry.entries.size, 0);
+});
+
+test("allows an invoice with both documented IRPF and VAT", async () => {
+  const context = setup({ extracted: { ...invoice, irpfRate: 15, irpfAmount: "-15.00", totalAmount: "106.00" } });
+  assert.equal((await context.processor.process(input())).state, "completed");
+});
+
 test("requires a unique active supplier master match before archiving", async () => {
   const context = setup({ supplierName: "missing" });
   const result = await context.processor.process(input());

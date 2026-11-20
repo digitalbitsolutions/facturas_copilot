@@ -56,7 +56,7 @@ function numericAmount(field?: Field): number | undefined {
   const textValue = field?.valueString ?? field?.content;
   if (!textValue) return undefined;
   const value = textValue.trim().replace(/[\s\u00a0]/g, "").replace(/(?:€|EUR|USD)$/i, "");
-  if (!/^\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?$|^\d+(?:[.,]\d{1,2})?$/.test(value)) return undefined;
+  if (!/^-?\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?$|^-?\d+(?:[.,]\d{1,2})?$/.test(value)) return undefined;
   const lastComma = value.lastIndexOf(",");
   const lastDot = value.lastIndexOf(".");
   const lastSeparator = Math.max(lastComma, lastDot);
@@ -68,6 +68,29 @@ function numericAmount(field?: Field): number | undefined {
     : value.replace(/[.,]/g, "");
   const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+/**
+ * Reads a retention only when its own line states both its percentage and its
+ * amount.  The amount keeps the sign shown in the document: usually negative,
+ * so the independently stated invoice total remains base + VAT + IRPF.
+ */
+function irpfFromRecognizedText(content?: string): { amount: string; rate: number } | undefined {
+  if (!content) return undefined;
+  const number = "-?\\d{1,3}(?:[.,]\\d{3})*(?:[.,]\\d{1,2})?|-?\\d+(?:[.,]\\d{1,2})?";
+  for (const line of content.split(/\r?\n/)) {
+    if (!/\b(?:irpf|retenci[oó]n)\b/i.test(line)) continue;
+    const rateMatch = new RegExp(`(${number})\\s*%`).exec(line);
+    if (!rateMatch) continue;
+    const rate = numericAmount({ content: rateMatch[1] });
+    if (rate === undefined || rate <= 0 || rate > 100) continue;
+    const withoutRate = line.slice(0, rateMatch.index) + line.slice((rateMatch.index ?? 0) + rateMatch[0].length);
+    const amountTokens = withoutRate.match(new RegExp(number, "g")) ?? [];
+    const amount = numericAmount({ content: amountTokens.at(-1) });
+    if (amount === undefined || amount === 0) continue;
+    return { amount: amount.toFixed(2), rate };
+  }
+  return undefined;
 }
 
 function derivedTaxableBase(total?: Field, tax?: Field): string | undefined {
@@ -260,6 +283,7 @@ export function mapInvoiceResult(payload: AnalyzeResponse): { invoice: Extracted
     ?? fields.SubTotal?.valueCurrency?.currencyCode
     ?? fields.TotalTax?.valueCurrency?.currencyCode;
   const lines = lineItems(fields.Items);
+  const irpf = irpfFromRecognizedText(payload.analyzeResult?.content);
   return {
     invoice: {
       supplierName: text(supplier), ...(text(fields.VendorTaxId) ? { supplierTaxId: text(fields.VendorTaxId) } : {}), invoiceNumber: text(fields.InvoiceId), invoiceDate: text(fields.InvoiceDate),
@@ -267,6 +291,7 @@ export function mapInvoiceResult(payload: AnalyzeResponse): { invoice: Extracted
       ...(text(fields.CustomerTaxId) ? { recipientTaxId: text(fields.CustomerTaxId) } : {}),
       ...(lines ? { lines } : {}),
       dueDate: text(fields.DueDate), taxableBase, vatAmount,
+      ...(irpf ? { irpfAmount: irpf.amount, irpfRate: irpf.rate } : {}),
       ...(lineTaxRate.percent !== undefined ? { vatRateSlots: [lineTaxRate.percent, 0, 0] as const } : {}),
       totalAmount: amount(fields.InvoiceTotal), currency: currency?.toUpperCase(),
     },
@@ -319,7 +344,8 @@ function coherentFiscalSummary(invoice: ExtractedInvoice): boolean {
   const base = Number(invoice.taxableBase);
   const tax = Number(invoice.vatAmount);
   const total = Number(invoice.totalAmount);
-  return [base, tax, total].every(Number.isFinite) && base >= 0 && tax >= 0 && Math.abs(base + tax - total) <= 0.01;
+  const irpf = invoice.irpfAmount === undefined ? 0 : Number(invoice.irpfAmount);
+  return [base, tax, irpf, total].every(Number.isFinite) && base >= 0 && tax >= 0 && Math.abs(base + tax + irpf - total) <= 0.01;
 }
 
 function sameInvoiceNumber(left?: string, right?: string): boolean {
@@ -373,9 +399,9 @@ function enrichWithFiscalTable(primary: Extraction, content?: string): Extractio
 }
 
 function isFiscallyCoherent(invoice: ExtractedInvoice): boolean {
-  const [base, vat, total] = [invoice.taxableBase, invoice.vatAmount, invoice.totalAmount]
+  const [base, vat, irpf, total] = [invoice.taxableBase, invoice.vatAmount, invoice.irpfAmount ?? "0", invoice.totalAmount]
     .map((value) => (value ? Math.round(Number(value) * 100) : Number.NaN));
-  return [base, vat, total].every(Number.isFinite) && Math.abs(base + vat - total) <= 1;
+  return [base, vat, irpf, total].every(Number.isFinite) && Math.abs(base + vat + irpf - total) <= 1;
 }
 
 /** Emits only the approved diagnostic properties for deficient fiscal fields. */
