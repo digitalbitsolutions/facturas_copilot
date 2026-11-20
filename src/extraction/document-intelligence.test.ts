@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { DocumentIntelligenceInvoiceExtractor, mapInvoiceResult } from "./document-intelligence.ts";
+import { DENTALIS_PAGE3_DUMP } from "./fixtures-dentalis.ts";
 
 const result = {
   status: "succeeded" as const,
@@ -190,7 +191,12 @@ test("uses a coherent fiscal summary from page three when the first two pages om
       InvoiceTotal: { valueCurrency: { amount: 3513.2, currencyCode: "EUR" }, confidence: 0.98 },
     } }] } });
     if (calls === 5) return new Response(null, { status: 202, headers: { "operation-location": "https://di.example.com/result/read" } });
-    return Response.json({ status: "succeeded", analyzeResult: { content: "Base Imponible % I.V.A. Imp. I.V.A. Total\n2.764,73 21 % 580,59 3.513,20\n152,62 10,00 15,26" } });
+    if (calls === 6) return Response.json({ status: "succeeded", analyzeResult: { content: "Base Imponible % I.V.A. Imp. I.V.A. Total\n2.764,73 21 % 580,59 3.513,20\n152,62 10,00 15,26" } });
+    if (calls === 7) return new Response(null, { status: 202, headers: { "operation-location": "https://di.example.com/result/layout" } });
+    return Response.json({ status: "succeeded", analyzeResult: { tables: [{
+      rowCount: DENTALIS_PAGE3_DUMP.rowCount, columnCount: DENTALIS_PAGE3_DUMP.columnCount,
+      cells: DENTALIS_PAGE3_DUMP.cells.map((cell) => ({ rowIndex: cell.row, columnIndex: cell.col, kind: cell.kind, content: cell.content })),
+    }] } });
   };
   const extractor = new DocumentIntelligenceInvoiceExtractor("https://di.example.com", { getAccessToken: async () => "token" }, { fetch: fetchMock as typeof fetch, pollIntervalMs: 0 });
   const extracted = await extractor.extract({
@@ -199,8 +205,9 @@ test("uses a coherent fiscal summary from page three when the first two pages om
   });
   assert.equal(extracted.invoice.taxableBase, "2917.35");
   assert.equal(extracted.invoice.vatAmount, "595.85");
+  assert.deepEqual(extracted.invoice.vatRateSlots, [21, 10, 0]);
   assert.equal(extracted.invoice.totalAmount, "3513.20");
-  assert.equal(calls, 7);
+  assert.equal(calls, 8);
 });
 
 test("normalizes international formatted line amounts before deriving VAT", () => {
@@ -230,6 +237,7 @@ test("derives fiscal amounts from a uniform line tax rate when line amounts are 
   });
   assert.equal(extracted.invoice.taxableBase, "1550.79");
   assert.equal(extracted.invoice.vatAmount, "325.66");
+  assert.deepEqual(extracted.invoice.vatRateSlots, [21, 0, 0]);
   assert.equal(extracted.confidence.taxableBase, 0.91);
   assert.equal(extracted.confidence.vatAmount, 0.91);
 });

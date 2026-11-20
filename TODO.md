@@ -36,6 +36,7 @@
 - [x] Crear en producción la columna multilínea `FieldAudit` en `ProcesosFacturas` antes de desplegar el cambio (20 de noviembre, creación manual confirmada).
 - [x] Crear y confirmar Cygnus en `MaestroProveedores`: `CYGNUS_B87385308`, NIF `B87385308`, alias `CYGNUS`, activo (20 de noviembre).
 - [x] Desplegar la corrección aprobada para Cygnus: commit `d1f20f7`, workflow `44648472075` correcto el 20 de noviembre.
+- [ ] Contrastar con Néstor el modelo fiscal del Excel antes de desplegarlo: quedan preparados localmente `TipoIVA1`, `TipoIVA2` y `TipoIVA3` en `RegistroFacturas`; usan porcentajes visibles (`21`, `10`, `4`) y rellenan con `0` solo los tramos no aplicables ya identificados.
 - [ ] Reenviar una factura individual de Cygnus y comprobar `completed`, auditoría `FieldAudit`, fila en `RegistroFacturas`, líneas y PDF archivado en SharePoint.
 - [ ] Resolver con Néstor el conflicto de receptor de Vidrios. Debe permanecer en revisión (normalmente `EX-10` si proveedor y fiscalidad pasan), sin archivo ni registro; no es una prueba de completado.
 - [ ] Crear el agente de Copilot conectado exclusivamente a `ConsultaPagosCopilot`, aplicar `docs/COPILOT_PAYMENT_AGENT.md` como instrucciones y validar consultas de factura, importe, vencimiento y ausencia de vencimiento.

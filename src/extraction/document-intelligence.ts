@@ -3,7 +3,7 @@ import type { InvoiceExtractor, AttachmentInput } from "../processing/types.ts";
 import type { AccessTokenProvider } from "../microsoft365/graph-client.ts";
 import { enrichWithFacturX } from "./factur-x.ts";
 import { decideDueDate } from "./due-date.ts";
-import { extractFiscal, type DiAnalyzeResult } from "./fiscal.ts";
+import { extractFiscal, vatRateSlots, type DiAnalyzeResult } from "./fiscal.ts";
 import { dumpTaxTables } from "./fiscal-diagnose.ts";
 import { diagnoseFields } from "./field-diagnostic.ts";
 
@@ -267,6 +267,7 @@ export function mapInvoiceResult(payload: AnalyzeResponse): { invoice: Extracted
       ...(text(fields.CustomerTaxId) ? { recipientTaxId: text(fields.CustomerTaxId) } : {}),
       ...(lines ? { lines } : {}),
       dueDate: text(fields.DueDate), taxableBase, vatAmount,
+      ...(lineTaxRate.percent !== undefined ? { vatRateSlots: [lineTaxRate.percent, 0, 0] as const } : {}),
       totalAmount: amount(fields.InvoiceTotal), currency: currency?.toUpperCase(),
     },
     confidence: {
@@ -383,6 +384,7 @@ function enrichWithValidatedFiscalLayout(primary: Extraction, result: DiAnalyzeR
       ...primary.invoice,
       taxableBase: (baseTotal / 100).toFixed(2),
       vatAmount: (vatTotal / 100).toFixed(2),
+      vatRateSlots: vatRateSlots(fiscal.summary.rows),
     },
     confidence: {
       ...primary.confidence,

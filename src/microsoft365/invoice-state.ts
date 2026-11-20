@@ -152,12 +152,14 @@ export class SharePointInvoiceRegistry extends SharePointLists implements Invoic
 
   async putOnce(input: { processId: string; invoice: ValidatedInvoice; duplicateKey: string; documentUrl: string; metadata: ProcessRecord["input"] }): Promise<void> {
     if (!(await this.find(this.invoicesList, "ProcessId", input.processId))) try {
+      const vatRateSlots = input.invoice.vatRateSlots ?? (Number(input.invoice.vatAmount) === 0 ? [0, 0, 0] as const : undefined);
       const fields: Record<string, unknown> = {
         Title: input.invoice.invoiceNumber, ProcessId: input.processId, DuplicateKey: input.duplicateKey,
         Proveedor: input.invoice.supplierName, NIFProveedor: input.invoice.supplierTaxId ?? "",
         Receptor: input.invoice.recipientName ?? "", NIFReceptor: input.invoice.recipientTaxId ?? "",
         NumeroFactura: input.invoice.invoiceNumber, FechaFactura: input.invoice.invoiceDate,
         BaseImponible: Number(input.invoice.taxableBase), IVA: Number(input.invoice.vatAmount), Total: Number(input.invoice.totalAmount),
+        ...(vatRateSlots ? { TipoIVA1: vatRateSlots[0], TipoIVA2: vatRateSlots[1], TipoIVA3: vatRateSlots[2] } : {}),
         Moneda: input.invoice.currency ?? "", DueDateStatus: input.invoice.dueDateStatus ?? "",
         DocumentoUrl: input.documentUrl, Remitente: input.metadata.sender, Recibido: input.metadata.receivedAt,
       };

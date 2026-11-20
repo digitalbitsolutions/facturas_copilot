@@ -1,4 +1,6 @@
-export type InvoiceField = Exclude<keyof ExtractedInvoice, "lines" | "dueDateStatus">;
+export type VatRateSlots = readonly [number, number, number];
+
+export type InvoiceField = Exclude<keyof ExtractedInvoice, "lines" | "dueDateStatus" | "vatRateSlots">;
 export type ExtractionConfidence = Partial<Record<InvoiceField, number>>;
 
 export type InvoiceLine = {
@@ -24,6 +26,8 @@ export type ExtractedInvoice = {
   dueDateStatus?: DueDateStatus;
   taxableBase?: string;
   vatAmount?: string;
+  /** Up to three fiscal VAT rates, expressed as percentages. Zero means the slot does not apply. */
+  vatRateSlots?: VatRateSlots;
   totalAmount?: string;
   currency?: string;
 };
@@ -55,7 +59,7 @@ export type ValidationIssue = {
 
 export type ValidatedInvoice = Required<Pick<ExtractedInvoice,
   "supplierName" | "invoiceNumber" | "invoiceDate" | "taxableBase" | "vatAmount" | "totalAmount"
->> & Pick<ExtractedInvoice, "dueDate" | "dueDateStatus" | "currency" | "supplierTaxId" | "recipientName" | "recipientTaxId" | "lines">;
+>> & Pick<ExtractedInvoice, "dueDate" | "dueDateStatus" | "currency" | "supplierTaxId" | "recipientName" | "recipientTaxId" | "lines" | "vatRateSlots">;
 
 export type InvoiceValidationResult =
   | { valid: true; invoice: ValidatedInvoice; issues: [] }

@@ -1,4 +1,4 @@
-import type { ExtractedInvoice, ExtractionConfidence } from "../invoices/types.ts";
+import type { ExtractedInvoice, ExtractionConfidence, InvoiceField } from "../invoices/types.ts";
 
 type Extraction = { invoice: ExtractedInvoice; confidence: ExtractionConfidence };
 
@@ -70,7 +70,7 @@ export function enrichWithFacturX(extraction: Extraction, content: Uint8Array): 
 
   const invoice = { ...current };
   const confidence = { ...extraction.confidence };
-  for (const field of Object.keys(candidate) as Array<Exclude<keyof ExtractedInvoice, "lines" | "dueDateStatus">>) {
+  for (const field of Object.keys(candidate) as InvoiceField[]) {
     if (!invoice[field] && candidate[field]) {
       invoice[field] = candidate[field];
       confidence[field] = 1;

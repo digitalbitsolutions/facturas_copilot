@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { DENTALIS_PAGE3_DUMP } from "./fixtures-dentalis.ts";
-import { extractFiscal, formatCents, parseAmount, parseRateBp, type DiAnalyzeResult } from "./fiscal.ts";
+import { extractFiscal, formatCents, parseAmount, parseRateBp, vatRateSlots, type DiAnalyzeResult } from "./fiscal.ts";
 
 const expected = { baseTotal: 291735, vatTotal: 59585, grossTotal: 351320 };
 const resultFromDump = (options: { tables?: boolean; words?: boolean; corrupt?: boolean } = {}): DiAnalyzeResult => {
@@ -56,8 +56,10 @@ const checks: Array<[string, () => void]> = [
   ["la fila 21 % conserva cuota", () => { const r = extractFiscal(resultFromDump()); assert.ok(r.ok); if (r.ok) assert.equal(r.summary.rows.find((row) => row.rateBp === 2100)?.vat, 58059); }],
   ["la fila 10 % conserva cuota", () => { const r = extractFiscal(resultFromDump()); assert.ok(r.ok); if (r.ok) assert.equal(r.summary.rows.find((row) => row.rateBp === 1000)?.vat, 1526); }],
   ["la tabla contiene base de ambos tipos", () => { const r = extractFiscal(resultFromDump()); assert.ok(r.ok); if (r.ok) assert.deepEqual(r.summary.rows.map((row) => row.base).sort((a, b) => a - b), [15262, 276473]); }],
+  ["los tipos de IVA ocupan tres huecos y los no usados quedan a cero", () => { const r = extractFiscal(resultFromDump()); assert.ok(r.ok); if (r.ok) assert.deepEqual(vatRateSlots(r.summary.rows), [21, 10, 0]); }],
+  ["más de tres tipos de IVA no se truncan silenciosamente", () => assert.throws(() => vatRateSlots([{ base: 1, rateBp: 2100, vat: 0 }, { base: 1, rateBp: 1000, vat: 0 }, { base: 1, rateBp: 500, vat: 0 }, { base: 1, rateBp: 400, vat: 0 }]), /more than three/)],
   ["el total coincide con base más IVA", () => { const r = extractFiscal(resultFromDump()); assert.ok(r.ok); if (r.ok) assert.equal(r.summary.baseTotal + r.summary.vatTotal, r.summary.grossTotal); }],
 ];
 
-assert.equal(checks.length, 32);
+assert.equal(checks.length, 34);
 for (const [name, check] of checks) test(name, check);

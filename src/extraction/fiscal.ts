@@ -42,6 +42,16 @@ export interface TaxSummary {
   grossTotal: Cents;
   source: "table" | "words";
 }
+
+/**
+ * Projects a validated fiscal table into the three Excel/SharePoint VAT slots.
+ * A zero is used only for an unused slot; it never replaces an unrecognised rate.
+ */
+export function vatRateSlots(rows: TaxRow[]): readonly [number, number, number] {
+  const rates = [...new Set(rows.map((row) => row.rateBp))].sort((a, b) => b - a);
+  if (rates.length > 3) throw new Error("A fiscal invoice cannot be projected into more than three VAT rate slots");
+  return [rates[0] ? rates[0] / 100 : 0, rates[1] ? rates[1] / 100 : 0, rates[2] ? rates[2] / 100 : 0];
+}
 export type FiscalResult =
   | { ok: true; summary: TaxSummary; warnings: string[] }
   | { ok: false; errors: string[]; warnings: string[] };
