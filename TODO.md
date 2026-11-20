@@ -36,8 +36,9 @@
 - [x] Crear en producción la columna multilínea `FieldAudit` en `ProcesosFacturas` antes de desplegar el cambio (20 de noviembre, creación manual confirmada).
 - [x] Crear y confirmar Cygnus en `MaestroProveedores`: `CYGNUS_B87385308`, NIF `B87385308`, alias `CYGNUS`, activo (20 de noviembre).
 - [x] Desplegar la corrección aprobada para Cygnus: commit `d1f20f7`, workflow `44648472075` correcto el 20 de noviembre.
-- [ ] Contrastar con Néstor el modelo fiscal del Excel antes de desplegarlo: quedan preparados localmente `TipoIVA1`, `TipoIVA2` y `TipoIVA3` en `RegistroFacturas`; usan porcentajes visibles (`21`, `10`, `4`) y rellenan con `0` solo los tramos no aplicables ya identificados.
-- [ ] Reenviar una factura individual de Cygnus y comprobar `completed`, auditoría `FieldAudit`, fila en `RegistroFacturas`, líneas y PDF archivado en SharePoint.
+- [x] Reenviar una factura individual de Cygnus y comprobar `completed`, auditoría `FieldAudit`, fila en `RegistroFacturas`, líneas y PDF archivado en SharePoint: factura `488/ANT/26`, procesada correctamente a las 02:00 CET el 20 de noviembre.
+- [x] Crear en producción `RegistroFacturas.TipoIVA1`, `TipoIVA2` y `TipoIVA3`, y configurar las vistas públicas `Registro fiscal` y `Estado de pagos` (20 de noviembre).
+- [ ] Contrastar con Néstor el modelo fiscal del Excel antes de publicar o desplegar `2de0ecb`: decidir si además se persisten base y cuota por cada tipo de IVA, tratamiento de IRPF y regla definitiva de nombre/familia de gasto. Los tres tipos de IVA ya están preparados localmente y sus columnas existen en producción.
 - [ ] Resolver con Néstor el conflicto de receptor de Vidrios. Debe permanecer en revisión (normalmente `EX-10` si proveedor y fiscalidad pasan), sin archivo ni registro; no es una prueba de completado.
 - [ ] Crear el agente de Copilot conectado exclusivamente a `ConsultaPagosCopilot`, aplicar `docs/COPILOT_PAYMENT_AGENT.md` como instrucciones y validar consultas de factura, importe, vencimiento y ausencia de vencimiento.
 - [ ] Acordar y configurar el revisor obligatorio de despliegues de producción en el entorno GitHub `prod` antes de la activación operativa.
