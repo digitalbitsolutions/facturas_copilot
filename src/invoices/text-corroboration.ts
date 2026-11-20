@@ -3,7 +3,7 @@ import type { RecipientMasterRecord } from "./recipient-identity.ts";
 import type { ExtractedInvoice, ExtractionConfidence, FieldAuditEntry, FieldSources, InvoiceField, InvoiceValidationConfig } from "./types.ts";
 
 const HEADER_LINES = 15;
-const NIF_NAME_WINDOW = 6;
+const NIF_NAME_WINDOW = 15;
 const MAX_EVIDENCE_CHARS = 160;
 const MONTHS: Record<string, number> = {
   enero: 1, febrero: 2, marzo: 3, abril: 4, mayo: 5, junio: 6, julio: 7, agosto: 8,
@@ -102,15 +102,16 @@ export function applyTextCorroboration(input: {
     const date = corroborateInvoiceDate(text);
     if (date && (!invoice.invoiceDate?.trim() || invoice.invoiceDate === date.value)) record("invoiceDate", date.value, date.rule, date.evidence);
   }
-  if (!deficient("recipientName") && !deficient("recipientTaxId")) return result;
   const found = corroborateRecipient(text, recipients, invoice.supplierTaxId);
   if (!found) return result;
   const recipient = found.recipient;
   const names = [recipient.legalName, ...(recipient.aliases ?? [])].map(normalizeSupplierName);
-  const taxConflict = !deficient("recipientTaxId") && normalizeTaxId(invoice.recipientTaxId ?? "") !== normalizeTaxId(recipient.taxId ?? "");
+  const exactRecipientTaxId = Boolean(invoice.recipientTaxId && recipient.taxId && normalizeTaxId(invoice.recipientTaxId) === normalizeTaxId(recipient.taxId));
+  const taxConflict = !deficient("recipientTaxId") && !exactRecipientTaxId;
   const nameConflict = !deficient("recipientName") && !names.includes(normalizeSupplierName(invoice.recipientName ?? ""));
-  if (taxConflict || nameConflict) return result;
+  const canCorrectConflictingName = nameConflict && exactRecipientTaxId;
+  if (taxConflict || (nameConflict && !canCorrectConflictingName)) return result;
   if (deficient("recipientTaxId") && recipient.taxId) record("recipientTaxId", recipient.taxId, "recipient_nif_name_proximity_v1", found.evidence);
-  if (deficient("recipientName")) record("recipientName", recipient.legalName, "recipient_nif_name_proximity_v1", found.evidence);
+  if (deficient("recipientName") || canCorrectConflictingName) record("recipientName", recipient.legalName, "recipient_nif_name_proximity_v1", found.evidence);
   return result;
 }

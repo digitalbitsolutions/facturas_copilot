@@ -39,6 +39,23 @@ test("completes deficient values with audited text provenance and does not inven
   assert.deepEqual(confidence, { recipientName: 0.4, recipientTaxId: 0.5, invoiceDate: 0.6, totalAmount: 0.99 });
 });
 
+test("corrects a conflicting recipient name only after exact NIF and nearby master-name corroboration", () => {
+  const text = ["ALFA DENTAL NORTE, S.L.", "Calle", "Ciudad", "Factura", "Numero", "Fecha", "Vencimiento", "Pedido", "Envio", "Referencia", "Datos", "Cliente", "CIF ESB00000001"].join("\n");
+  const confidence = { recipientName: 0.99, recipientTaxId: 0.99 };
+  const corrected = applyTextCorroboration({
+    invoice: { recipientName: "Laboratorio Miranda", recipientTaxId: "ESB00000001" }, confidence, text, recipients, config: defaultValidationConfig,
+  });
+  assert.equal(corrected.invoice.recipientName, "Alfa Dental Norte, S.L.");
+  assert.equal(corrected.fieldSources.recipientName, "text_fallback");
+  assert.deepEqual(corrected.audit[0]?.previous, { value: "Laboratorio Miranda", confidence: 0.99 });
+
+  const uncorroborated = applyTextCorroboration({
+    invoice: { recipientName: "Laboratorio Miranda", recipientTaxId: "ESB00000001" }, confidence, text: "CIF ESB00000001", recipients, config: defaultValidationConfig,
+  });
+  assert.equal(uncorroborated.invoice.recipientName, "Laboratorio Miranda");
+  assert.equal(uncorroborated.audit.length, 0);
+});
+
 test("skips low confidence only for an audited text fallback field", () => {
   const invoice = { supplierName: "S", invoiceNumber: "1", invoiceDate: "2026-11-01", taxableBase: "100.00", vatAmount: "21.00", totalAmount: "121.00" };
   assert.equal(validateInvoice(invoice, { invoiceDate: 0.5, totalAmount: 0.5 }).valid, false);
