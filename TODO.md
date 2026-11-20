@@ -35,7 +35,8 @@
 - [x] Integrar y validar localmente la corroboración textual acotada a receptores activos: `fieldSource = text_fallback`, evidencia mínima, umbrales y validación fiscal sin cambios, y diagnóstico limitado. `npm.cmd run check` superó 135 pruebas.
 - [x] Crear en producción la columna multilínea `FieldAudit` en `ProcesosFacturas` antes de desplegar el cambio (20 de noviembre, creación manual confirmada).
 - [x] Crear y confirmar Cygnus en `MaestroProveedores`: `CYGNUS_B87385308`, NIF `B87385308`, alias `CYGNUS`, activo (20 de noviembre).
-- [ ] Desplegar la corrección aprobada para Cygnus y reenviar una factura individual; comprobar `completed`, auditoría `FieldAudit`, fila en `RegistroFacturas`, líneas y PDF archivado en SharePoint.
+- [x] Desplegar la corrección aprobada para Cygnus: commit `d1f20f7`, workflow `44648472075` correcto el 20 de noviembre.
+- [ ] Reenviar una factura individual de Cygnus y comprobar `completed`, auditoría `FieldAudit`, fila en `RegistroFacturas`, líneas y PDF archivado en SharePoint.
 - [ ] Resolver con Néstor el conflicto de receptor de Vidrios. Debe permanecer en revisión (normalmente `EX-10` si proveedor y fiscalidad pasan), sin archivo ni registro; no es una prueba de completado.
 - [ ] Crear el agente de Copilot conectado exclusivamente a `ConsultaPagosCopilot`, aplicar `docs/COPILOT_PAYMENT_AGENT.md` como instrucciones y validar consultas de factura, importe, vencimiento y ausencia de vencimiento.
 - [ ] Acordar y configurar el revisor obligatorio de despliegues de producción en el entorno GitHub `prod` antes de la activación operativa.
