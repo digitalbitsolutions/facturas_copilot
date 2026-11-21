@@ -79,12 +79,7 @@ export function decideDueDate(field: DueDateField | null | undefined, documentTe
     }
   });
   const t = norm(lines.filter((_line, index) => !bankDetailLines.has(index)).join("\n"));
-  const matchedIndicators = INDICATORS.flatMap((re, index) => re.test(t) ? [index] : []);
-  if (matchedIndicators.length > 0) {
-    // Diagnostic identifiers only: never emit document text, dates, names or
-    // bank data. This lets production confirm which rule requires review.
-    console.info("Due-date indicators require review", { matchedIndicators });
-    return { status: "review", reason: "due_date_indicators_present_but_unverified" };
-  }
-  return { status: "not_stated" };
+  return INDICATORS.some((re) => re.test(t))
+    ? { status: "review", reason: "due_date_indicators_present_but_unverified" }
+    : { status: "not_stated" };
 }
