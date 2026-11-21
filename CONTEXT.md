@@ -33,6 +33,8 @@ Responsable documentado: Néstor — Jefe de proyecto.
 - Se observó un candidato real que no llegó a `Facturas Copilot`: tenía adjunto, pero el asunto usaba `FAC` en vez de la palabra literal `factura`, única variante cubierta por la regla actual. Después de completar y ajustar la prueba de IRPF se debe ampliar, revisar y probar la regla de Outlook para admitir de forma segura ese formato abreviado, sin reprocesar el histórico.
 - Se añadieron en `MaestroReceptores` los aliases `DC 8CARD` y `DC 8 CARD` al registro activo `TREO_2025` (`B67915157`) y el receptor activo `DC_VIC` / `DC VIC, SL` (`B16896227`), con aliases `DC VIC`, `DC VIC SL` y `DENTALVIC`.
 
+- Se creó el borrador `Asistente de pagos` en Copilot Studio el 21 de noviembre, conectado exclusivamente a `ConsultaPagosCopilot`, sin herramientas, fuentes externas ni memoria y con instrucciones de solo lectura. La vista previa no puede ejecutarse: Copilot Studio muestra `EnforcementUsageCredits`, porque el entorno no tiene créditos. Pendiente solicitar al administrador capacidad/créditos y, tras ello, ejecutar las cuatro consultas de consistencia documentadas en `docs/COPILOT_PAYMENT_AGENT.md`; no publicar el agente antes de validarlas.
+
 ## Punto exacto de reanudación — 19 de noviembre de 2026
 
 - Producción ejecuta el commit `93f3271`; el despliegue `44626265818` desactivó `INVOICE_FISCAL_DIAGNOSTIC_ONLY`. Las facturas válidas pueden avanzar a registro, líneas y archivo en SharePoint. Las pruebas anteriores que terminaron en diagnóstico no se reprocesan automáticamente.
