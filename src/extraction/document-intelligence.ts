@@ -270,7 +270,7 @@ function enrichWithExplicitIrpfSummary(extraction: Extraction, content?: string)
     });
     return matches.length === 1 ? matches[0] : undefined;
   };
-  const base = labelled(/\bbase\s+imponible\b/i);
+  const base = labelled(/\bbase\s+impo(?:nible|sable)\b/i);
   const vat = labelled(/\b(?:i\.?v\.?a\.?|iva|vat)\b/i);
   const total = labelled(/\btotal\s+(?:a\s+)?(?:pagar|pay|factura)\b/i);
   // Prefer the signed amount on the explicitly labelled line itself. Some

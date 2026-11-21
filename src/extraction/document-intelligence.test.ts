@@ -205,7 +205,7 @@ test("uses labelled OCR fiscal text only when it reconciles to the extracted tot
 
 test("recovers a labelled IRPF summary from the invoice model text only when its arithmetic is exact", async () => {
   let calls = 0;
-  const primary = { status: "succeeded" as const, analyzeResult: { content: "Base imponible\n1.200,00 EUR\nIVA\nexempt\n0,00 EUR\nRetencio IRPF\n15,00 %\n-180,00 EUR\nTOTAL A PAGAR 1.020,00 EUR\nDades de pagament:\nIBAN ES73 0081 4291 6000 1374 4140", documents: [{ fields: {
+  const primary = { status: "succeeded" as const, analyzeResult: { content: "BASE IMPOSABLE\n1.200,00 EUR\nIVA\nexempt\n0,00 EUR\nRETENCIÓ IRPF\n15,00 %\n-180,00 EUR\nTOTAL A PAGAR 1.020,00 EUR\nDades de pagament:\nIBAN ES73 0081 4291 6000 1374 4140", documents: [{ fields: {
     VendorName: { valueString: "Carlota Comulada Aragon", confidence: 0.6 },
     VendorTaxId: { valueString: "48216083X", confidence: 0.6 },
     InvoiceId: { valueString: "001/2026", confidence: 0.99 },
