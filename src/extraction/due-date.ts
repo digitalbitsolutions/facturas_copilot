@@ -43,6 +43,8 @@ const INDICATORS: RegExp[] = [
 // A bank-details footer is not a payment term or a due date. OCR sometimes
 // normalizes the Catalan heading "Dades de pagament" as "Data de pagament".
 const BANK_DETAILS = /\b(?:dades?|data|datos) de (?:pagament|pago)\b/i;
+const PAYMENT_DETAILS_HEADING = /\b(?:forma|m[eé]todo) de (?:pagament|pago)\b/i;
+const IBAN = /\bIBAN\b/i;
 
 /**
  * @param field         campo dueDate de prebuilt-invoice (valor ya normalizado + confianza)
@@ -54,10 +56,20 @@ export function decideDueDate(field: DueDateField | null | undefined, documentTe
   if (value && conf !== null && conf >= DUE_DATE_MIN_CONFIDENCE) {
     return { status: "ok", dueDate: value, confidence: conf };
   }
-  const t = norm(documentText
-    .split(/\r?\n/)
-    .filter((line) => !BANK_DETAILS.test(line))
-    .join("\n"));
+  const lines = documentText.split(/\r?\n/);
+  const bankDetailLines = new Set<number>();
+  lines.forEach((line, index) => {
+    if (BANK_DETAILS.test(line)) bankDetailLines.add(index);
+    if (!IBAN.test(line)) return;
+    bankDetailLines.add(index);
+    // Invoice models sometimes turn the harmless bank footer into a separate
+    // "Forma de pagament" heading immediately before its IBAN. It is not a
+    // due-date term unless another explicit term remains in the document.
+    for (let previous = index - 1; previous >= Math.max(0, index - 2); previous -= 1) {
+      if (BANK_DETAILS.test(lines[previous]) || PAYMENT_DETAILS_HEADING.test(lines[previous])) bankDetailLines.add(previous);
+    }
+  });
+  const t = norm(lines.filter((_line, index) => !bankDetailLines.has(index)).join("\n"));
   return INDICATORS.some((re) => re.test(t))
     ? { status: "review", reason: "due_date_indicators_present_but_unverified" }
     : { status: "not_stated" };
