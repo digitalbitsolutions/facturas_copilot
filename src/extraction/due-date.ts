@@ -48,6 +48,7 @@ const INDICATORS: RegExp[] = [
 const BANK_DETAILS = /\b(?:dades?|data|datos)\b[^\r\n]{0,80}\b(?:pagament|pago)\b/i;
 const PAYMENT_DETAILS_HEADING = /\b(?:forma|m[eé]todo) de (?:pagament|pago)\b/i;
 const IBAN = /\bIBAN\b/i;
+const PAYMENT_TERM = /\b(?:vencim|vto\b|plazo|pagadero|giro|domiciliad|condici|\d+\s*d[ií]as?)\b/i;
 
 /**
  * @param field         campo dueDate de prebuilt-invoice (valor ya normalizado + confianza)
@@ -61,15 +62,20 @@ export function decideDueDate(field: DueDateField | null | undefined, documentTe
   }
   const lines = documentText.split(/\r?\n/);
   const bankDetailLines = new Set<number>();
+  const hasIban = lines.some((line) => IBAN.test(line));
   lines.forEach((line, index) => {
     if (BANK_DETAILS.test(line)) bankDetailLines.add(index);
+    // A bare payment-method heading alongside bank account details describes
+    // the remittance footer, not a payment term. Keep it if it states an
+    // actual deadline, term, giro or domiciliation.
+    if (hasIban && PAYMENT_DETAILS_HEADING.test(line) && !PAYMENT_TERM.test(line)) bankDetailLines.add(index);
     if (!IBAN.test(line)) return;
     bankDetailLines.add(index);
     // Invoice models sometimes turn the harmless bank footer into a separate
     // "Forma de pagament" heading immediately before its IBAN. It is not a
     // due-date term unless another explicit term remains in the document.
     for (let previous = index - 1; previous >= Math.max(0, index - 2); previous -= 1) {
-      if (BANK_DETAILS.test(lines[previous]) || PAYMENT_DETAILS_HEADING.test(lines[previous])) bankDetailLines.add(previous);
+      if (BANK_DETAILS.test(lines[previous]) || (PAYMENT_DETAILS_HEADING.test(lines[previous]) && !PAYMENT_TERM.test(lines[previous]))) bankDetailLines.add(previous);
     }
   });
   const t = norm(lines.filter((_line, index) => !bankDetailLines.has(index)).join("\n"));

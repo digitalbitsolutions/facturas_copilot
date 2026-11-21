@@ -72,5 +72,10 @@ check("una cabecera de forma de pago junto al IBAN no es un vencimiento", () => 
   assert.deepEqual(r, { status: "not_stated" });
 });
 
+check("una cabecera aislada de forma de pago con IBAN no oculta un plazo real", () => {
+  assert.equal(decideDueDate({ value: "2026-11-19", confidence: 0.3 }, "Forma de pago: 30 días\nIBAN: ES73 0081 4291 6000 1374 4140").status, "review");
+  assert.equal(decideDueDate({ value: "2026-11-19", confidence: 0.3 }, "Forma de pagament\nIBAN: ES73 0081 4291 6000 1374 4140").status, "not_stated");
+});
+
 if (failed) { console.error(`\n${failed} test(s) fallaron`); process.exit(1); }
 console.log("\nTodos los tests pasaron");
