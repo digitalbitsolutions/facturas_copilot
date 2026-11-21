@@ -61,6 +61,12 @@ check("los datos bancarios de pago no son un vencimiento", () => {
   assert.deepEqual(r, { status: "not_stated" });
 });
 
+check("variantes OCR del encabezado bancario no son un vencimiento", () => {
+  for (const text of ["Dades pagament: Titular\nIBAN: ES73 0081 4291 6000 1374 4140", "Datos bancarios de pago: Titular\nIBAN: ES73 0081 4291 6000 1374 4140"]) {
+    assert.equal(decideDueDate({ value: "2026-11-19", confidence: 0.3 }, text).status, "not_stated", text);
+  }
+});
+
 check("una cabecera de forma de pago junto al IBAN no es un vencimiento", () => {
   const r = decideDueDate({ value: "2026-11-19", confidence: 0.3 }, "Forma de pagament:\nTitular: Professional\nIBAN: ES73 0081 4291 6000 1374 4140");
   assert.deepEqual(r, { status: "not_stated" });

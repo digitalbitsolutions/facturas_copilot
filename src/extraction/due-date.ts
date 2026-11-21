@@ -42,7 +42,10 @@ const INDICATORS: RegExp[] = [
 
 // A bank-details footer is not a payment term or a due date. OCR sometimes
 // normalizes the Catalan heading "Dades de pagament" as "Data de pagament".
-const BANK_DETAILS = /\b(?:dades?|data|datos) de (?:pagament|pago)\b/i;
+// OCR and the invoice model can omit the connecting "de" or add intervening
+// labels. Any bank-details heading still requires both concepts, while an
+// actual due-date term is evaluated independently below.
+const BANK_DETAILS = /\b(?:dades?|data|datos)\b[^\r\n]{0,80}\b(?:pagament|pago)\b/i;
 const PAYMENT_DETAILS_HEADING = /\b(?:forma|m[eé]todo) de (?:pagament|pago)\b/i;
 const IBAN = /\bIBAN\b/i;
 
