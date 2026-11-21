@@ -36,7 +36,7 @@ const INDICATORS: RegExp[] = [
   /\bforma de pago\b/, /\bforma de pagament\b/,
   /\bcondiciones de pago\b/, /\bcondicions de pagament\b/,
   /\bplazo de pago\b/, /\bpagadero\b/,
-  /\b\d+ dias( fecha| f\/f)?\b/, /\b\d+ dies( data)?\b/,
+  /\b\d+ dias( fecha| f\/f)?\b/, /\b(?:a\s+)?\d+\s+dies\s+data\b/,
   /\bgiro\b/, /\bdomiciliad/, /\brecibo\b/,
 ];
 

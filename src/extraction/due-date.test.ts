@@ -55,6 +55,9 @@ check("indicios en es/ca/en, con mayúsculas y acentos", () => {
 check("'Pagats', 'Data valor' y 'cobrament' NO cuentan como indicio de vencimiento", () => {
   assert.equal(decideDueDate({ value: "2026-11-10", confidence: 0.3 }, "Ports Pagats Data valor 10/11/2026 Adreça de cobrament").status, "not_stated");
 });
+check("un número seguido de dies sin condición de pago no es vencimiento", () => {
+  assert.equal(decideDueDate({ value: "2026-11-19", confidence: 0.3 }, "Serveis realitzats durant 15 dies").status, "not_stated");
+});
 
 check("los datos bancarios de pago no son un vencimiento", () => {
   const r = decideDueDate({ value: "2026-11-19", confidence: 0.3 }, "Dades de pagament:\nData de pagament: 19/11/2026\nTitular: Professional\nIBAN: ES73 0081 4291 6000 1374 4140");
