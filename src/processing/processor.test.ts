@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { DocumentIntelligenceDocumentClassifier } from "../classification/document-intelligence-classifier.ts";
+import { DocumentReviewError } from "./document-review-error.ts";
 import { AttachmentProcessor, MemoryDocumentRepository, MemoryInvoiceRegistry, MemoryProcessStore, MemorySupplierDirectory } from "./index.ts";
-import type { AttachmentInput, DocumentKind } from "./types.ts";
+import type { AttachmentInput, DocumentClassifier, DocumentKind } from "./types.ts";
 
 const input = (attachmentId = "a-1"): AttachmentInput => ({
   messageId: "message-1", attachmentId, sender: "billing@example.test", receivedAt: "2026-09-07T10:00:00Z",
@@ -9,16 +11,17 @@ const input = (attachmentId = "a-1"): AttachmentInput => ({
 });
 const invoice = { supplierName: "ACME", invoiceNumber: "F-42", invoiceDate: "2026-09-01", dueDate: "2026-10-01", taxableBase: "100", vatAmount: "21", totalAmount: "121", currency: "EUR" };
 
-function setup(options: { kind?: DocumentKind; extracted?: typeof invoice; extractionErrorFor?: string; supplierName?: string } = {}) {
+function setup(options: { kind?: DocumentKind; extracted?: typeof invoice; extractionErrorFor?: string; supplierName?: string; classifier?: DocumentClassifier; documentError?: DocumentReviewError } = {}) {
   const processStore = new MemoryProcessStore();
   const documents = new MemoryDocumentRepository();
   const registry = new MemoryInvoiceRegistry();
   const supplierDirectory = new MemorySupplierDirectory(options.supplierName === "missing" ? [] : [{ supplierId: "SUP-1", legalName: options.supplierName ?? "ACME", active: true }]);
   let extractionCalls = 0;
   const processor = new AttachmentProcessor({
-    classifier: { classify: async () => ({ kind: options.kind ?? "invoice", confidence: 0.99, reasons: ["test"] }) },
+    classifier: options.classifier ?? { classify: async () => ({ kind: options.kind ?? "invoice", confidence: 0.99, reasons: ["test"] }) },
     extractor: { extract: async (attachment) => {
       extractionCalls += 1;
+      if (options.documentError) throw options.documentError;
       if (attachment.attachmentId === options.extractionErrorFor) throw new Error("Unreadable PDF");
       return { invoice: options.extracted ?? invoice, confidence: { totalAmount: 0.99 } };
     } },
@@ -70,6 +73,14 @@ test("keeps an IRPF-only invoice in review without archiving or registering it",
   assert.equal(result.exception?.reason, "Invoice with IRPF and no VAT requires review");
   assert.equal(context.documents.documents.size, 0);
   assert.equal(context.registry.entries.size, 0);
+});
+
+test("reports an unresolved supplier alongside extraction issues", async () => {
+  const context = setup({ supplierName: "missing", extracted: { ...invoice, totalAmount: "122" } });
+  const result = await context.processor.process(input());
+  assert.equal(result.state, "review_required");
+  assert.equal(result.exception?.code, "EX-06");
+  assert.deepEqual(result.exception?.issues?.map(issue => issue.code), ["amount_mismatch", "supplier_not_found"]);
 });
 
 test("uses an exact active supplier NIF match before confidence validation", async () => {
@@ -151,6 +162,32 @@ test("retries a review caused by a transient technical failure", async () => {
   assert.equal(retry.state, "review_required");
   assert.equal(retry.idempotentReplay, false);
   assert.equal(context.extractionCalls(), 2);
+});
+
+test("keeps oversized PDFs in review without calling Document Intelligence", async () => {
+  const classifier = new DocumentIntelligenceDocumentClassifier("https://document.test", {
+    getAccessToken: async () => assert.fail("Oversized PDF must be rejected before fetching a token"),
+  });
+  const context = setup({ classifier });
+  const attachment = { ...input(), content: new Uint8Array(4 * 1024 * 1024 + 1) };
+  const first = await context.processor.process(attachment);
+  assert.equal(first.state, "review_required");
+  assert.equal(first.exception?.code, "EX-02");
+  assert.equal(first.exception?.retryable, false);
+  assert.equal((await context.processor.process(attachment)).idempotentReplay, true);
+  assert.equal(context.extractionCalls(), 0);
+});
+
+test("does not re-extract a PDF flagged for permanent manual review", async () => {
+  const context = setup({ documentError: new DocumentReviewError("EX-05", "Multiple invoice numbers") });
+  const first = await context.processor.process(input());
+  assert.equal(first.state, "review_required");
+  assert.equal(first.exception?.code, "EX-05");
+  assert.equal(first.exception?.retryable, false);
+  assert.equal((await context.processor.process(input())).idempotentReplay, true);
+  assert.equal(context.extractionCalls(), 1);
+  assert.equal(context.documents.documents.size, 0);
+  assert.equal(context.registry.entries.size, 0);
 });
 
 test("isolates a failed attachment from the remaining message", async () => {

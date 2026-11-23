@@ -1,5 +1,6 @@
 import type { AccessTokenProvider } from "../microsoft365/graph-client.ts";
 import type { AttachmentInput, DocumentClassification, DocumentClassifier } from "../processing/types.ts";
+import { DocumentReviewError } from "../processing/document-review-error.ts";
 import { classifyDocumentText } from "./classifier.ts";
 
 const API_VERSION = "2024-11-30";
@@ -31,7 +32,7 @@ export class DocumentIntelligenceDocumentClassifier implements DocumentClassifie
 
   async classify(input: AttachmentInput): Promise<DocumentClassification> {
     if (input.contentType !== "application/pdf" || input.content.length === 0 || input.content.length > 4 * 1024 * 1024) {
-      throw new Error("Classification requires a PDF between 1 byte and 4 MB for the F0 tier");
+      throw new DocumentReviewError("EX-02", "Classification requires a PDF between 1 byte and 4 MiB");
     }
     const token = await this.tokenProvider.getAccessToken();
     const response = await this.fetchImpl(

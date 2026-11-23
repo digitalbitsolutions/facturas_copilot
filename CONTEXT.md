@@ -1,5 +1,11 @@
 # Contexto de reanudación
 
+## Cambios locales del 24 de noviembre de 2026
+
+- Los adjuntos fuera del límite vigente de 4 MiB quedan en revisión no reintentable (`EX-02`). La ausencia de factura detectada, varios números de factura en el PDF o superar el máximo de páginas verificables quedan en revisión no reintentable (`EX-05`). Los fallos técnicos conservan su tratamiento reintentable.
+- Si fallan otros campos y el proveedor no se identifica, el proceso registra ambas incidencias en `ValidationIssues`.
+- Compilación TypeScript y 156 pruebas superadas. Cambios pendientes de despliegue. Quedan pendientes la decisión sobre «Resuelta» y las reemisiones `EX-07`, y el contraste de las reglas de corroboración propuestas con los PDF reales.
+
 Actualizado: 21 de noviembre de 2026, piloto de archivo SharePoint activo; prueba IRPF en ajuste final de vencimiento.
 
 Responsable documentado: Néstor — Jefe de proyecto.

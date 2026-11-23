@@ -432,5 +432,5 @@ test("rejects documents outside the F0 file-size limit", async () => {
   await assert.rejects(() => extractor.extract({
     messageId: "manual", attachmentId: "large", sender: "pilot", receivedAt: "2026-09-10T12:00:00Z",
     originalFilename: "large.pdf", contentType: "application/pdf", content: new Uint8Array(4 * 1024 * 1024 + 1),
-  }), /4 MB/);
+  }), /4 MiB/);
 });

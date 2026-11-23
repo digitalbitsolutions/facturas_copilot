@@ -1,5 +1,6 @@
 import type { ExtractedInvoice, ExtractionConfidence, FieldSources, InvoiceField } from "../invoices/types.ts";
 import type { InvoiceExtractor, AttachmentInput } from "../processing/types.ts";
+import { DocumentReviewError } from "../processing/document-review-error.ts";
 import type { AccessTokenProvider } from "../microsoft365/graph-client.ts";
 import { enrichWithFacturX } from "./factur-x.ts";
 import { decideDueDate } from "./due-date.ts";
@@ -315,7 +316,7 @@ function confidence(fields: Record<string, Field>, mapping: Partial<Record<Invoi
 
 export function mapInvoiceResult(payload: AnalyzeResponse): { invoice: ExtractedInvoice; confidence: ExtractionConfidence } {
   const fields = payload.analyzeResult?.documents?.[0]?.fields;
-  if (!fields) throw new Error("Document Intelligence did not detect an invoice");
+  if (!fields) throw new DocumentReviewError("EX-05", "Document Intelligence did not detect an invoice");
   const supplier = text(fields.VendorAddressRecipient) ? fields.VendorAddressRecipient : fields.VendorName;
   const taxDetails = taxDetailAmounts(fields.TaxDetails);
   const itemAmounts = lineItemAmounts(fields.Items);
@@ -507,8 +508,10 @@ export class DocumentIntelligenceInvoiceExtractor implements InvoiceExtractor {
   }
 
   async extract(input: AttachmentInput, context: { recognizedText?: string; ensureSingleInvoiceDocument?: boolean } = {}): Promise<Extraction> {
-    if (input.contentType !== "application/pdf") throw new Error("Document Intelligence pilot only accepts PDF files");
-    if (input.content.length === 0 || input.content.length > 4 * 1024 * 1024) throw new Error("PDF must be between 1 byte and 4 MB for the F0 tier");
+    if (input.contentType !== "application/pdf") throw new DocumentReviewError("EX-02", "Document Intelligence pilot only accepts PDF files");
+    if (input.content.length === 0 || input.content.length > 4 * 1024 * 1024) {
+      throw new DocumentReviewError("EX-02", "PDF must be between 1 byte and 4 MiB");
+    }
     const token = await this.tokenProvider.getAccessToken();
     const primary = await this.analyze(input, token, "1-2");
     if (context.ensureSingleInvoiceDocument) await this.assertSingleInvoiceDocument(input, token, primary);
@@ -569,10 +572,10 @@ export class DocumentIntelligenceInvoiceExtractor implements InvoiceExtractor {
       }
       for (const identifier of invoiceNumbers(analysis)) identifiers.add(identifier);
       if (identifiers.size > 1) {
-        throw new Error("PDF contains multiple invoice numbers and requires manual review");
+        throw new DocumentReviewError("EX-05", "PDF contains multiple invoice numbers and requires manual review");
       }
     }
-    throw new Error(`PDF has more than ${MAX_INVOICE_PAGES_TO_VERIFY} pages and requires manual review`);
+    throw new DocumentReviewError("EX-05", `PDF has more than ${MAX_INVOICE_PAGES_TO_VERIFY} pages and requires manual review`);
   }
 
   private async analyze(input: AttachmentInput, token: string, pages: string, model = MODEL_ID): Promise<AnalyzeResponse> {

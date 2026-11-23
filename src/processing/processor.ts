@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { applyTextCorroboration, buildDuplicateKey, buildInvoicePath, defaultValidationConfig, resolveRecipientIdentity, resolveSupplierIdentity, validateInvoice, validationConfigForSupplier } from "../invoices/index.ts";
 import type { InvoiceValidationConfig } from "../invoices/types.ts";
+import { DocumentReviewError } from "./document-review-error.ts";
 import type {
   AttachmentInput, DocumentClassifier, DocumentRepository, InvoiceExtractor, InvoiceRegistry,
   ProcessException, ProcessRecord, ProcessResult, ProcessStore,
@@ -89,8 +90,9 @@ export class AttachmentProcessor {
       let validation = validateInvoice(corroborated.invoice, extraction.confidence, supplierValidationConfig, fieldSources);
       if (!validation.valid) {
         const missing = validation.issues.some((issue) => issue.code === "required");
+        const issues = supplierIdentity.status === "matched" ? validation.issues : [...validation.issues, supplierIdentity.issue];
         return this.finish(record, "review_required", {
-          code: missing ? "EX-05" : "EX-06", reason: "Invoice extraction requires review", retryable: false, issues: validation.issues,
+          code: missing ? "EX-05" : "EX-06", reason: "Invoice extraction requires review", retryable: false, issues,
         });
       }
 
@@ -150,6 +152,9 @@ export class AttachmentProcessor {
       }
       return this.finish(record, "completed");
     } catch (error) {
+      if (error instanceof DocumentReviewError) {
+        return this.finish(record, "review_required", { code: error.code, reason: error.message, retryable: false });
+      }
       return this.finish(record, "review_required", { code: "EX-04", reason: error instanceof Error ? error.message : String(error), retryable: true });
     }
   }
