@@ -1,14 +1,19 @@
 # Contexto de reanudación
 
-## Cambios locales del 24 de noviembre de 2026
+Actualizado: 24 de noviembre de 2026. Piloto activo con los primeros correos posteriores al despliegue verificados.
+
+Responsable documentado: Néstor — Jefe de proyecto.
+
+## Punto de reanudación — 24 de noviembre de 2026
 
 - Los adjuntos fuera del límite vigente de 4 MiB quedan en revisión no reintentable (`EX-02`). La ausencia de factura detectada, varios números de factura en el PDF o superar el máximo de páginas verificables quedan en revisión no reintentable (`EX-05`). Los fallos técnicos conservan su tratamiento reintentable.
 - Si fallan otros campos y el proveedor no se identifica, el proceso registra ambas incidencias en `ValidationIssues`.
-- Compilación TypeScript y 156 pruebas superadas. Cambios pendientes de despliegue. Quedan pendientes la decisión sobre «Resuelta» y las reemisiones `EX-07`, y el contraste de las reglas de corroboración propuestas con los PDF reales.
-
-Actualizado: 21 de noviembre de 2026, piloto de archivo SharePoint activo; prueba IRPF en ajuste final de vencimiento.
-
-Responsable documentado: Néstor — Jefe de proyecto.
+- Producción ejecuta `58011f5`. El [workflow 45288784840](https://github.com/digitalbitsolutions/facturas_copilot/actions/runs/45288784840) completó `npm run check` (156 pruebas) y la publicación en Azure Functions. Se conservaron el buzón y la carpeta del piloto, el corte `2026-11-18T20:07:43Z`, el procesamiento y enrutamiento por receptor activos, y el diagnóstico fiscal y la importación de previsiones desactivados.
+- El 23 de noviembre, los 7 adjuntos recibidos en `Facturas Copilot` quedaron en revisión, sin PDF archivado ni alta fiscal. Cuatro de SonoIO por el número de factura, uno de Straumann por el IVA, uno de EMAS por el NIF del proveedor y un PDF de Operaciones por tamaño. El fallo de tamaño figuró como `EX-04` bajo la versión anterior.
+- Se verificaron en producción las altas de SonoIO y EMAS, más 24 altas de proveedores de la lista posterior. El NIF `B62652805` queda pendiente de contrastar entre GRENKE y SPANIVUIT. `MaestroReceptores` quedó con 7 filas activas tras el alta de `DC_BERGA` (`B16896359`). `DC 8CARD` figura como alias de TREO 2025.
+- El 24 de noviembre se verificaron en `ProcesosFacturas` 4 adjuntos nuevos de 3 correos, sin archivo ni alta fiscal: Straumann `9100274453` en `EX-06` por IVA de baja confianza, Cashkeeper en `EX-06` por vencimiento de baja confianza y proveedor sin coincidencia, y los escaneos `003002` y `003003` desviados como `EX-03`. El PDF de Operaciones recibido el día 23 pasó a `EX-02` no reintentable. Queda pendiente verificar un caso `completed` posterior al despliegue, con una sola fila fiscal y el PDF archivado.
+- Se dieron de alta y verificaron como activos los dos proveedores identificados en los PDF de Cashkeeper y del escaneo `003002`, con confianza reducida desactivada. Manohay Dental ya estaba activo. El escaneo `003003` sigue pendiente de revisión documental.
+- La ampliación de la regla de Outlook a asuntos que empiezan por `FAC` espera confirmación. Siguen pendientes las decisiones de Néstor sobre «Resuelta» y las reemisiones `EX-07`, y el contraste de las reglas de corroboración con los PDF reales.
 
 ## Punto exacto de reanudación — 20 de noviembre de 2026
 
