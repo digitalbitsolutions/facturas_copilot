@@ -17,6 +17,7 @@ const INVOICE_INDICATORS: Indicator[] = [
   { pattern: /\bbase imponible\b/, weight: 2, reason: "Contains taxable base" },
   { pattern: /\btotal (?:factura|fra)\b/, weight: 2, reason: "Contains invoice total" },
   { pattern: /\b(?:iva|vat)\b/, weight: 1, reason: "Contains VAT terminology" },
+  { pattern: /\b(?:irpf|i r p f)\b/, weight: 1, reason: "Contains IRPF withholding" },
   { pattern: /\bfecha (?:de )?factura\b/, weight: 1, reason: "Contains invoice date" },
   { pattern: /\bnumero (?:de )?factura\b/, weight: 1, reason: "Contains invoice number" },
 ];

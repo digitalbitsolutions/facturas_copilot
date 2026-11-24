@@ -8,6 +8,14 @@ test("classifies a fiscal invoice from independent indicators", () => {
   assert.ok(result.confidence >= 0.85);
 });
 
+test("uses IRPF alongside an invoice heading without overriding stronger bank evidence", () => {
+  const result = classifyDocumentText("FACTURA: 267 FECHA: HONORARIOS SUMA € 500,00 15 % I.R.P.F. € 75,00 TOTAL € 425,00", "scan.pdf");
+  assert.equal(result.kind, "invoice");
+  assert.ok(result.reasons.includes("Contains IRPF withholding"));
+  assert.equal(classifyDocumentText("Nómina mensual IRPF 15 %").kind, "other");
+  assert.equal(classifyDocumentText("Liquidación de recibos Total nominal abonado Factura IRPF").kind, "bank_settlement");
+});
+
 test("classifies the observed bank receipt settlement before invoice extraction", () => {
   const result = classifyDocumentText("Liquidación de recibos Total nominal abonado Fecha valor Intereses Comisiones Gastos correo IVA");
   assert.equal(result.kind, "bank_settlement");
