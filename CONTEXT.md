@@ -6,6 +6,8 @@ Responsable documentado: Néstor — Jefe de proyecto.
 
 ## Punto de reanudación — 24 de noviembre de 2026
 
+- En la rama `fix/straumann-vat-cashkeeper-due-irpf-classifier` se confirmó base e IVA de cabeceras coherentes con el desglose de las páginas 1-2, se añadió corroboración auditada de vencimientos explícitos y se incorporó IRPF como señal de clasificación. Compilación TypeScript y 166 pruebas superadas con respuestas simuladas. Pendiente aprobación del despliegue y verificación con correos nuevos. El PDF `003003` y la salida original de Document Intelligence de los casos históricos siguen pendientes.
+
 - Los adjuntos fuera del límite vigente de 4 MiB quedan en revisión no reintentable (`EX-02`). La ausencia de factura detectada, varios números de factura en el PDF o superar el máximo de páginas verificables quedan en revisión no reintentable (`EX-05`). Los fallos técnicos conservan su tratamiento reintentable.
 - Si fallan otros campos y el proveedor no se identifica, el proceso registra ambas incidencias en `ValidationIssues`.
 - Producción ejecuta `58011f5`. El [workflow 45288784840](https://github.com/digitalbitsolutions/facturas_copilot/actions/runs/45288784840) completó `npm run check` (156 pruebas) y la publicación en Azure Functions. Se conservaron el buzón y la carpeta del piloto, el corte `2026-11-18T20:07:43Z`, el procesamiento y enrutamiento por receptor activos, y el diagnóstico fiscal y la importación de previsiones desactivados.
