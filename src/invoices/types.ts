@@ -48,9 +48,9 @@ export type InvoiceValidationConfig = {
 export type FieldSource = "text_fallback" | "master_match";
 export type FieldSources = Partial<Record<InvoiceField, FieldSource>>;
 export type FieldAuditEntry = {
-  field: "recipientName" | "recipientTaxId" | "invoiceDate";
+  field: "recipientName" | "recipientTaxId" | "invoiceDate" | "dueDate";
   fieldSource: "text_fallback";
-  rule: "recipient_nif_name_proximity_v1" | "invoice_date_labelled_v1" | "invoice_date_place_date_v1";
+  rule: "recipient_nif_name_proximity_v1" | "invoice_date_labelled_v1" | "invoice_date_place_date_v1" | "due_date_labelled_v1";
   evidence: Array<{ line: number; text: string }>;
   previous?: { value?: string; confidence?: number };
 };

@@ -15,6 +15,10 @@ const LONG_DATE = "(\\d{1,2})\\s+de\\s+(enero|febrero|marzo|abril|mayo|junio|jul
 const NUMERIC_DATE = "(\\d{1,2})[/.\\-](\\d{1,2})[/.\\-](\\d{4})";
 const EXACT_LONG = new RegExp(`^${LONG_DATE}\\.?$`, "i");
 const EXACT_NUMERIC = new RegExp(`^${NUMERIC_DATE}\\.?$`);
+const DUE_DATE_LINE = new RegExp(
+  `^(?:vencimientos?|fecha\\s+(?:de\\s+)?vencimiento|venciments?|vto\\.?)\\s*:?\\s*(${NUMERIC_DATE})(?:\\s+((?:\\d{1,3}(?:\\.\\d{3})+|\\d+),\\d{2})\\s*€?)?$`,
+  "i",
+);
 const LABELLED = /\bfecha\s+(?:de\s+)?(?:factura|emisi[oó]n|expedici[oó]n)\s*[:\-]?\s*(.+)$/i;
 const PLACE_DATE = new RegExp(`^(\\p{L}[\\p{L}' .\\-]{1,40}?),\\s*(?:a\\s+)?(${LONG_DATE})\\.?$`, "iu");
 const NOT_A_PLACE = /vencim|vence|pago|cobro|domicili|factura|fecha/i;
@@ -37,6 +41,21 @@ function parseExactDate(value: string): string | undefined {
   return numeric ? iso(Number(numeric[3]), Number(numeric[2]), Number(numeric[1])) : undefined;
 }
 function evidenceLine(line: number, text: string): Evidence[number] { return { line, text: text.slice(0, MAX_EVIDENCE_CHARS) }; }
+
+export function corroborateDueDate(text: string, totalAmount?: string): { value: string; rule: "due_date_labelled_v1"; evidence: Evidence } | undefined {
+  let candidate: ReturnType<typeof corroborateDueDate>;
+  for (const [index, raw] of text.split(/\r?\n/).entries()) {
+    const line = raw.trim();
+    const match = DUE_DATE_LINE.exec(line);
+    if (!match) continue;
+    const value = parseExactDate(match[1]);
+    const amount = match[5];
+    if (!value || (candidate && candidate.value !== value)) return undefined;
+    if (amount && (!totalAmount?.trim() || Number(amount.replace(/[.,]/g, "")) !== Math.round(Number(totalAmount) * 100))) return undefined;
+    candidate ??= { value, rule: "due_date_labelled_v1", evidence: [evidenceLine(index + 1, line)] };
+  }
+  return candidate;
+}
 
 /** Requires an explicit invoice label or a place-date header within the first fifteen non-empty lines. */
 export function corroborateInvoiceDate(text: string): DateCorroboration | undefined {
@@ -93,7 +112,7 @@ export function applyTextCorroboration(input: {
   const result: CorroborationResult = { invoice: { ...invoice }, fieldSources: {}, audit: [] };
   if (!text) return result;
   const threshold = (field: InvoiceField) => config.minimumConfidenceByField?.[field] ?? config.minimumConfidence;
-  const deficient = (field: "recipientName" | "recipientTaxId" | "invoiceDate") => !invoice[field]?.trim() || !((confidence[field] ?? -Infinity) >= threshold(field));
+  const deficient = (field: FieldAuditEntry["field"]) => !invoice[field]?.trim() || !((confidence[field] ?? -Infinity) >= threshold(field));
   const record = (field: FieldAuditEntry["field"], value: string, rule: FieldAuditEntry["rule"], evidence: Evidence) => {
     const previous = { ...(invoice[field] ? { value: invoice[field] } : {}), ...(confidence[field] !== undefined ? { confidence: confidence[field] } : {}) };
     result.invoice[field] = value;
@@ -103,6 +122,13 @@ export function applyTextCorroboration(input: {
   if (deficient("invoiceDate")) {
     const date = corroborateInvoiceDate(text);
     if (date && (!invoice.invoiceDate?.trim() || invoice.invoiceDate === date.value)) record("invoiceDate", date.value, date.rule, date.evidence);
+  }
+  if (invoice.dueDateStatus !== "not_stated" && deficient("dueDate")) {
+    const date = corroborateDueDate(text, invoice.totalAmount);
+    if (date && (!invoice.dueDate?.trim() || invoice.dueDate === date.value)) {
+      record("dueDate", date.value, date.rule, date.evidence);
+      result.invoice.dueDateStatus = "present";
+    }
   }
   const found = corroborateRecipient(text, recipients, invoice.supplierTaxId);
   if (!found) return result;
