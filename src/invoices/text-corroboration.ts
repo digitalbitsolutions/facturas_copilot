@@ -15,10 +15,15 @@ const LONG_DATE = "(\\d{1,2})\\s+de\\s+(enero|febrero|marzo|abril|mayo|junio|jul
 const NUMERIC_DATE = "(\\d{1,2})[/.\\-](\\d{1,2})[/.\\-](\\d{4})";
 const EXACT_LONG = new RegExp(`^${LONG_DATE}\\.?$`, "i");
 const EXACT_NUMERIC = new RegExp(`^${NUMERIC_DATE}\\.?$`);
+const DUE_DATE_LABEL = "(?:vencimientos?|fecha\\s+(?:de\\s+)?vencimiento|venciments?|vto\\.?)";
+const AMOUNT = "(?:\\d{1,3}(?:\\.\\d{3})+|\\d+),\\d{2}";
+// OCR can join the payment method and the labelled due date in one paragraph.
 const DUE_DATE_LINE = new RegExp(
-  `^(?:vencimientos?|fecha\\s+(?:de\\s+)?vencimiento|venciments?|vto\\.?)\\s*:?\\s*(${NUMERIC_DATE})(?:\\s+((?:\\d{1,3}(?:\\.\\d{3})+|\\d+),\\d{2})\\s*€?)?$`,
+  `(?:^|\\s)${DUE_DATE_LABEL}\\s*:?\\s*(${NUMERIC_DATE})(?:\\s+(${AMOUNT})\\s*€?)?$`,
   "i",
 );
+const ANY_NUMERIC_DATE = new RegExp(`(?<!\\d)${NUMERIC_DATE}(?!\\d)`, "g");
+const SCHEDULE_CONTINUATION = new RegExp(`^${NUMERIC_DATE}(?:\\s+${AMOUNT})?\\s*€?\\.?$`);
 const LABELLED = /\bfecha\s+(?:de\s+)?(?:factura|emisi[oó]n|expedici[oó]n)\s*[:\-]?\s*(.+)$/i;
 const PLACE_DATE = new RegExp(`^(\\p{L}[\\p{L}' .\\-]{1,40}?),\\s*(?:a\\s+)?(${LONG_DATE})\\.?$`, "iu");
 const NOT_A_PLACE = /vencim|vence|pago|cobro|domicili|factura|fecha/i;
@@ -46,9 +51,10 @@ export function corroborateDueDate(text: string, totalAmount?: string): { value:
   let candidate: ReturnType<typeof corroborateDueDate>;
   for (const [index, raw] of text.split(/\r?\n/).entries()) {
     const line = raw.trim();
-    if (candidate && EXACT_NUMERIC.test(line)) return undefined;
+    if (candidate && SCHEDULE_CONTINUATION.test(line)) return undefined;
     const match = DUE_DATE_LINE.exec(line);
     if (!match) continue;
+    if ((line.match(ANY_NUMERIC_DATE) ?? []).length !== 1) return undefined;
     const value = parseExactDate(match[1]);
     const amount = match[5];
     if (!value || (candidate && candidate.value !== value)) return undefined;
