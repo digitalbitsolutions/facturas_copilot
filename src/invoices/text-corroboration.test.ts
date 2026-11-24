@@ -3,6 +3,7 @@ import test from "node:test";
 import { applyTextCorroboration, corroborateDueDate, corroborateInvoiceDate, corroborateRecipient } from "./text-corroboration.ts";
 import { defaultValidationConfig, validateInvoice } from "./validation.ts";
 import { normalizeTaxId } from "./supplier-identity.ts";
+import { CASHKEEPER_OCR } from "./fixtures-cashkeeper.ts";
 
 const ALFA = { recipientId: "ALFA", legalName: "Alfa Dental Norte, S.L.", taxId: "B00000001", aliases: ["Alfa Norte"], active: true };
 const BETA = { recipientId: "BETA", legalName: "Beta Clinica Sur, S.L.", taxId: "B00000002", aliases: [], active: true };
@@ -49,6 +50,53 @@ test("audits a matching low-confidence due date and retains conflicting or absen
   assert.equal(applyTextCorroboration({ ...input, invoice: { ...input.invoice, dueDate: "2026-11-23" } }).audit.length, 0);
   assert.equal(applyTextCorroboration({ ...input, invoice: { totalAmount: "52.03", dueDateStatus: "not_stated" } }).audit.length, 0);
   assert.equal(applyTextCorroboration({ ...input, invoice: { totalAmount: "52.03" } }).invoice.dueDate, "2026-11-24");
+});
+
+const CASHKEEPER_DUE_LINE = "Forma de Pago T. CRÉDITO RECURRENTE Vencimientos : 24/11/2026 52,03";
+const cashkeeperCorroboration = {
+  invoice: { dueDate: "2026-11-24", totalAmount: "52.03" },
+  confidence: { dueDate: 0.568 }, text: CASHKEEPER_OCR, recipients: [], config: defaultValidationConfig,
+};
+
+test("R1: accepts the literal Cashkeeper payment paragraph", () => {
+  assert.equal(corroborateDueDate(CASHKEEPER_DUE_LINE, "52.03")?.value, "2026-11-24");
+});
+
+test("R2: finds the Cashkeeper due date in the complete OCR", () => {
+  assert.equal(corroborateDueDate(CASHKEEPER_OCR, "52.03")?.value, "2026-11-24");
+});
+
+test("R3: audits and validates the Cashkeeper due date from the complete OCR", () => {
+  const result = applyTextCorroboration(cashkeeperCorroboration);
+  assert.equal(result.fieldSources.dueDate, "text_fallback");
+  assert.equal(result.invoice.dueDateStatus, "present");
+  assert.equal(result.audit.length, 1);
+  assert.equal(result.audit[0]?.rule, "due_date_labelled_v1");
+  assert.equal(result.audit[0]?.evidence[0]?.text, CASHKEEPER_DUE_LINE);
+  assert.deepEqual(result.audit[0]?.previous, { value: "2026-11-24", confidence: 0.568 });
+  const validation = validateInvoice(result.invoice, cashkeeperCorroboration.confidence, defaultValidationConfig, result.fieldSources);
+  assert.ok(!validation.valid && !validation.issues.some(issue => issue.field === "dueDate"));
+});
+
+for (const [name, text] of [
+  ["R4: joined payment schedule", "Forma de Pago Vencimientos : 24/11/2026 24/12/2026"],
+  ["R5: continuation with date only", "Vencimientos: 24/11/2026\n24/12/2026"],
+  ["R6: continuation with an amount", "Vencimientos: 24/11/2026\n24/12/2026 26,03"],
+  ["R7: partial payment", "Forma de Pago T. CRÉDITO RECURRENTE Vencimientos : 24/11/2026 26,00"],
+  ["R9: prefix with other dates", "Periodo del 24/10/2026 al 23/11/2026 Vencimiento 24/11/2026"],
+  ["R10: text after the amount", "Vencimientos : 24/11/2026 52,03 Página 1 / 1"],
+  ["R11: label inside another word", "Revencimientos : 24/11/2026"],
+]) {
+  test(name, () => assert.equal(corroborateDueDate(text, "52.03"), undefined));
+}
+
+test("R8: preserves low-confidence review when the OCR contradicts the model", () => {
+  const input = { ...cashkeeperCorroboration, invoice: { ...cashkeeperCorroboration.invoice, dueDate: "2026-11-23" } };
+  const result = applyTextCorroboration(input);
+  assert.equal(result.audit.length, 0);
+  assert.equal(result.invoice.dueDate, "2026-11-23");
+  const validation = validateInvoice(result.invoice, input.confidence, defaultValidationConfig, result.fieldSources);
+  assert.ok(!validation.valid && validation.issues.some(issue => issue.field === "dueDate" && issue.code === "low_confidence"));
 });
 
 test("corroborates a single recipient only with its complete NIF and nearby name", () => {
