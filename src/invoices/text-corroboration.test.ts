@@ -25,6 +25,8 @@ test("corroborates only an explicit single due date with no partial payment", ()
   assert.equal(corroborateDueDate(`Forma de Pago\nT. CRÉDITO RECURRENTE\n${line}`, "52.03")?.value, "2026-11-24");
   assert.equal(corroborateDueDate(`${line}\n${line}`, "52.03")?.value, "2026-11-24");
   assert.equal(corroborateDueDate("Vencimiento 23/12/2026")?.value, "2026-12-23");
+  assert.equal(corroborateDueDate("Vencimientos: 24/11/2026\n24/12/2026"), undefined);
+  assert.equal(corroborateDueDate(line, "52.03")?.value, "2026-11-24");
   assert.equal(corroborateDueDate("Vencimientos : 31/02/2026"), undefined);
   assert.equal(corroborateDueDate("Fecha Valor 24/11/2026"), undefined);
   assert.equal(corroborateDueDate("Vencimientos : 24/11/2026 50,00", "52.03"), undefined);

@@ -46,6 +46,7 @@ export function corroborateDueDate(text: string, totalAmount?: string): { value:
   let candidate: ReturnType<typeof corroborateDueDate>;
   for (const [index, raw] of text.split(/\r?\n/).entries()) {
     const line = raw.trim();
+    if (candidate && EXACT_NUMERIC.test(line)) return undefined;
     const match = DUE_DATE_LINE.exec(line);
     if (!match) continue;
     const value = parseExactDate(match[1]);
