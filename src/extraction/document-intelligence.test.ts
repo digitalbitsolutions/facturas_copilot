@@ -182,6 +182,53 @@ test("uses a coherent first-pages fiscal layout when invoice header omits freigh
   assert.ok(requests.some((url) => url.includes("prebuilt-layout") && url.includes("pages=1-2")));
 });
 
+for (const scenario of [
+  { name: "two VAT rates", base: 177.99, vat: 22.64, total: 200.63, rows: [["133,94", "10 %", "13,39"], ["44,05", "21 %", "9,25"]], rates: [21, 10, 0] },
+  { name: "one VAT rate", base: 325.55, vat: 32.56, total: 358.11, rows: [["325,55", "10 %", "32,56"]], rates: [10, 0, 0] },
+  { name: "mismatching header", base: 177.98, vat: 22.65, total: 200.63, rows: [["133,94", "10 %", "13,39"], ["44,05", "21 %", "9,25"]] },
+  { name: "mismatching layout", base: 177.99, vat: 22.64, total: 200.63, rows: [["133,94", "10 %", "13,39"], ["44,05", "21 %", "9,26"]] },
+  { name: "layout failure", base: 325.55, vat: 32.56, total: 358.11, failure: true },
+  { name: "sufficient confidence", base: 325.55, vat: 32.56, total: 358.11, confidence: 0.94, skip: true },
+  { name: "IRPF present", base: 100, vat: 21, total: 106, content: "IRPF 15 % -15,00", skip: true },
+]) {
+  test(`confirms a coherent fiscal header only with matching layout evidence: ${scenario.name}`, async () => {
+    const requests: string[] = [];
+    const currency = (amount: number, confidence: number) => ({ valueCurrency: { amount, currencyCode: "EUR" }, confidence });
+    const primary = { status: "succeeded", analyzeResult: { content: scenario.content, documents: [{ fields: {
+      ...result.analyzeResult.documents[0].fields,
+      SubTotal: currency(scenario.base, 0.95),
+      TotalTax: currency(scenario.vat, scenario.confidence ?? 0.6),
+      InvoiceTotal: currency(scenario.total, 0.99),
+    } }] } };
+    const rows = [["Desglose IVA", "Base", "Tarifa", "IVA"], ...(scenario.rows ?? []).map(row => ["IVA", ...row])];
+    const layout = { status: "succeeded", analyzeResult: { tables: [{
+      rowCount: rows.length, columnCount: 4,
+      cells: rows.flatMap((row, rowIndex) => row.map((content, columnIndex) => ({ rowIndex, columnIndex, content }))),
+    }] } };
+    const extractor = new DocumentIntelligenceInvoiceExtractor("https://di.example.com", { getAccessToken: async () => "token" }, {
+      pollIntervalMs: 0,
+      fetch: async (url, init) => {
+        const target = String(url);
+        if (init?.method === "POST") {
+          requests.push(target);
+          const model = target.includes("prebuilt-layout") ? "layout" : "invoice";
+          return new Response(null, { status: 202, headers: { "operation-location": `https://di.example.com/result/${model}` } });
+        }
+        return Response.json(target.endsWith("layout") ? (scenario.failure ? { status: "failed" } : layout) : primary);
+      },
+    });
+    const extracted = await extractor.extract({
+      messageId: "test", attachmentId: "test", sender: "pilot", receivedAt: "2026-11-24T10:00:00Z",
+      originalFilename: "invoice.pdf", contentType: "application/pdf", content: new Uint8Array([1, 2, 3]),
+    });
+    assert.equal(extracted.invoice.taxableBase, scenario.base.toFixed(2));
+    assert.equal(extracted.invoice.vatAmount, scenario.vat.toFixed(2));
+    assert.equal(extracted.confidence.vatAmount, scenario.rates ? 0.9 : scenario.confidence ?? 0.6);
+    assert.equal(requests.filter(url => url.includes("prebuilt-layout") && url.includes("pages=1-2")).length, scenario.skip ? 0 : 1);
+    if (scenario.rates) assert.deepEqual(extracted.invoice.vatRateSlots, scenario.rates);
+  });
+}
+
 test("uses labelled OCR fiscal text only when it reconciles to the extracted total", async () => {
   let calls = 0;
   const fetchMock = async (_url: string | URL | Request, _init?: RequestInit) => {

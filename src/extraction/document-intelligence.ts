@@ -1,4 +1,5 @@
 import type { ExtractedInvoice, ExtractionConfidence, FieldSources, InvoiceField } from "../invoices/types.ts";
+import { defaultValidationConfig } from "../invoices/validation.ts";
 import type { InvoiceExtractor, AttachmentInput } from "../processing/types.ts";
 import { DocumentReviewError } from "../processing/document-review-error.ts";
 import type { AccessTokenProvider } from "../microsoft365/graph-client.ts";
@@ -492,6 +493,29 @@ function enrichWithValidatedFiscalLayout(primary: Extraction, result: DiAnalyzeR
   };
 }
 
+function needsFiscalConfirmation(extraction: Extraction): boolean {
+  return !extraction.invoice.irpfAmount && (["taxableBase", "vatAmount"] as const).some((field) => {
+    const minimum = defaultValidationConfig.minimumConfidenceByField?.[field] ?? defaultValidationConfig.minimumConfidence;
+    return !((extraction.confidence[field] ?? -Infinity) >= minimum);
+  });
+}
+
+function confirmVatWithFiscalSummary(primary: Extraction, result: DiAnalyzeResult): Extraction {
+  const [base, vat, total] = [primary.invoice.taxableBase, primary.invoice.vatAmount, primary.invoice.totalAmount]
+    .map((value) => Math.round(Number(value) * 100));
+  const fiscal = extractFiscal(result, { headerTotal: total });
+  if (!fiscal.ok || fiscal.summary.baseTotal !== base || fiscal.summary.vatTotal !== vat) return primary;
+  return {
+    ...primary,
+    invoice: { ...primary.invoice, vatRateSlots: vatRateSlots(fiscal.summary.rows) },
+    confidence: {
+      ...primary.confidence,
+      taxableBase: Math.max(primary.confidence.taxableBase ?? 0, 0.9),
+      vatAmount: Math.max(primary.confidence.vatAmount ?? 0, 0.9),
+    },
+  };
+}
+
 export class DocumentIntelligenceInvoiceExtractor implements InvoiceExtractor {
   private readonly endpoint: string;
   private readonly tokenProvider: AccessTokenProvider;
@@ -543,6 +567,11 @@ export class DocumentIntelligenceInvoiceExtractor implements InvoiceExtractor {
       if (!isFiscallyCoherent(extraction.invoice)) logLowConfidenceFiscalFields(extraction, fields);
     } catch {
       console.warn("Invoice first-pages fiscal layout was unavailable");
+    } else if (needsFiscalConfirmation(extraction)) try {
+      const layout = await this.analyze(input, token, "1-2", "prebuilt-layout") as { analyzeResult?: DiAnalyzeResult };
+      extraction = confirmVatWithFiscalSummary(extraction, layout.analyzeResult ?? {});
+    } catch {
+      console.warn("Invoice fiscal confirmation layout was unavailable");
     }
     extraction = enrichWithRecognizedFiscalText(extraction, context.recognizedText);
     // The read-model text and the invoice model text may differ. Each source

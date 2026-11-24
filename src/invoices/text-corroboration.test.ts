@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { applyTextCorroboration, corroborateInvoiceDate, corroborateRecipient } from "./text-corroboration.ts";
+import { applyTextCorroboration, corroborateDueDate, corroborateInvoiceDate, corroborateRecipient } from "./text-corroboration.ts";
 import { defaultValidationConfig, validateInvoice } from "./validation.ts";
 import { normalizeTaxId } from "./supplier-identity.ts";
 
@@ -18,6 +18,37 @@ test("corroborates only an explicit invoice date or a place-date header", () => 
   assert.equal(corroborateInvoiceDate("Fecha: 03/02/2026"), undefined);
   assert.equal(corroborateInvoiceDate("Fecha factura: 03/02/2026")?.value, "2026-02-03");
   assert.equal(corroborateInvoiceDate("Fecha factura: 31/02/2026"), undefined);
+});
+
+test("corroborates only an explicit single due date with no partial payment", () => {
+  const line = "Vencimientos : 24/11/2026 52,03";
+  assert.equal(corroborateDueDate(`Forma de Pago\nT. CRÉDITO RECURRENTE\n${line}`, "52.03")?.value, "2026-11-24");
+  assert.equal(corroborateDueDate(`${line}\n${line}`, "52.03")?.value, "2026-11-24");
+  assert.equal(corroborateDueDate("Vencimiento 23/12/2026")?.value, "2026-12-23");
+  assert.equal(corroborateDueDate("Vencimientos: 24/11/2026\n24/12/2026"), undefined);
+  assert.equal(corroborateDueDate(line, "52.03")?.value, "2026-11-24");
+  assert.equal(corroborateDueDate("Vencimientos : 31/02/2026"), undefined);
+  assert.equal(corroborateDueDate("Fecha Valor 24/11/2026"), undefined);
+  assert.equal(corroborateDueDate("Vencimientos : 24/11/2026 50,00", "52.03"), undefined);
+  assert.equal(corroborateDueDate("Vencimientos : 24/11/2026 26,00\nVencimientos : 24/12/2026 26,03", "52.03"), undefined);
+  assert.equal(corroborateDueDate(`${line}\nVencimiento 23/12/2026`, "52.03"), undefined);
+});
+
+test("audits a matching low-confidence due date and retains conflicting or absent-date decisions", () => {
+  const input = {
+    invoice: { dueDate: "2026-11-24", totalAmount: "52.03" },
+    confidence: { dueDate: 0.4 }, text: "Vencimientos : 24/11/2026 52,03", recipients: [], config: defaultValidationConfig,
+  };
+  const result = applyTextCorroboration(input);
+  assert.equal(result.invoice.dueDateStatus, "present");
+  assert.equal(result.fieldSources.dueDate, "text_fallback");
+  assert.deepEqual(result.audit[0]?.previous, { value: "2026-11-24", confidence: 0.4 });
+  assert.equal(result.audit[0]?.rule, "due_date_labelled_v1");
+  const validation = validateInvoice(result.invoice, input.confidence, input.config, result.fieldSources);
+  assert.ok(!validation.valid && !validation.issues.some(issue => issue.field === "dueDate"));
+  assert.equal(applyTextCorroboration({ ...input, invoice: { ...input.invoice, dueDate: "2026-11-23" } }).audit.length, 0);
+  assert.equal(applyTextCorroboration({ ...input, invoice: { totalAmount: "52.03", dueDateStatus: "not_stated" } }).audit.length, 0);
+  assert.equal(applyTextCorroboration({ ...input, invoice: { totalAmount: "52.03" } }).invoice.dueDate, "2026-11-24");
 });
 
 test("corroborates a single recipient only with its complete NIF and nearby name", () => {
