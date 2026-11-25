@@ -122,3 +122,10 @@
 - [x] Implementar estados, excepciones e idempotencia por adjunto.
 - [x] Preparar cliente Graph y adaptador SharePoint simulado.
 - [x] Versionar esquema Excel y configuración M365.
+
+### Seguimiento de extracción fiscal UTPR
+
+- [ ] Contrastar el esquema de `TaxDetails` 2024-11-30 con respuestas reales, en especial `Amount`, `TaxAmount` y `NetAmount`.
+- [ ] Revisar `derivedTaxableBase` cuando hay varias cuotas y `TotalTax` no recoge su suma.
+- [ ] Extender la búsqueda del resumen fiscal a facturas de más de tres páginas.
+- [ ] Revisar la condición `!fields.TaxDetails` cuando el campo existe con un array vacío. En la lectura UTPR de páginas 1–2 el campo estaba ausente.
