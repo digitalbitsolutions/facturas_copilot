@@ -341,6 +341,97 @@ test("uses a coherent fiscal summary from page three when the first two pages om
   assert.equal(calls, 8);
 });
 
+const utprFiscalRows = [
+  ["Importe", "Portes", "Base Imponible", "% I.V.A.", "Imp. I.V.A.", "Total €"],
+  ["2.890,93", "", "2.738,31", "21 %", "575,05", "3.481,24"],
+  ["", "", "152,62", "10,00", "15,26", ""],
+];
+
+function utprFiscalTable(rows: string[][]) {
+  return {
+    rowCount: rows.length, columnCount: 6,
+    cells: rows.flatMap((row, rowIndex) => row.map((content, columnIndex) => ({ rowIndex, columnIndex, content }))),
+  };
+}
+
+const utprRegressionCases: Array<{
+  name: string; calendar?: boolean; total?: number; invoiceId?: string | null;
+  tables?: ReturnType<typeof utprFiscalTable>[]; layoutFailure?: boolean; irpf?: boolean; corroborated?: boolean;
+}> = [
+  { name: "U1: corrects the carry-forward total using both VAT rates", corroborated: true },
+  { name: "U2: keeps a calendar on page three in review", calendar: true, corroborated: true },
+  { name: "U3: rejects a one-cent discrepancy", total: 3481.25 },
+  { name: "U4: rejects a carry-forward total reported on page three", total: 2366.99 },
+  { name: "U5: rejects an incomplete tax summary", tables: [utprFiscalTable(utprFiscalRows.slice(0, 2))] },
+  { name: "U6: rejects a different invoice number", invoiceId: "26/11715" },
+  { name: "U7: rejects a missing invoice number", invoiceId: null },
+  { name: "U8: rejects two candidate fiscal tables", tables: [utprFiscalTable(utprFiscalRows), utprFiscalTable(utprFiscalRows)] },
+  { name: "U9: leaves the total unchanged if layout analysis fails", layoutFailure: true },
+  { name: "U10: does not corroborate from a summary with IRPF", irpf: true },
+];
+
+for (const scenario of utprRegressionCases) {
+  test(scenario.name, async () => {
+    const { SubTotal: _base, TotalTax: _vat, DueDate: _due, ...header } = result.analyzeResult.documents[0].fields;
+    const finalInvoiceId = scenario.invoiceId === null ? {} : { InvoiceId: { valueString: scenario.invoiceId ?? "26/11714" } };
+    const amount = (value: number, confidence: number) => ({ valueCurrency: { amount: value, currencyCode: "EUR" }, confidence });
+    const responses: Record<string, object> = {
+      "invoice/1-2": { documents: [{ fields: { ...header, InvoiceId: { valueString: "26/11714" }, InvoiceTotal: amount(1704.35, 0.848) } }] },
+      "invoice/3": {
+        ...(scenario.irpf ? { content: "IRPF 15 % -1,00" } : {}),
+        documents: [{ fields: {
+          ...finalInvoiceId, InvoiceTotal: amount(scenario.total ?? 3481.24, 0.844), TotalTax: amount(575.05, 0.923),
+          ...(scenario.irpf ? { SubTotal: amount(2907.19, 0.95) } : {}),
+        } }],
+      },
+      "read/3": { content: scenario.calendar ? "Forma de pago: 6 VENCIMIENTOS\nVencimientos: 30/11/2026\n30/12/2026\nGiro domiciliado" : "" },
+      "layout/3": { tables: scenario.tables ?? [utprFiscalTable(utprFiscalRows)] },
+      "layout/1-2": {},
+    };
+    const extractor = new DocumentIntelligenceInvoiceExtractor("https://di.example.com", { getAccessToken: async () => "token" }, {
+      pollIntervalMs: 0,
+      fetch: async (url, init) => {
+        const target = new URL(String(url));
+        if (init?.method === "POST") {
+          const model = target.pathname.match(/prebuilt-(invoice|read|layout):analyze/)?.[1];
+          const key = `${model}/${target.searchParams.get("pages")}`;
+          assert.ok(responses[key], `Unexpected analysis ${key}`);
+          return new Response(null, { status: 202, headers: { "operation-location": `https://di.example.com/result/${key}` } });
+        }
+        const key = target.pathname.slice("/result/".length);
+        return Response.json(scenario.layoutFailure && key === "layout/3"
+          ? { status: "failed" }
+          : { status: "succeeded", analyzeResult: responses[key] });
+      },
+    });
+    const extracted = await extractor.extract({
+      messageId: "test", attachmentId: "utpr", sender: "pilot", receivedAt: "2026-11-25T10:00:00Z",
+      originalFilename: "factura.pdf", contentType: "application/pdf", content: new Uint8Array([1, 2, 3]),
+    });
+    const validation = validateInvoice(extracted.invoice, extracted.confidence);
+    if (scenario.corroborated) {
+      assert.equal(extracted.invoice.totalAmount, "3481.24");
+      assert.equal(extracted.invoice.taxableBase, "2890.93");
+      assert.equal(extracted.invoice.vatAmount, "590.31");
+      assert.deepEqual(extracted.invoice.vatRateSlots, [21, 10, 0]);
+      assert.equal(extracted.confidence.totalAmount, 0.9);
+      if (scenario.calendar) {
+        assert.notEqual(extracted.invoice.dueDateStatus, "not_stated");
+        assert.ok(!validation.valid);
+        assert.deepEqual(validation.issues.map(({ field, code }) => ({ field, code })), [{ field: "dueDate", code: "low_confidence" }]);
+      } else {
+        assert.equal(extracted.invoice.dueDateStatus, "not_stated");
+        assert.ok(validation.valid);
+      }
+    } else {
+      const differentInvoice = scenario.invoiceId === "26/11715";
+      assert.equal(extracted.invoice.totalAmount, (differentInvoice ? 1704.35 : scenario.total ?? 3481.24).toFixed(2));
+      assert.equal(extracted.confidence.totalAmount, differentInvoice ? 0.848 : 0.844);
+      assert.ok(!validation.valid && validation.issues.some(issue => issue.field === "totalAmount" && issue.code === "low_confidence"));
+    }
+  });
+}
+
 test("normalizes international formatted line amounts before deriving VAT", () => {
   const extracted = mapInvoiceResult({
     status: "succeeded",

@@ -516,6 +516,29 @@ function confirmVatWithFiscalSummary(primary: Extraction, result: DiAnalyzeResul
   };
 }
 
+function corroborateTotalWithFiscalLayout(
+  extraction: Extraction, result: DiAnalyzeResult, primaryInvoiceId: string | undefined, finalPage: Extraction,
+): Extraction {
+  const finalInvoiceId = finalPage.invoice.invoiceNumber;
+  const primaryId = primaryInvoiceId && normalizedInvoiceNumber(primaryInvoiceId);
+  if (!primaryId || !finalInvoiceId || primaryId !== normalizedInvoiceNumber(finalInvoiceId)) return extraction;
+  if (extraction.invoice.irpfAmount || finalPage.invoice.irpfAmount) return extraction;
+
+  const cents = (value?: string) => value?.trim() ? Math.round(Number(value) * 100) : Number.NaN;
+  const total = cents(extraction.invoice.totalAmount);
+  if (!Number.isFinite(total) || total !== cents(finalPage.invoice.totalAmount)) return extraction;
+
+  const fiscal = extractFiscal(result, { headerTotal: total });
+  if (!fiscal.ok) return extraction;
+  const { baseTotal, vatTotal, grossTotal } = fiscal.summary;
+  if (grossTotal !== total || baseTotal !== cents(extraction.invoice.taxableBase) || vatTotal !== cents(extraction.invoice.vatAmount)) return extraction;
+
+  return {
+    ...extraction,
+    confidence: { ...extraction.confidence, totalAmount: Math.max(extraction.confidence.totalAmount ?? 0, 0.9) },
+  };
+}
+
 export class DocumentIntelligenceInvoiceExtractor implements InvoiceExtractor {
   private readonly endpoint: string;
   private readonly tokenProvider: AccessTokenProvider;
@@ -545,14 +568,19 @@ export class DocumentIntelligenceInvoiceExtractor implements InvoiceExtractor {
     }
     for (const diagnostic of diagnoseFields(fields)) console.warn(`Invoice field diagnostic ${JSON.stringify(diagnostic)}`);
     let extraction = enrichWithFacturX(mapInvoiceResult(primary), input.content);
+    let finalPageText: string | undefined;
     if (!fields?.SubTotal && !fields?.TotalTax && !fields?.TaxDetails) try {
       // F0 analyses a maximum of two selected pages per request. A separate page-3
       // request retrieves a final fiscal summary without widening every invoice run.
-      extraction = enrichWithFinalPageFiscalSummary(extraction, mapInvoiceResult(await this.analyze(input, token, "3")));
+      const finalPage = mapInvoiceResult(await this.analyze(input, token, "3"));
+      extraction = enrichWithFinalPageFiscalSummary(extraction, finalPage);
       const fiscalText = await this.analyze(input, token, "3", "prebuilt-read");
-      extraction = enrichWithFiscalTable(extraction, fiscalText.analyzeResult?.content);
+      finalPageText = fiscalText.analyzeResult?.content;
+      extraction = enrichWithFiscalTable(extraction, finalPageText);
       const layout = await this.analyze(input, token, "3", "prebuilt-layout") as { analyzeResult?: DiAnalyzeResult };
-      extraction = enrichWithValidatedFiscalLayout(extraction, layout.analyzeResult ?? {});
+      const layoutResult = layout.analyzeResult ?? {};
+      extraction = enrichWithValidatedFiscalLayout(extraction, layoutResult);
+      extraction = corroborateTotalWithFiscalLayout(extraction, layoutResult, text(fields?.InvoiceId), finalPage);
       console.warn(`Invoice fiscal layout ${JSON.stringify(dumpTaxTables(layout.analyzeResult ?? {}))}`);
     } catch {
       // A two-page PDF has no continuation page. Preserve the original safe review path.
@@ -581,7 +609,9 @@ export class DocumentIntelligenceInvoiceExtractor implements InvoiceExtractor {
     extraction = enrichWithExplicitIrpfSummary(extraction, primary.analyzeResult?.content);
     // The mailbox classifier supplies transient OCR text from the attachment;
     // mailbox processing must provide text for one invoice only.
-    return enrichWithDueDateDecision(extraction, fields?.DueDate, [context.recognizedText, primary.analyzeResult?.content].filter((value): value is string => Boolean(value)).join("\n"));
+    const documentText = [context.recognizedText, primary.analyzeResult?.content, finalPageText]
+      .filter((value): value is string => Boolean(value)).join("\n");
+    return enrichWithDueDateDecision(extraction, fields?.DueDate, documentText);
   }
 
   /**
