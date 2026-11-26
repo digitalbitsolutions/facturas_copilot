@@ -47,6 +47,8 @@ const INDICATORS: RegExp[] = [
 // actual due-date term is evaluated independently below.
 const BANK_DETAILS = /\b(?:dades?|data|datos)\b[^\r\n]{0,80}\b(?:pagament|pago)\b/i;
 const PAYMENT_DETAILS_HEADING = /\b(?:forma|m[eé]todo) de (?:pagament|pago)\b/i;
+// Strip only the immediate payment phrase so explicit terms in the same OCR paragraph remain visible.
+const IMMEDIATE_PAYMENT = /\bforma de (?:pago|pagament)\s*:?\s*(?:transf\w*\.?[ _-]*)?(?:al[ _-]+)?contado\b/g;
 const IBAN = /\bIBAN\b/i;
 const PAYMENT_TERM = /\b(?:vencim|vto\b|plazo|pagadero|giro|domiciliad|condici|\d+\s*d[ií]as?)\b/i;
 
@@ -78,7 +80,7 @@ export function decideDueDate(field: DueDateField | null | undefined, documentTe
       if (BANK_DETAILS.test(lines[previous]) || (PAYMENT_DETAILS_HEADING.test(lines[previous]) && !PAYMENT_TERM.test(lines[previous]))) bankDetailLines.add(previous);
     }
   });
-  const t = norm(lines.filter((_line, index) => !bankDetailLines.has(index)).join("\n"));
+  const t = norm(lines.filter((_line, index) => !bankDetailLines.has(index)).join("\n")).replace(IMMEDIATE_PAYMENT, " ");
   return INDICATORS.some((re) => re.test(t))
     ? { status: "review", reason: "due_date_indicators_present_but_unverified" }
     : { status: "not_stated" };

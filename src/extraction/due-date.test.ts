@@ -80,5 +80,55 @@ check("una cabecera aislada de forma de pago con IBAN no oculta un plazo real", 
   assert.equal(decideDueDate({ value: "2026-11-19", confidence: 0.3 }, "Forma de pagament\nIBAN: ES73 0081 4291 6000 1374 4140").status, "not_stated");
 });
 
+const GUIMAR_PAYMENT = "FORMA DE PAGO: Transf_contado";
+const BANK_ACCOUNT_LABEL = "CUENTA BANCARIA: [omitida]";
+const GUIMAR_FOOTER = GUIMAR_PAYMENT + "\n" + BANK_ACCOUNT_LABEL;
+
+check("G1: pago al contado y cuenta bancaria en líneas separadas", () => {
+  assert.deepEqual(decideDueDate(undefined, GUIMAR_FOOTER), { status: "not_stated" });
+});
+
+check("G2: pago al contado y cuenta bancaria en un párrafo", () => {
+  assert.deepEqual(decideDueDate(undefined, GUIMAR_PAYMENT + " " + BANK_ACCOUNT_LABEL), { status: "not_stated" });
+});
+
+check("G3: la fecha de escritura con baja confianza se descarta", () => {
+  const result = decideDueDate({ value: "2026-11-01", confidence: 0.4 }, "FECHA ESCRITURA: 01/11/2026\n" + GUIMAR_FOOTER);
+  assert.deepEqual(result, { status: "not_stated" });
+});
+
+check("G4: un vencimiento del modelo con confianza suficiente se conserva", () => {
+  const result = decideDueDate({ value: "2026-11-30", confidence: 0.9 }, GUIMAR_FOOTER);
+  assert.deepEqual(result, { status: "ok", dueDate: "2026-11-30", confidence: 0.9 });
+});
+
+check("G5: vencimiento explícito con baja confianza sigue en revisión", () => {
+  assert.equal(decideDueDate({ value: "2026-11-30", confidence: 0.4 }, "Vencimiento: 30/11/2026").status, "review");
+});
+
+check("G6: calendario de varios plazos de UTPR sigue en revisión", () => {
+  const calendar = "Forma de pago: 6 VENCIMIENTOS\nVencimientos: 30/11/2026\n30/12/2026\nGiro domiciliado";
+  assert.equal(decideDueDate(undefined, calendar).status, "review");
+});
+
+const GUIMAR_REVIEW_CASES: Array<[string, string]> = [
+  ["G7: vencimiento en una línea aparte", GUIMAR_PAYMENT + "\nVencimiento: 30/11/2026"],
+  ["G8: vencimiento en el mismo párrafo", GUIMAR_PAYMENT + " Vencimiento: 30/11/2026"],
+  ["G9: contado con un plazo", "Forma de pago: Contado a 30 días"],
+  ["G10: transferencia a plazo", "Forma de pago: Transferencia 30 días"],
+  ["G11: transferencia sin indicación de contado", "Forma de pago: Transferencia bancaria"],
+  ["G12: contado seguido de un sufijo", "Forma de pago: Transf_contado_30"],
+];
+
+for (const [name, text] of GUIMAR_REVIEW_CASES) {
+  check(name, () => assert.equal(decideDueDate(undefined, text).status, "review"));
+}
+
+check("G13: variantes de pago al contado", () => {
+  for (const text of ["Forma de pago: TRANSFERENCIA AL CONTADO", "Forma de pagament: Transf. contado"]) {
+    assert.deepEqual(decideDueDate(undefined, text), { status: "not_stated" }, text);
+  }
+});
+
 if (failed) { console.error(`\n${failed} test(s) fallaron`); process.exit(1); }
 console.log("\nTodos los tests pasaron");
